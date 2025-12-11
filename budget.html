@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Budget – Novus 1730 Ops Hub</title>
+    <link rel="stylesheet" href="css/styles.css" />
+
+    <style>
+        .budget-table th,
+        .budget-table td {
+            padding: 0.35rem 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .budget-text-cell {
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .budget-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .budget-summary-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .budget-summary-label {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            min-height: 260px;
+        }
+
+        .chart-empty-msg {
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-align: center;
+            margin-top: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="top-nav">
+            <div class="nav-left">
+                <div class="logo-mark">🍅</div>
+                <span class="logo-text">1730 Ops Hub</span>
+            </div>
+
+            <nav class="nav-center">
+                <a href="staff-meeting-dashboard.html">Meeting Dashboard</a>
+                <a href="weekly-meeting.html">Weekly Meeting</a>
+                <a href="needs-action.html">Needs Action</a>
+                <a href="budget.html" class="active">Budget</a>
+            </nav>
+
+            <div class="nav-right">
+                <button class="logout-btn" onclick="window.location.href='index.html'">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- HEADER -->
+            <section class="page-header">
+                <h1 class="page-title">Budget Overview</h1>
+                <p class="page-subtitle">
+                    Powered by <code>budget_2026.xlsx</code> in the <code>data</code> folder.<br>
+                    Uses sheets: <code>Budget Category</code>, <code>Funds Available</code>, and <code>Purchase Log</code>.
+                </p>
+            </section>
+
+            <!-- FILTER BAR: MONTH + DEPARTMENT -->
+            <section>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="budget-month">Month</label>
+                        <select id="budget-month">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="budget-dept">Department</label>
+                        <select id="budget-dept">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SUMMARY CARDS -->
+            <section style="margin-top: 1.5rem;">
+                <div class="page-header">
+                    <h2 class="page-title" style="font-size: 1.1rem;">Summary</h2>
+                </div>
+
+                <div class="budget-summary-grid">
+                    <!-- Filtered slice summary -->
+                    <div class="card">
+                        <div class="card-title">For selected Month &amp; Department</div>
+                        <div class="card-body">
+                            <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                                <div>
+                                    <div class="budget-summary-label">Total Budget Allowed (Budget Category)</div>
+                                    <div class="budget-summary-value" id="sum-allowed">$0</div>
+                                </div>
+                                <div>
+                                    <div class="budget-summary-label">Total Spent (Purchase Log)</div>
+                                    <div class="budget-summary-value" id="sum-spent">$0</div>
+                                </div>
+                                <div>
+                                    <div class="budget-summary-label">Funds Available (Funds Available sheet)</div>
+                                    <div class="budget-summary-value" id="sum-available">$0</div>
+                                </div>
+                                <div>
+                                    <div class="budget-summary-label">Remaining (Budget − Spent)</div>
+                                    <div class="budget-summary-value" id="sum-remaining">$0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Global total remaining -->
+                    <div class="card">
+                        <div class="card-title">Overall Remaining Budget (All Months &amp; Depts)</div>
+                        <div class="card-body">
+                            <div class="budget-summary-label">
+                                Sum of all Budget Category amounts minus total Purchase Log costs.
+                            </div>
+                            <div class="budget-summary-value" id="sum-remaining-total" style="margin-top:0.5rem;">
+                                $0
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GRAPHS -->
+            <section style="margin-top: 1.5rem;">
+                <div class="page-header">
+                    <h2 class="page-title" style="font-size: 1.05rem;">Visuals</h2>
+                    <p class="page-subtitle">
+                        Usage pie respects Month &amp; Department filters.<br>
+                        Department spend pie respects Month, but compares all departments.
+                    </p>
+                </div>
+
+                <div class="charts-grid">
+                    <!-- Used vs Remaining pie -->
+                    <div class="card">
+                        <div class="card-title">Budget Usage (Selection)</div>
+                        <div class="card-body">
+                            <div class="chart-wrapper">
+                                <canvas id="chart-budget-usage"></canvas>
+                            </div>
+                            <div class="chart-empty-msg" id="chart-budget-usage-msg" style="display:none;">
+                                Not enough budget data for the current selection.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Per-department spend pie -->
+                    <div class="card">
+                        <div class="card-title">Spend by Department</div>
+                        <div class="card-body">
+                            <div class="chart-wrapper">
+                                <canvas id="chart-dept-spend"></canvas>
+                            </div>
+                            <div class="chart-empty-msg" id="chart-dept-spend-msg" style="display:none;">
+                                No purchase data for the current month selection.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TABLES -->
+            <section style="margin-top: 1.5rem;">
+                <!-- Budget Category table -->
+                <div class="page-header">
+                    <h2 class="page-title" style="font-size: 1.05rem;">Budget Categories</h2>
+                    <p class="page-subtitle">
+                        From the <code>Budget Category</code> sheet. Filtered by Month (if selected).
+                    </p>
+                </div>
+                <div class="card" style="margin-bottom: 1.25rem;">
+                    <div class="card-body" style="overflow-x: auto;">
+                        <table class="table budget-table" id="tbl-budget-category" style="width:100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left;">Month</th>
+                                    <th style="text-align:left;">Category</th>
+                                    <th style="text-align:right;">Amount Allowed</th>
+                                </tr>
+                            </thead>
+                            <tbody id="body-budget-category">
+                                <!-- Rows via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Funds Available table -->
+                <div class="page-header">
+                    <h2 class="page-title" style="font-size: 1.05rem;">Funds Available</h2>
+                    <p class="page-subtitle">
+                        From the <code>Funds Available</code> sheet. Columns: Department, Amount Spent, Funds Available.
+                        Filtered by Department (if selected).
+                    </p>
+                </div>
+                <div class="card" style="margin-bottom: 1.25rem;">
+                    <div class="card-body" style="overflow-x: auto;">
+                        <table class="table budget-table" id="tbl-funds-available" style="width:100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left;">Department</th>
+                                    <th style="text-align:right;">Amount Spent</th>
+                                    <th style="text-align:right;">Funds Available</th>
+                                </tr>
+                            </thead>
+                            <tbody id="body-funds-available">
+                                <!-- Rows via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Purchase Log table -->
+                <div class="page-header">
+                    <h2 class="page-title" style="font-size: 1.05rem;">Purchase Log</h2>
+                    <p class="page-subtitle">
+                        From the <code>Purchase Log</code> sheet. Filtered by Month and Department (if selected).
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-body" style="overflow-x: auto;">
+                        <table class="table budget-table" id="tbl-purchase-log" style="width:100%; border-collapse: collapse;">
+
+                            <colgroup>
+                                <col style="width: 10%;">
+                                <col style="width: 12%;">
+                                <col style="width: 14%;">
+                                <col style="width: 12%;">
+                                <col style="width: 10%;">
+                                <col style="width: 12%;">
+                                <col style="width: 30%;">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left;">Month</th>
+                                    <th style="text-align:left;">Department</th>
+                                    <th style="text-align:left;">Requested By</th>
+                                    <th style="text-align:left;">PPO#</th>
+                                    <th style="text-align:right;">Cost</th>
+                                    <th style="text-align:left;">Date Created</th>
+                                    <th style="text-align:left;">Vendor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="body-purchase-log">
+                                <!-- Rows via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- SheetJS for Excel reading -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const BUDGET_DATA_FILE      = "data/budget_2026.xlsx";
+        const SHEET_BUDGET_CATEGORY = "Budget Category";
+        const SHEET_FUNDS_AVAILABLE = "Funds Available";
+        const SHEET_PURCHASE_LOG    = "Purchase Log";
+
+        let budgetCategories = [];
+        let fundsAvailable   = [];
+        let purchaseLog      = [];
+
+        let filteredBudgetCategories = [];
+        let filteredFundsAvailable   = [];
+        let filteredPurchaseLog      = [];
+
+        const monthSelect = document.getElementById("budget-month");
+        const deptSelect  = document.getElementById("budget-dept");
+
+        const sumAllowedEl       = document.getElementById("sum-allowed");
+        const sumSpentEl         = document.getElementById("sum-spent");
+        const sumAvailEl         = document.getElementById("sum-available");
+        const sumRemainEl        = document.getElementById("sum-remaining");
+        const sumRemainTotalEl   = document.getElementById("sum-remaining-total");
+
+        const bodyBudgetCategory = document.getElementById("body-budget-category");
+        const bodyFundsAvailable = document.getElementById("body-funds-available");
+        const bodyPurchaseLog    = document.getElementById("body-purchase-log");
+
+        // Chart elements
+        const budgetUsageCanvas  = document.getElementById("chart-budget-usage");
+        const deptSpendCanvas    = document.getElementById("chart-dept-spend");
+        const budgetUsageMsgEl   = document.getElementById("chart-budget-usage-msg");
+        const deptSpendMsgEl     = document.getElementById("chart-dept-spend-msg");
+
+        let budgetUsageChart = null;
+        let deptSpendChart   = null;
+
+        // For passing summary into chart update
+        let currentAllowed = 0;
+        let currentSpent   = 0;
+
+        // Overall totals
+        let overallAllowed = 0;
+        let overallSpent   = 0;
+
+        // ===== Helpers =====
+        function safeString(v) {
+            if (v === null || v === undefined) return "";
+            return String(v);
+        }
+
+        // Robust numeric parser that tolerates accounting strings ($, commas, parentheses)
+        function parseNumber(v) {
+            if (v === null || v === undefined || v === "") return 0;
+            if (typeof v === "number") return v;
+
+            let s = String(v).trim();
+            if (!s) return 0;
+
+            // Handle accounting negatives like "(1,234.50)"
+            const isNegative = s.includes("(") && s.includes(")");
+
+            // Remove everything except digits, dots, minus
+            s = s.replace(/[^0-9.\-]/g, "");
+            if (!s) return 0;
+
+            let num = parseFloat(s);
+            if (isNaN(num)) return 0;
+            if (isNegative && num > 0) num = -num;
+
+            return num;
+        }
+
+        function formatCurrency(v) {
+            const num = parseNumber(v);
+            return num.toLocaleString("en-US", {
+                style: "currency",
+                currency: "USD",
+                maximumFractionDigits: 2
+            });
+        }
+
+        // Find a field in a row, ignoring case and extra spaces in header names
+        function getField(row, candidateNames) {
+            if (!row || typeof row !== "object") return null;
+            const keys = Object.keys(row);
+            for (const key of keys) {
+                const normKey = key.trim().toLowerCase();
+                for (const candidate of candidateNames) {
+                    const normCandidate = candidate.trim().toLowerCase();
+                    if (normKey === normCandidate) {
+                        return row[key];
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getBudgetAmount(row) {
+            // Support "Amount", "Amount Allowed", or headers with stray spaces
+            const rawVal = getField(row, ["Amount", "Amount Allowed"]);
+            return parseNumber(rawVal);
+        }
+
+        // ===== Load budget workbook =====
+        async function loadBudgetData() {
+            try {
+                const resp = await fetch(BUDGET_DATA_FILE);
+                if (!resp.ok) {
+                    throw new Error("Failed to load data: " + resp.statusText);
+                }
+                const buf = await resp.arrayBuffer();
+                const wb = XLSX.read(buf, { type: "array" });
+
+                // Budget Category
+                const wsBudget = wb.Sheets[SHEET_BUDGET_CATEGORY];
+                if (!wsBudget) {
+                    console.error("Sheet not found:", SHEET_BUDGET_CATEGORY);
+                } else {
+                    budgetCategories = XLSX.utils.sheet_to_json(wsBudget, {
+                        defval: null,
+                        raw: false
+                    });
+                }
+
+                // Funds Available
+                const wsFunds = wb.Sheets[SHEET_FUNDS_AVAILABLE];
+                if (!wsFunds) {
+                    console.error("Sheet not found:", SHEET_FUNDS_AVAILABLE);
+                } else {
+                    fundsAvailable = XLSX.utils.sheet_to_json(wsFunds, {
+                        defval: null,
+                        raw: false
+                    });
+                }
+
+                // Purchase Log
+                const wsPurch = wb.Sheets[SHEET_PURCHASE_LOG];
+                if (!wsPurch) {
+                    console.error("Sheet not found:", SHEET_PURCHASE_LOG);
+                } else {
+                    purchaseLog = XLSX.utils.sheet_to_json(wsPurch, {
+                        defval: null,
+                        raw: false
+                    });
+                }
+
+                // Compute overall totals (all months, all departments)
+                overallAllowed = 0;
+                budgetCategories.forEach(r => {
+                    overallAllowed += getBudgetAmount(r);
+                });
+
+                overallSpent = 0;
+                purchaseLog.forEach(r => {
+                    const cost = getField(r, ["Cost"]);
+                    overallSpent += parseNumber(cost);
+                });
+
+                const overallRemaining = overallAllowed - overallSpent;
+                sumRemainTotalEl.textContent = formatCurrency(overallRemaining);
+
+                initFilters();
+                applyFiltersAndRender();
+            } catch (err) {
+                console.error(err);
+                alert("Error loading budget_2026.xlsx. See console for details.");
+            }
+        }
+
+        function initFilters() {
+            // ----- Month options -----
+            const monthSet = new Set();
+            budgetCategories.forEach(r => {
+                const m = safeString(getField(r, ["Month"])).trim();
+                if (m) monthSet.add(m);
+            });
+            purchaseLog.forEach(r => {
+                const m = safeString(getField(r, ["Month"])).trim();
+                if (m) monthSet.add(m);
+            });
+
+            const months = Array.from(monthSet).sort((a, b) => a.localeCompare(b));
+
+            while (monthSelect.options.length > 1) monthSelect.remove(1);
+
+            months.forEach(m => {
+                const opt = document.createElement("option");
+                opt.value = m;
+                opt.textContent = m;
+                monthSelect.appendChild(opt);
+            });
+
+            // ----- Department options -----
+            const deptSet = new Set();
+            fundsAvailable.forEach(r => {
+                const d = safeString(getField(r, ["Department"])).trim();
+                if (d) deptSet.add(d);
+            });
+            purchaseLog.forEach(r => {
+                const d = safeString(getField(r, ["Department"])).trim();
+                if (d) deptSet.add(d);
+            });
+
+            const depts = Array.from(deptSet).sort((a, b) => a.localeCompare(b));
+
+            while (deptSelect.options.length > 1) deptSelect.remove(1);
+
+            depts.forEach(d => {
+                const opt = document.createElement("option");
+                opt.value = d;
+                opt.textContent = d;
+                deptSelect.appendChild(opt);
+            });
+        }
+
+        // ===== Filtering + Summary =====
+        function applyFiltersAndRender() {
+            const selMonth = monthSelect.value;
+            const selDept  = deptSelect.value;
+
+            // Budget Categories filtered by month
+            filteredBudgetCategories = budgetCategories.filter(row => {
+                if (selMonth) {
+                    const m = safeString(getField(row, ["Month"])).trim();
+                    if (m !== selMonth) return false;
+                }
+                return true;
+            });
+
+            // Funds Available filtered by department
+            filteredFundsAvailable = fundsAvailable.filter(row => {
+                if (selDept) {
+                    const d = safeString(getField(row, ["Department"])).trim();
+                    if (d !== selDept) return false;
+                }
+                return true;
+            });
+
+            // Purchase log filtered by month + department
+            filteredPurchaseLog = purchaseLog.filter(row => {
+                if (selMonth) {
+                    const m = safeString(getField(row, ["Month"])).trim();
+                    if (m !== selMonth) return false;
+                }
+                if (selDept) {
+                    const d = safeString(getField(row, ["Department"])).trim();
+                    if (d !== selDept) return false;
+                }
+                return true;
+            });
+
+            renderSummary();
+            renderTables();
+            updateCharts();
+        }
+
+        function renderSummary() {
+            // Total budget allowed from Budget Category (for selected Month)
+            currentAllowed = 0;
+            filteredBudgetCategories.forEach(r => {
+                currentAllowed += getBudgetAmount(r);
+            });
+
+            // Total spent from Purchase Log (for selected Month & Dept)
+            currentSpent = 0;
+            filteredPurchaseLog.forEach(r => {
+                const cost = getField(r, ["Cost"]);
+                currentSpent += parseNumber(cost);
+            });
+
+            // Funds available from Funds Available (for selected Dept)
+            let currentAvailable = 0;
+            filteredFundsAvailable.forEach(r => {
+                const fa = getField(r, ["Funds Available"]);
+                currentAvailable += parseNumber(fa);
+            });
+
+            const currentRemaining = currentAllowed - currentSpent;
+
+            sumAllowedEl.textContent = formatCurrency(currentAllowed);
+            sumSpentEl.textContent   = formatCurrency(currentSpent);
+            sumAvailEl.textContent   = formatCurrency(currentAvailable);
+            sumRemainEl.textContent  = formatCurrency(currentRemaining);
+        }
+
+        // ===== Rendering tables =====
+        function renderTables() {
+            // Budget Category
+            bodyBudgetCategory.innerHTML = "";
+            if (!filteredBudgetCategories.length) {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 3;
+                td.textContent = "No budget rows match the current filters.";
+                td.style.padding = "0.5rem";
+                tr.appendChild(td);
+                bodyBudgetCategory.appendChild(tr);
+            } else {
+                filteredBudgetCategories.forEach(row => {
+                    const tr = document.createElement("tr");
+
+                    const monthVal = safeString(getField(row, ["Month"]));
+                    const catVal   = safeString(getField(row, ["Category"]));
+
+                    const monthCell = document.createElement("td");
+                    monthCell.textContent = monthVal;
+
+                    const catCell = document.createElement("td");
+                    catCell.textContent = catVal;
+
+                    const amtCell = document.createElement("td");
+                    amtCell.textContent = formatCurrency(getBudgetAmount(row));
+                    amtCell.style.textAlign = "right";
+
+                    tr.appendChild(monthCell);
+                    tr.appendChild(catCell);
+                    tr.appendChild(amtCell);
+
+                    bodyBudgetCategory.appendChild(tr);
+                });
+            }
+
+            // Funds Available
+            bodyFundsAvailable.innerHTML = "";
+            if (!filteredFundsAvailable.length) {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 3;
+                td.textContent = "No funds rows match the current filters.";
+                td.style.padding = "0.5rem";
+                tr.appendChild(td);
+                bodyFundsAvailable.appendChild(tr);
+            } else {
+                filteredFundsAvailable.forEach(row => {
+                    const tr = document.createElement("tr");
+
+                    const deptVal  = safeString(getField(row, ["Department"]));
+                    const spentVal = getField(row, ["Amount Spent"]);
+                    const availVal = getField(row, ["Funds Available"]);
+
+                    const deptCell = document.createElement("td");
+                    deptCell.textContent = deptVal;
+
+                    const spentCell = document.createElement("td");
+                    spentCell.textContent = formatCurrency(spentVal);
+                    spentCell.style.textAlign = "right";
+
+                    const availCell = document.createElement("td");
+                    availCell.textContent = formatCurrency(availVal);
+                    availCell.style.textAlign = "right";
+
+                    tr.appendChild(deptCell);
+                    tr.appendChild(spentCell);
+                    tr.appendChild(availCell);
+
+                    bodyFundsAvailable.appendChild(tr);
+                });
+            }
+
+            // Purchase Log
+            bodyPurchaseLog.innerHTML = "";
+            if (!filteredPurchaseLog.length) {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 7;
+                td.textContent = "No purchases match the current filters.";
+                td.style.padding = "0.5rem";
+                tr.appendChild(td);
+                bodyPurchaseLog.appendChild(tr);
+            } else {
+                filteredPurchaseLog.forEach(row => {
+                    const tr = document.createElement("tr");
+
+                    const monthVal   = safeString(getField(row, ["Month"]));
+                    const deptVal    = safeString(getField(row, ["Department"]));
+                    const reqVal     = safeString(getField(row, ["Requested By"]));
+                    const ppoVal     = safeString(getField(row, ["PPO#", "PPO #"]));
+                    const costVal    = getField(row, ["Cost"]);
+                    const dateVal    = safeString(getField(row, ["Date Created"]));
+                    const vendorVal  = safeString(getField(row, ["Vendor"]));
+
+                    const monthCell = document.createElement("td");
+                    monthCell.textContent = monthVal;
+
+                    const deptCell = document.createElement("td");
+                    deptCell.textContent = deptVal;
+
+                    const reqCell = document.createElement("td");
+                    reqCell.textContent = reqVal;
+
+                    const ppoCell = document.createElement("td");
+                    ppoCell.textContent = ppoVal;
+
+                    const costCell = document.createElement("td");
+                    costCell.textContent = formatCurrency(costVal);
+                    costCell.style.textAlign = "right";
+
+                    const dateCell = document.createElement("td");
+                    dateCell.textContent = dateVal;
+
+                    const vendorCell = document.createElement("td");
+                    vendorCell.textContent = vendorVal;
+                    vendorCell.classList.add("budget-text-cell");
+
+                    tr.appendChild(monthCell);
+                    tr.appendChild(deptCell);
+                    tr.appendChild(reqCell);
+                    tr.appendChild(ppoCell);
+                    tr.appendChild(costCell);
+                    tr.appendChild(dateCell);
+                    tr.appendChild(vendorCell);
+
+                    bodyPurchaseLog.appendChild(tr);
+                });
+            }
+        }
+
+        // ===== Charts =====
+        function updateCharts() {
+            // --- Budget usage pie (filtered selection) ---
+            const used     = Math.max(currentSpent, 0);
+            const allowed  = Math.max(currentAllowed, 0);
+            const remaining = Math.max(allowed - used, 0);
+
+            const hasBudgetData = allowed > 0 || used > 0;
+
+            if (budgetUsageChart) {
+                budgetUsageChart.destroy();
+                budgetUsageChart = null;
+            }
+
+            if (!hasBudgetData) {
+                budgetUsageCanvas.style.display = "none";
+                budgetUsageMsgEl.style.display  = "block";
+            } else {
+                budgetUsageCanvas.style.display = "block";
+                budgetUsageMsgEl.style.display  = "none";
+
+                const ctx1 = budgetUsageCanvas.getContext("2d");
+                budgetUsageChart = new Chart(ctx1, {
+                    type: "pie",
+                    data: {
+                        labels: ["Used", "Remaining"],
+                        datasets: [{
+                            data: [used, remaining]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: "bottom"
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || "";
+                                        const value = context.raw || 0;
+                                        return `${label}: ${formatCurrency(value)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // --- Spend by department pie ---
+            if (deptSpendChart) {
+                deptSpendChart.destroy();
+                deptSpendChart = null;
+            }
+
+            const selMonth = monthSelect.value;
+
+            const deptTotals = {};
+            purchaseLog.forEach(row => {
+                const m    = safeString(getField(row, ["Month"])).trim();
+                const dept = safeString(getField(row, ["Department"])).trim();
+                if (!dept) return;
+
+                if (selMonth && m !== selMonth) return; // respect month filter
+
+                const cost = parseNumber(getField(row, ["Cost"]));
+                if (!deptTotals[dept]) deptTotals[dept] = 0;
+                deptTotals[dept] += cost;
+            });
+
+            const deptNames = Object.keys(deptTotals);
+            const deptValues = deptNames.map(d => deptTotals[d]);
+
+            const hasDeptData = deptNames.length > 0 && deptValues.some(v => v > 0);
+
+            if (!hasDeptData) {
+                deptSpendCanvas.style.display = "none";
+                deptSpendMsgEl.style.display  = "block";
+            } else {
+                deptSpendCanvas.style.display = "block";
+                deptSpendMsgEl.style.display  = "none";
+
+                const ctx2 = deptSpendCanvas.getContext("2d");
+                deptSpendChart = new Chart(ctx2, {
+                    type: "pie",
+                    data: {
+                        labels: deptNames,
+                        datasets: [{
+                            data: deptValues
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: "bottom"
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || "";
+                                        const value = context.raw || 0;
+                                        return `${label}: ${formatCurrency(value)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // ===== Events =====
+        monthSelect.addEventListener("change", applyFiltersAndRender);
+        deptSelect.addEventListener("change", applyFiltersAndRender);
+
+        window.addEventListener("load", () => {
+            loadBudgetData();
+        });
+    </script>
+</body>
+</html>

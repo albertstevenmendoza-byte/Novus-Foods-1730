@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Staff Meeting Dashboard – Novus 1730 Ops Hub</title>
+    <link rel="stylesheet" href="css/styles.css" />
+
+    <style>
+        /* === LAYOUT WIDENING / FULLER SCREEN === */
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-nav {
+            padding-inline: 1.5rem;
+        }
+
+        .main-content {
+            width: 100%;
+            max-width: 1400px;
+            margin: 1.25rem auto 2.5rem;
+            padding: 0 1.5rem;
+        }
+
+        .card {
+            width: 100%;
+        }
+
+        .page-header {
+            margin-bottom: 1rem;
+        }
+
+        .page-title {
+            margin-bottom: 0.1rem;
+        }
+
+        .page-subtitle {
+            max-width: 900px;
+        }
+
+        /* === BUILDER / GRID === */
+
+        .builder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 0.9rem;
+        }
+
+        .builder-actions {
+            margin-top: 0.9rem;
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        /* === GROUPS & WIDGETS === */
+
+        .dashboard-groups {
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+            margin-top: 1.25rem;
+        }
+
+        .dashboard-group {
+            border-radius: 0.75rem;
+            border: 1px solid var(--border, #e2e8f0);
+            padding: 0.85rem 1rem;
+            background: rgba(255, 255, 255, 0.94);
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+        }
+
+        .dashboard-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.65rem;
+        }
+
+        .dashboard-group-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .dashboard-group-meta {
+            font-size: 0.78rem;
+            color: var(--muted, #64748b);
+        }
+
+        .dashboard-group-widgets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 0.9rem;
+        }
+
+        .widget-card {
+            border-radius: 0.75rem;
+            border: 1px solid var(--border, #e2e8f0);
+            padding: 0.7rem 0.85rem;
+            background: #f8fafc;
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .widget-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .widget-subtitle {
+            font-size: 0.78rem;
+            color: var(--muted, #64748b);
+        }
+
+        .widget-metric-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-top: 0.3rem;
+        }
+
+        /* === CHART HEIGHT CONTROL === */
+
+        .widget-chart-container {
+            position: relative;
+            width: 100%;
+            height: 250px;   /* tweak this to make charts shorter/taller */
+        }
+
+        .widget-chart {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        .btn-sm {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.55rem;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 999px;
+            background: #e2e8f0;
+            font-size: 0.7rem;
+            color: #0f172a;
+        }
+
+        .tag-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: #0f172a;
+        }
+
+        .field-hint {
+            font-size: 0.7rem;
+            color: var(--muted, #64748b);
+            margin-top: 0.15rem;
+        }
+
+        @media (max-width: 700px) {
+            .top-nav {
+                padding-inline: 0.75rem;
+            }
+
+            .main-content {
+                padding: 0 0.75rem;
+                margin-top: 1rem;
+            }
+
+            .dashboard-group-widgets {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="top-nav">
+            <div class="nav-left">
+                <div class="logo-mark">🍅</div>
+                <span class="logo-text">1730 Plant Data</span>
+            </div>
+
+            <nav class="nav-center">
+                <a href="staff-meeting-dashboard.html" class="active">Meeting Dashboard</a>
+                <a href="weekly-meeting.html">Weekly Meeting</a>
+                <a href="needs-action.html">Needs Action</a>
+                <a href="budget.html">Budget</a>
+            </nav>
+
+            <div class="nav-right">
+                <button class="logout-btn" onclick="window.location.href='index.html'">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- HEADER -->
+            <section class="page-header">
+                <h1 class="page-title">Customized Dashboard</h1>
+                <p class="page-subtitle">
+                    Build your own dashboard from <code>all_department_data_2026.xlsx</code>.<br>
+                    Groups persist in your browser even after logout (using <code>localStorage</code>).
+                </p>
+            </section>
+
+            <!-- BUILDER / CONTROLS -->
+            <section>
+                <div class="card">
+                    <div class="card-title">Add a Metric Widget</div>
+                    <div class="card-body">
+                        <div class="builder-grid">
+                            <div class="form-group">
+                                <label for="builder-dept">Department (Sheet)</label>
+                                <select id="builder-dept">
+                                    <option value="">Select department</option>
+                                    <option value="Inventory Control">Inventory Control</option>
+                                    <option value="Production">Production</option>
+                                    <option value="Warehouse">Warehouse</option>
+                                    <option value="SAP">SAP</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="QA">QA</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="HR | Training">HR | Training</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="builder-metric">Metric</label>
+                                <select id="builder-metric" disabled>
+                                    <option value="">Select a department first</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="builder-category">Category (optional)</label>
+                                <select id="builder-category" disabled>
+                                    <option value="">None</option>
+                                </select>
+                                <p class="field-hint">
+                                    Production → Line; Inventory Control / Warehouse → City.
+                                </p>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="builder-timegrain">Time grain</label>
+                                <select id="builder-timegrain">
+                                    <option value="day">Day</option>
+                                    <option value="week">Week</option>
+                                    <option value="month">Month</option>
+                                    <option value="year">Year</option>
+                                    <option value="latest">Latest day</option>
+                                </select>
+                                <p class="field-hint">
+                                    "Latest day" uses only the most recent Date in that sheet.
+                                </p>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="builder-chart-type">Visualization</label>
+                                <select id="builder-chart-type">
+                                    <option value="metric">Metric Card</option>
+                                    <option value="bar">Bar Chart</option>
+                                    <option value="line">Line Chart</option>
+                                    <option value="scatter">Scatter Plot</option>
+                                    <option value="pie">Pie Chart</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="builder-group-name">Group name</label>
+                                <input id="builder-group-name" type="text" placeholder="e.g. Warehouse KPIs" />
+                                <p class="field-hint">
+                                    Widgets with the same group name appear in the same row.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="builder-actions">
+                            <button id="btn-add-widget" class="btn btn-primary">
+                                + Add widget to group
+                            </button>
+                            <button id="btn-clear-dashboard" class="btn btn-outline btn-sm" type="button">
+                                Clear all widgets
+                            </button>
+                            <span style="font-size:0.8rem; color:var(--muted);">
+                                Dashboard layout is saved automatically.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DASHBOARD GROUPS -->
+            <section style="margin-top: 1.25rem;">
+                <div class="page-header">
+                    <h2 class="page-title" style="font-size: 1.05rem;">Your Dashboard</h2>
+                    <p class="page-subtitle">
+                        Each group fills one row; widgets inside are auto-arranged. Changes persist via <code>localStorage</code>.
+                    </p>
+                </div>
+
+                <div id="dashboard-groups" class="dashboard-groups">
+                    <!-- Groups + widgets injected by JS -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Excel + charts -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const DATA_FILE = "data/all_department_data_2026.xlsx";
+        const DASHBOARD_STORAGE_KEY = "novus_1730_staff_dashboard_v1";
+
+        const DEPT_CATEGORY_COLUMN = {
+            "Production": "Line",
+            "Inventory Control": "City",
+            "Warehouse": "City"
+        };
+
+        const NON_METRIC_COLUMNS = new Set([
+            "Date", "City", "Line", "Notes", "Near Miss",
+            "Needs Action", "Date Completed", "Department"
+        ]);
+
+        let departmentData = {};
+        let dashboardGroups = [];
+
+        const deptSelect        = document.getElementById("builder-dept");
+        const metricSelect      = document.getElementById("builder-metric");
+        const categorySelect    = document.getElementById("builder-category");
+        const timeGrainSelect   = document.getElementById("builder-timegrain");
+        const chartTypeSelect   = document.getElementById("builder-chart-type");
+        const groupNameInput    = document.getElementById("builder-group-name");
+        const addWidgetBtn      = document.getElementById("btn-add-widget");
+        const clearDashboardBtn = document.getElementById("btn-clear-dashboard");
+        const groupsContainer   = document.getElementById("dashboard-groups");
+
+        const widgetCharts = new Map();
+
+        function safeString(v) {
+            if (v === null || v === undefined) return "";
+            return String(v);
+        }
+
+        function parseNumber(v) {
+            if (v === null || v === undefined || v === "") return 0;
+            if (typeof v === "number") return v;
+            let s = String(v).trim();
+            if (!s) return 0;
+            const isNegative = s.includes("(") && s.includes(")");
+            s = s.replace(/[^0-9.\-]/g, "");
+            if (!s) return 0;
+            let num = parseFloat(s);
+            if (isNaN(num)) return 0;
+            if (isNegative && num > 0) num = -num;
+            return num;
+        }
+
+        function formatNumber(v) {
+            const num = parseNumber(v);
+            return num.toLocaleString("en-US", {
+                maximumFractionDigits: 2
+            });
+        }
+
+        function uuid() {
+            if (crypto.randomUUID) return crypto.randomUUID();
+            return "id_" + Math.random().toString(36).slice(2) + "_" + Date.now();
+        }
+
+        function getField(row, fieldName) {
+            if (!row || typeof row !== "object") return undefined;
+            const target = String(fieldName).trim().toLowerCase();
+
+            for (const key of Object.keys(row)) {
+                if (key.trim().toLowerCase() === target) {
+                    return row[key];
+                }
+            }
+            return undefined;
+        }
+
+        function getTimeBucket(rawDateStr, timeGrain) {
+            const s = safeString(rawDateStr).trim();
+            if (!s) return "";
+
+            const d = new Date(s);
+            if (isNaN(d)) {
+                return s;
+            }
+
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            const dd = String(d.getDate()).padStart(2, "0");
+
+            if (timeGrain === "month") {
+                return `${yyyy}-${mm}`;
+            } else if (timeGrain === "year") {
+                return `${yyyy}`;
+            } else if (timeGrain === "week") {
+                const date = new Date(d.getTime());
+                const dayNum = (date.getUTCDay() + 6) % 7; 
+                date.setUTCDate(date.getUTCDate() - dayNum + 3);
+                const firstThursday = new Date(Date.UTC(date.getUTCFullYear(), 0, 4));
+                const diff = date - firstThursday;
+                const week = 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
+                const weekStr = String(week).padStart(2, "0");
+                return `${yyyy}-W${weekStr}`;
+            }
+
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function filterRowsByTimeGrain(rows, timeGrain) {
+            if (timeGrain !== "latest") return rows;
+
+            let latestTs = null;
+            let latestDateStr = null;
+
+            rows.forEach(r => {
+                const raw = safeString(getField(r, "Date")).trim();
+                if (!raw) return;
+                const d = new Date(raw);
+                if (isNaN(d)) return;
+                const ts = d.getTime();
+                if (latestTs === null || ts > latestTs) {
+                    latestTs = ts;
+                    latestDateStr = raw;
+                }
+            });
+
+            if (latestDateStr === null) {
+                return rows;
+            }
+
+            return rows.filter(r => safeString(getField(r, "Date")).trim() === latestDateStr);
+        }
+
+        async function loadAllDepartmentData() {
+            const resp = await fetch(DATA_FILE);
+            if (!resp.ok) {
+                throw new Error("Failed to load " + DATA_FILE + ": " + resp.statusText);
+            }
+            const buf = await resp.arrayBuffer();
+            const wb = XLSX.read(buf, { type: "array" });
+
+            console.log("Workbook sheets:", wb.SheetNames);
+
+            wb.SheetNames.forEach(sheetName => {
+                const ws = wb.Sheets[sheetName];
+                if (!ws) return;
+
+                const rows = XLSX.utils.sheet_to_json(ws, {
+                    defval: null,
+                    raw: false
+                });
+
+                departmentData[sheetName] = rows;
+            });
+
+            console.log("Loaded departmentData keys:", Object.keys(departmentData));
+        }
+
+        function refreshMetricOptionsForDept(dept) {
+            metricSelect.innerHTML = "";
+            metricSelect.disabled = true;
+
+            const placeholderOpt = document.createElement("option");
+            placeholderOpt.value = "";
+            placeholderOpt.textContent = dept ? "Select metric" : "Select a department first";
+            metricSelect.appendChild(placeholderOpt);
+
+            const rows = departmentData[dept];
+            if (!dept || !rows || !rows.length) {
+                if (dept && (!rows || !rows.length)) {
+                    console.warn("No data rows for sheet:", dept);
+                }
+                return;
+            }
+
+            const sample = rows[0] || {};
+            const cols = Object.keys(sample);
+
+            console.log("Columns for dept", dept, ":", cols);
+
+            cols.forEach(col => {
+                if (NON_METRIC_COLUMNS.has(col)) return;
+
+                const opt = document.createElement("option");
+                opt.value = col;
+                opt.textContent = col;
+                metricSelect.appendChild(opt);
+            });
+
+            metricSelect.disabled = false;
+        }
+
+        function refreshCategoryOptionsForDept(dept) {
+            categorySelect.innerHTML = "";
+            const noneOpt = document.createElement("option");
+            noneOpt.value = "";
+            noneOpt.textContent = "None";
+            categorySelect.appendChild(noneOpt);
+
+            categorySelect.disabled = true;
+
+            const catCol = DEPT_CATEGORY_COLUMN[dept];
+            if (!catCol) {
+                return;
+            }
+
+            const opt = document.createElement("option");
+            opt.value = catCol;
+            opt.textContent = catCol;
+            categorySelect.appendChild(opt);
+
+            categorySelect.disabled = false;
+        }
+
+        function initBuilderControls() {
+            deptSelect.addEventListener("change", () => {
+                const dept = deptSelect.value;
+                refreshMetricOptionsForDept(dept);
+                refreshCategoryOptionsForDept(dept);
+            });
+
+            addWidgetBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                handleAddWidget();
+            });
+
+            clearDashboardBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (!confirm("Clear all groups and widgets from dashboard?")) return;
+                clearAllGroups();
+            });
+        }
+
+        function handleAddWidget() {
+            const dept          = deptSelect.value;
+            const metric        = metricSelect.value;
+            const chartType     = chartTypeSelect.value;
+            const categoryField = categorySelect.value || "";
+            const timeGrain     = timeGrainSelect.value || "day";
+            let   groupName     = groupNameInput.value.trim();
+
+            if (!dept) {
+                alert("Please select a department (sheet).");
+                return;
+            }
+            if (!metric) {
+                alert("Please select a metric.");
+                return;
+            }
+            if (!departmentData[dept] || !departmentData[dept].length) {
+                alert(`No data loaded for "${dept}". Check sheet name & workbook.`);
+                return;
+            }
+            if (!groupName) {
+                groupName = dept + " Group";
+            }
+
+            let group = dashboardGroups.find(g => g.name === groupName);
+            if (!group) {
+                group = {
+                    id: uuid(),
+                    name: groupName,
+                    widgets: []
+                };
+                dashboardGroups.push(group);
+            }
+
+            const widgetConfig = {
+                id: uuid(),
+                dept,
+                metric,
+                chartType,
+                categoryField,
+                timeGrain
+            };
+
+            group.widgets.push(widgetConfig);
+
+            saveDashboardLayout();
+            renderAllGroups();
+        }
+
+        function saveDashboardLayout() {
+            try {
+                const payload = {
+                    groups: dashboardGroups,
+                    savedAt: new Date().toISOString()
+                };
+                localStorage.setItem(DASHBOARD_STORAGE_KEY, JSON.stringify(payload));
+            } catch (err) {
+                console.error("Error saving dashboard layout:", err);
+            }
+        }
+
+        function loadDashboardLayout() {
+            try {
+                const raw = localStorage.getItem(DASHBOARD_STORAGE_KEY);
+                if (!raw) {
+                    dashboardGroups = [];
+                    return;
+                }
+                const payload = JSON.parse(raw);
+                if (!payload || !Array.isArray(payload.groups)) {
+                    console.warn("Dashboard layout malformed in localStorage.");
+                    dashboardGroups = [];
+                    return;
+                }
+                dashboardGroups = payload.groups;
+            } catch (err) {
+                console.error("Error loading dashboard layout:", err);
+                dashboardGroups = [];
+            }
+        }
+
+        function clearAllGroups() {
+            widgetCharts.forEach(chart => chart.destroy());
+            widgetCharts.clear();
+            dashboardGroups = [];
+            saveDashboardLayout();
+            renderAllGroups();
+        }
+
+        // === AGGREGATION LOGIC: sum for day/latest, average for week/month/year ===
+        function computeMetricAggregate(dept, metric, timeGrain) {
+            const grain = timeGrain || "day";
+            const allRows = departmentData[dept] || [];
+            const rows = filterRowsByTimeGrain(allRows, grain);
+            if (!rows.length) return 0;
+
+            let total = 0;
+            let count = 0;
+
+            rows.forEach(r => {
+                const v = parseNumber(r[metric]);
+                if (!Number.isNaN(v)) {
+                    total += v;
+                    count += 1;
+                }
+            });
+
+            if (["week", "month", "year"].includes(grain)) {
+                return count ? total / count : 0;
+            }
+            return total;
+        }
+
+        function renderAllGroups() {
+            widgetCharts.forEach(chart => chart.destroy());
+            widgetCharts.clear();
+
+            groupsContainer.innerHTML = "";
+
+            if (!dashboardGroups.length) {
+                const emptyMsg = document.createElement("p");
+                emptyMsg.style.fontSize = "0.85rem";
+                emptyMsg.style.color = "var(--muted, #64748b)";
+                emptyMsg.textContent = "No widgets yet. Use the form above to add your first widget.";
+                groupsContainer.appendChild(emptyMsg);
+                return;
+            }
+
+            dashboardGroups.forEach(group => {
+                const groupEl = document.createElement("div");
+                groupEl.className = "dashboard-group";
+
+                const headerEl = document.createElement("div");
+                headerEl.className = "dashboard-group-header";
+
+                const titleWrap = document.createElement("div");
+                const title = document.createElement("div");
+                title.className = "dashboard-group-title";
+                title.textContent = group.name;
+
+                const meta = document.createElement("div");
+                meta.className = "dashboard-group-meta";
+                meta.textContent = `${group.widgets.length} widget${group.widgets.length === 1 ? "" : "s"}`;
+
+                titleWrap.appendChild(title);
+                titleWrap.appendChild(meta);
+
+                const actionsWrap = document.createElement("div");
+                actionsWrap.style.display = "flex";
+                actionsWrap.style.gap = "0.4rem";
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.className = "btn btn-outline btn-sm";
+                deleteBtn.textContent = "Remove group";
+                deleteBtn.addEventListener("click", () => {
+                    if (!confirm(`Remove group "${group.name}" and all its widgets?`)) return;
+                    dashboardGroups = dashboardGroups.filter(g => g.id !== group.id);
+                    saveDashboardLayout();
+                    renderAllGroups();
+                });
+
+                actionsWrap.appendChild(deleteBtn);
+
+                headerEl.appendChild(titleWrap);
+                headerEl.appendChild(actionsWrap);
+
+                const widgetsWrap = document.createElement("div");
+                widgetsWrap.className = "dashboard-group-widgets";
+
+                group.widgets.forEach(widgetConfig => {
+                    const widgetEl = renderWidget(group, widgetConfig);
+                    widgetsWrap.appendChild(widgetEl);
+                });
+
+                groupEl.appendChild(headerEl);
+                groupEl.appendChild(widgetsWrap);
+
+                groupsContainer.appendChild(groupEl);
+            });
+        }
+
+        function renderWidget(group, widgetConfig) {
+            const {
+                id,
+                dept,
+                metric,
+                chartType,
+                categoryField,
+                timeGrain = "day"
+            } = widgetConfig;
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "widget-card";
+
+            const header = document.createElement("div");
+            header.className = "widget-header";
+
+            const left = document.createElement("div");
+            const title = document.createElement("div");
+            title.className = "widget-title";
+            title.textContent = `${metric} (${dept})`;
+
+            const subtitle = document.createElement("div");
+            subtitle.className = "widget-subtitle";
+
+            const timeLabelMap = {
+                day: "Day",
+                week: "Week",
+                month: "Month",
+                year: "Year",
+                latest: "Latest day"
+            };
+            const timeLabel = timeLabelMap[timeGrain] || "Day";
+
+            if (categoryField) {
+                subtitle.textContent = `${chartType.toUpperCase()} • Category: ${categoryField} • ${timeLabel}`;
+            } else {
+                subtitle.textContent = `${chartType.toUpperCase()} • No category • ${timeLabel}`;
+            }
+
+            left.appendChild(title);
+            left.appendChild(subtitle);
+
+            const right = document.createElement("div");
+            right.style.display = "flex";
+            right.style.alignItems = "center";
+            right.style.gap = "0.25rem";
+
+            const tag = document.createElement("span");
+            tag.className = "tag";
+            const dot = document.createElement("span");
+            dot.className = "tag-dot";
+            const tagText = document.createElement("span");
+            tagText.textContent = chartType === "metric" ? "Metric card" : "Chart";
+            tag.appendChild(dot);
+            tag.appendChild(tagText);
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "btn btn-outline btn-sm";
+            deleteBtn.textContent = "✕";
+            deleteBtn.title = "Remove widget";
+            deleteBtn.addEventListener("click", () => {
+                const g = dashboardGroups.find(g => g.id === group.id);
+                if (!g) return;
+                g.widgets = g.widgets.filter(w => w.id !== id);
+                saveDashboardLayout();
+                renderAllGroups();
+            });
+
+            right.appendChild(tag);
+            right.appendChild(deleteBtn);
+
+            header.appendChild(left);
+            header.appendChild(right);
+
+            wrapper.appendChild(header);
+
+            if (chartType === "metric") {
+                const valueEl = document.createElement("div");
+                valueEl.className = "widget-metric-value";
+                const val = computeMetricAggregate(dept, metric, timeGrain);
+                valueEl.textContent = formatNumber(val);
+                wrapper.appendChild(valueEl);
+            } else {
+                const chartContainer = document.createElement("div");
+                chartContainer.className = "widget-chart-container";
+
+                const canvas = document.createElement("canvas");
+                canvas.className = "widget-chart";
+                canvas.id = `chart_${id}`;
+
+                chartContainer.appendChild(canvas);
+                wrapper.appendChild(chartContainer);
+
+                const ctx = canvas.getContext("2d");
+                const chart = buildChartForWidget(
+                    ctx,
+                    dept,
+                    metric,
+                    chartType,
+                    categoryField,
+                    timeGrain
+                );
+                if (chart) {
+                    widgetCharts.set(id, chart);
+                }
+            }
+
+            return wrapper;
+        }
+
+        function buildChartForWidget(ctx, dept, metric, chartType, categoryField, timeGrain) {
+            const grain = timeGrain || "day";
+            let rows = departmentData[dept] || [];
+            rows = filterRowsByTimeGrain(rows, grain);
+            if (!rows.length) return null;
+
+            const useAverage = ["week", "month", "year"].includes(grain);
+
+            if (categoryField) {
+                const firstRow = rows[0] || {};
+                const hasDate = Object.keys(firstRow).some(
+                    k => k.trim().toLowerCase() === "date"
+                );
+
+                // === CATEGORY + DATE (e.g., Production Line over time) ===
+                if (hasDate) {
+                    const catDateMap = {};
+                    const bucketSet = new Set();
+
+                    rows.forEach(r => {
+                        const rawCat = getField(r, categoryField);
+                        const cat = safeString(rawCat ?? "").trim() || "(blank)";
+
+                        const rawDate = getField(r, "Date");
+                        const bucket = getTimeBucket(
+                            rawDate,
+                            grain === "latest" ? "day" : grain
+                        ) || "(blank)";
+
+                        const val = parseNumber(r[metric]);
+
+                        bucketSet.add(bucket);
+                        if (!catDateMap[cat]) catDateMap[cat] = {};
+                        if (!catDateMap[cat][bucket]) {
+                            catDateMap[cat][bucket] = { sum: 0, count: 0 };
+                        }
+                        catDateMap[cat][bucket].sum += val;
+                        catDateMap[cat][bucket].count += 1;
+                    });
+
+                    const labels = Array.from(bucketSet).sort();
+                    const categories = Object.keys(catDateMap);
+
+                    if (!labels.length || !categories.length) return null;
+
+                    const datasets = categories.map(cat => {
+                        const seriesData = labels.map(d => {
+                            const cell = catDateMap[cat][d];
+                            if (!cell) return 0;
+                            return useAverage && cell.count
+                                ? cell.sum / cell.count
+                                : cell.sum;
+                        });
+                        return {
+                            label: cat,
+                            data: seriesData
+                        };
+                    });
+
+                    const chartTypeForTime = (chartType === "scatter") ? "scatter" : "line";
+
+                    return new Chart(ctx, {
+                        type: chartTypeForTime,
+                        data: {
+                            labels: chartTypeForTime === "scatter" ? undefined : labels,
+                            datasets: chartTypeForTime === "scatter"
+                                ? datasets.map(ds => ({
+                                    label: ds.label,
+                                    data: ds.data.map((y, i) => ({ x: i + 1, y }))
+                                  }))
+                                : datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: "bottom" },
+                                tooltip: {
+                                    callbacks: {
+                                        label: c => {
+                                            const val = c.raw && c.raw.y !== undefined ? c.raw.y : c.raw;
+                                            return `${c.dataset.label}: ${formatNumber(val)}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: chartTypeForTime === "scatter"
+                                    ? { beginAtZero: true }
+                                    : undefined,
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                }
+
+                // === CATEGORY ONLY (no Date column) ===
+                const catMap = {};
+                rows.forEach(r => {
+                    const rawCat = getField(r, categoryField);
+                    const key = safeString(rawCat ?? "").trim() || "(blank)";
+                    const val = parseNumber(r[metric]);
+                    if (!catMap[key]) catMap[key] = 0;
+                    catMap[key] += val;
+                });
+
+                const labels = Object.keys(catMap);
+                const data = labels.map(k => catMap[k]);
+                if (!labels.length) return null;
+
+                if (chartType === "bar") {
+                    return new Chart(ctx, {
+                        type: "bar",
+                        data: {
+                            labels,
+                            datasets: [{ data }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: c => `${c.label}: ${formatNumber(c.raw)}`
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                } else if (chartType === "pie") {
+                    return new Chart(ctx, {
+                        type: "pie",
+                        data: { labels, datasets: [{ data }] },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: "bottom" },
+                                tooltip: {
+                                    callbacks: {
+                                        label: c => `${c.label}: ${formatNumber(c.raw)}`
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else if (chartType === "line" || chartType === "scatter") {
+                    const isScatter = chartType === "scatter";
+                    return new Chart(ctx, {
+                        type: isScatter ? "scatter" : "line",
+                        data: {
+                            labels: isScatter ? undefined : labels,
+                            datasets: [{
+                                data: isScatter
+                                    ? labels.map((lbl, i) => ({ x: i + 1, y: data[i] }))
+                                    : data
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: c => {
+                                            const val = isScatter ? c.raw && c.raw.y : c.raw;
+                                            const label = isScatter ? labels[c.dataIndex] : c.label || "";
+                                            return `${label}: ${formatNumber(val)}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: isScatter ? {
+                                x: { beginAtZero: true },
+                                y: { beginAtZero: true }
+                            } : {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                }
+
+                return null;
+            }
+
+            // === NO CATEGORY FIELD ===
+            const firstRow = rows[0] || {};
+            const hasDate = Object.keys(firstRow).some(
+                k => k.trim().toLowerCase() === "date"
+            );
+
+            if (hasDate) {
+                const byBucket = {};
+                rows.forEach(r => {
+                    const rawDate = getField(r, "Date");
+                    const bucket = getTimeBucket(
+                        rawDate,
+                        grain === "latest" ? "day" : grain
+                    ) || "(blank)";
+                    const val = parseNumber(r[metric]);
+                    if (!byBucket[bucket]) {
+                        byBucket[bucket] = { sum: 0, count: 0 };
+                    }
+                    byBucket[bucket].sum += val;
+                    byBucket[bucket].count += 1;
+                });
+
+                const labels = Object.keys(byBucket).sort();
+                const data = labels.map(d => {
+                    const cell = byBucket[d];
+                    if (!cell) return 0;
+                    return useAverage && cell.count ? cell.sum / cell.count : cell.sum;
+                });
+                if (!labels.length) return null;
+
+                if (chartType === "pie") {
+                    return new Chart(ctx, {
+                        type: "pie",
+                        data: { labels, datasets: [{ data }] },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: "bottom" },
+                                tooltip: {
+                                    callbacks: {
+                                        label: c => `${c.label}: ${formatNumber(c.raw)}`
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                const isScatter = chartType === "scatter";
+                return new Chart(ctx, {
+                    type: isScatter ? "scatter" : chartType,
+                    data: {
+                        labels: isScatter ? undefined : labels,
+                        datasets: [{
+                            data: isScatter
+                                ? labels.map((lbl, i) => ({ x: i + 1, y: data[i] }))
+                                : data
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: c => {
+                                        const val = isScatter ? c.raw && c.raw.y : c.raw;
+                                        const label = isScatter ? labels[c.dataIndex] : c.label || "";
+                                        return `${label}: ${formatNumber(val)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: isScatter ? {
+                            x: { beginAtZero: true },
+                            y: { beginAtZero: true }
+                        } : {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            } else {
+                const total = computeMetricAggregate(dept, metric, grain);
+                const labels = ["Total"];
+                const data = [total];
+
+                if (chartType === "pie") {
+                    return new Chart(ctx, {
+                        type: "pie",
+                        data: { labels, datasets: [{ data }] },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: "bottom" },
+                                tooltip: {
+                                    callbacks: {
+                                        label: c => `${c.label}: ${formatNumber(c.raw)}`
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                const isScatter = chartType === "scatter";
+                return new Chart(ctx, {
+                    type: isScatter ? "scatter" : chartType,
+                    data: {
+                        labels: isScatter ? undefined : labels,
+                        datasets: [{
+                            data: isScatter ? [{ x: 1, y: total }] : data
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: c => {
+                                        const val = isScatter ? c.raw && c.raw.y : c.raw;
+                                        const label = isScatter ? "Total" : c.label || "";
+                                        return `${label}: ${formatNumber(val)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: isScatter ? {
+                            x: { beginAtZero: true, max: 2 },
+                            y: { beginAtZero: true }
+                        } : {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
+
+        async function initPage() {
+            try {
+                await loadAllDepartmentData();
+            } catch (err) {
+                console.error(err);
+                alert("Error loading all_department_data_2026.xlsx. See console for details.");
+            }
+
+            initBuilderControls();
+            loadDashboardLayout();
+            renderAllGroups();
+        }
+
+        window.addEventListener("load", () => {
+            initPage();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Needs Action – Novus 1730 Ops Hub</title>
+    <link rel="stylesheet" href="css/styles.css" />
+
+    <style>
+        /* Make the Needs Action column wider and allow wrapping */
+        .na-text-cell {
+            max-width: 600px;        /* adjust if you want even more */
+            white-space: normal;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="top-nav">
+            <div class="nav-left">
+                <div class="logo-mark">🍅</div>
+                <span class="logo-text">1730 Plant Data</span>
+            </div>
+
+            <nav class="nav-center">
+                <a href="staff-meeting-dashboard.html">Meeting Dashboard</a>
+                <a href="weekly-meeting.html">Weekly Meeting</a>
+                <a href="needs-action.html" class="active">Needs Action</a>
+                <a href="budget.html">Budget</a>
+            </nav>
+
+            <div class="nav-right">
+                <button class="logout-btn" onclick="window.location.href='index.html'">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- HEADER -->
+            <section class="page-header">
+                <h1 class="page-title">Needs Action</h1>
+                <p class="page-subtitle">
+                    View and update completion dates for items in the
+                    <code>Needs Action</code> sheet of
+                    <code>data/all_department_data_2026.xlsx</code>.
+                </p>
+            </section>
+
+            <!-- SIMPLE FILTER BAR: ONLY DEPARTMENT + STATUS -->
+            <section>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="na-dept">Department</label>
+                        <select id="na-dept">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="na-status">Status</label>
+                        <select id="na-status">
+                            <option value="open">Open (no Date Completed)</option>
+                            <option value="completed">Completed</option>
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SUMMARY (NO GRAPH) -->
+            <section style="margin-top: 1.5rem;">
+                <div class="page-header">
+                    <h2 class="page-title" style="font-size: 1.1rem;">Summary</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                    <div class="card">
+                        <div class="card-title">Counts</div>
+                        <div class="card-body">
+                            <div style="display:flex; flex-direction:column; gap:0.25rem; font-size:0.9rem;">
+                                <div><strong>Total items:</strong> <span id="na-total-count">–</span></div>
+                                <div><strong>Open:</strong> <span id="na-open-count">–</span></div>
+                                <div><strong>Completed:</strong> <span id="na-completed-count">–</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TABLE ONLY -->
+            <section style="margin-top: 1.5rem;">
+                <div class="page-header">
+                    <h2 class="page-title" style="font-size: 1.1rem;">Needs Action List</h2>
+                    <p class="page-subtitle">
+                        Filter by Department and Status. For open items, choose a completion date and apply it
+                        (changes are in-memory for this session).
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-body" style="overflow-x: auto;">
+                        <table class="table" id="na-table" style="width:100%; border-collapse: collapse;">
+                            <!-- Column widths: Date | Needs Action (wide) | Date Completed | Dept | Status | Actions -->
+                            <colgroup>
+                                <col style="width: 10%;">
+                                <col style="width: 40%;">
+                                <col style="width: 15%;">
+                                <col style="width: 15%;">
+                                <col style="width: 10%;">
+                                <col style="width: 10%;">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left;">Date</th>
+                                    <th style="text-align:left;">Needs Action</th>
+                                    <th style="text-align:left;">Date Completed</th>
+                                    <th style="text-align:left;">Department</th>
+                                    <th style="text-align:left;">Status</th>
+                                    <th style="text-align:left;">Completion / Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="na-table-body">
+                                <!-- Rows injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- SheetJS for Excel reading -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <script>
+        const NEEDS_DATA_FILE = "data/all_department_data_2026.xlsx";
+        const NEEDS_SHEET_NAME = "Needs Action";
+
+        let needsRows = [];
+        let filteredRows = [];
+
+        let nextRowId = 0; // internal IDs, still useful for editing
+
+        const deptSelect   = document.getElementById("na-dept");
+        const statusSelect = document.getElementById("na-status");
+
+        const totalCountEl     = document.getElementById("na-total-count");
+        const openCountEl      = document.getElementById("na-open-count");
+        const completedCountEl = document.getElementById("na-completed-count");
+        const tableBody        = document.getElementById("na-table-body");
+
+        // ===== Helper functions =====
+        function safeString(v) {
+            if (v === null || v === undefined) return "";
+            return String(v);
+        }
+
+        function pad2(n) {
+            return String(n).padStart(2, "0");
+        }
+
+        function parseExcelDate(value) {
+            if (!value && value !== 0) return null;
+
+            if (value instanceof Date) {
+                return isNaN(value) ? null : value;
+            }
+
+            if (typeof value === "number") {
+                const base = new Date(Date.UTC(1899, 11, 30));
+                const d = new Date(base.getTime() + value * 86400000);
+                return isNaN(d) ? null : d;
+            }
+
+            const d = new Date(value);
+            return isNaN(d) ? null : d;
+        }
+
+        function formatDateShort(d) {
+            if (!d || !(d instanceof Date) || isNaN(d)) return "";
+            const y = d.getFullYear();
+            const m = pad2(d.getMonth() + 1);
+            const day = pad2(d.getDate());
+            return `${y}-${m}-${day}`;
+        }
+
+        function rowStatus(row) {
+            const dcRaw = row["Date Completed"];
+            const hasCompleted = dcRaw !== null && dcRaw !== undefined && String(dcRaw).trim() !== "";
+            return hasCompleted ? "completed" : "open";
+        }
+
+        // ===== Load Needs Action sheet =====
+        async function loadNeedsActionSheet() {
+            try {
+                const resp = await fetch(NEEDS_DATA_FILE);
+                if (!resp.ok) {
+                    throw new Error("Failed to load data: " + resp.statusText);
+                }
+                const buf = await resp.arrayBuffer();
+                const wb = XLSX.read(buf, { type: "array" });
+
+                const ws = wb.Sheets[NEEDS_SHEET_NAME];
+                if (!ws) {
+                    console.error("Sheet not found:", NEEDS_SHEET_NAME);
+                    return;
+                }
+
+                let rows = XLSX.utils.sheet_to_json(ws, {
+                    defval: null,
+                    cellDates: true,
+                    raw: false
+                });
+
+                needsRows = rows.map((r, idx) => ({ _id: idx, ...r }));
+                nextRowId = needsRows.length;
+
+                initFilters();
+                applyFilters();
+            } catch (err) {
+                console.error(err);
+                alert("Error loading Needs Action data. See console for details.");
+            }
+        }
+
+        function initFilters() {
+            if (!needsRows.length) return;
+
+            const deptSet = new Set();
+            needsRows.forEach(r => {
+                const d = r["Department"];
+                if (d !== null && d !== undefined && String(d).trim() !== "") {
+                    deptSet.add(String(d).trim());
+                }
+            });
+
+            const depts = Array.from(deptSet).sort((a, b) => a.localeCompare(b));
+
+            // Clear existing except "All"
+            while (deptSelect.options.length > 1) deptSelect.remove(1);
+
+            depts.forEach(dep => {
+                const o1 = document.createElement("option");
+                o1.value = dep;
+                o1.textContent = dep;
+                deptSelect.appendChild(o1);
+            });
+        }
+
+        // ===== Mark a row as completed with a chosen date (in-memory) =====
+        function markRowCompleted(rowId, completionDateStr) {
+            const row = needsRows.find(r => r._id === rowId);
+            if (!row) return;
+
+            let finalDateStr = completionDateStr && completionDateStr.trim()
+                ? completionDateStr.trim()
+                : formatDateShort(new Date());
+
+            const confirmMsg = `Set Date Completed to ${finalDateStr} for this item?`;
+            if (!confirm(confirmMsg)) return;
+
+            row["Date Completed"] = finalDateStr;
+            applyFilters();
+        }
+
+        // ===== Filtering logic (Department + Status only) =====
+        function applyFilters() {
+            if (!needsRows.length) {
+                filteredRows = [];
+                renderSummaryAndTable();
+                return;
+            }
+
+            const selectedDept = deptSelect.value;
+            const selectedStatus = statusSelect.value; // open / completed / all
+
+            filteredRows = needsRows.filter(row => {
+                if (selectedDept) {
+                    const deptVal = safeString(row["Department"]).trim();
+                    if (deptVal !== selectedDept) return false;
+                }
+
+                const st = rowStatus(row);
+                if (selectedStatus === "open" && st !== "open") return false;
+                if (selectedStatus === "completed" && st !== "completed") return false;
+
+                return true;
+            });
+
+            renderSummaryAndTable();
+        }
+
+        // ===== Rendering =====
+        function renderSummaryAndTable() {
+            const totalCount = filteredRows.length;
+            let openCount = 0;
+            let completedCount = 0;
+
+            filteredRows.forEach(r => {
+                const st = rowStatus(r);
+                if (st === "open") openCount++;
+                else if (st === "completed") completedCount++;
+            });
+
+            totalCountEl.textContent     = totalCount.toString();
+            openCountEl.textContent      = openCount.toString();
+            completedCountEl.textContent = completedCount.toString();
+
+            renderTable();
+        }
+
+        function renderTable() {
+            tableBody.innerHTML = "";
+
+            if (!filteredRows.length) {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 6;
+                td.textContent = "No rows match the current filters.";
+                td.style.padding = "0.5rem";
+                tr.appendChild(td);
+                tableBody.appendChild(tr);
+                return;
+            }
+
+            filteredRows.forEach(row => {
+                const tr = document.createElement("tr");
+
+                const date = parseExcelDate(row["Date"]);
+                const dateCompleted = parseExcelDate(row["Date Completed"]);
+                const status = rowStatus(row);
+
+                const dateCell = document.createElement("td");
+                dateCell.textContent = formatDateShort(date);
+                dateCell.style.padding = "0.35rem 0.4rem";
+
+                const naCell = document.createElement("td");
+                naCell.textContent = safeString(row["Needs Action"]);
+                naCell.style.padding = "0.35rem 0.4rem";
+                naCell.classList.add("na-text-cell");   // <<< Wider, wrapping cell
+
+                const dcCell = document.createElement("td");
+                dcCell.textContent = formatDateShort(dateCompleted);
+                dcCell.style.padding = "0.35rem 0.4rem";
+
+                const deptCell = document.createElement("td");
+                deptCell.textContent = safeString(row["Department"]);
+                deptCell.style.padding = "0.35rem 0.4rem";
+
+                const statusCell = document.createElement("td");
+                statusCell.textContent = status === "open" ? "Open" : "Completed";
+                statusCell.style.padding = "0.35rem 0.4rem";
+
+                const actionCell = document.createElement("td");
+                actionCell.style.padding = "0.35rem 0.4rem";
+                actionCell.style.whiteSpace = "nowrap";
+
+                if (status === "open") {
+                    const completionInput = document.createElement("input");
+                    completionInput.type = "date";
+                    completionInput.value = formatDateShort(new Date());
+                    completionInput.style.fontSize = "0.75rem";
+                    completionInput.style.padding = "0.15rem 0.25rem";
+                    completionInput.style.marginRight = "0.3rem";
+
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.textContent = "Set Completed";
+                    btn.className = "btn btn-secondary";
+                    btn.style.fontSize = "0.75rem";
+                    btn.style.padding = "0.15rem 0.5rem";
+
+                    btn.addEventListener("click", () => {
+                        markRowCompleted(row._id, completionInput.value);
+                    });
+
+                    actionCell.appendChild(completionInput);
+                    actionCell.appendChild(btn);
+                } else {
+                    actionCell.textContent = "—";
+                }
+
+                tr.appendChild(dateCell);
+                tr.appendChild(naCell);
+                tr.appendChild(dcCell);
+                tr.appendChild(deptCell);
+                tr.appendChild(statusCell);
+                tr.appendChild(actionCell);
+
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // ===== Events =====
+        deptSelect.addEventListener("change", applyFilters);
+        statusSelect.addEventListener("change", applyFilters);
+
+        window.addEventListener("load", () => {
+            loadNeedsActionSheet();
+        });
+    </script>
+</body>
+</html>

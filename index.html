@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Novus 1730 Ops Hub – Login</title>
+    <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="login-page">
+    <main class="login-card">
+        <header class="login-header">
+            <div class="login-logo">🍅</div>
+            <div>
+                <div class="login-title">Novus Foods 1730</div>
+                <div class="login-subtitle">Ops Hub • Staff Access Only</div>
+            </div>
+        </header>
+
+        <form id="login-form">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="username">Username</label>
+                    <input id="username" name="username" type="text" autocomplete="username" required />
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required />
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+                Sign In
+            </button>
+        </form>
+
+        <p class="login-footer-text">
+            Plant 1730 internal tool.<br>
+            Only configured usernames &amp; passwords for Plant 1730 are allowed.
+        </p>
+    </main>
+
+    <script>
+        // ===== PLANT-SPECIFIC FRONT-END AUTH (DEMO ONLY) =====
+        //
+        // This is *front-end only* – good enough for an internal demo,
+        // but not secure for internet exposure. For real production auth,
+        // you'd move this check to a backend.
+        //
+        // Edit the ALLOWED_USERS object below to match your real users
+        // and plant IDs.
+
+        const ALLOWED_USERS = {
+            // === EXAMPLES – CHANGE THESE ===
+            // username: { password: "...", plant: "1730", role: "..." }
+
+            "amendoza": {
+                password: "1730data",   // <-- change
+                plant: "1730",
+                role: "admin"
+            },
+            "mcaballero": {
+                password: "1730lead",   // <-- change
+                plant: "1730",
+                role: "admin"
+            },
+            "guest1730": {
+                password: "guest1730",  // <-- change or remove
+                plant: "1730",
+                role: "viewer"
+            }
+        };
+
+        const form = document.getElementById("login-form");
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (!username || !password) {
+                alert("Please enter both username and password.");
+                return;
+            }
+
+            const userConfig = ALLOWED_USERS[username];
+
+            // Check: user exists, password matches, and plant is 1730
+            if (!userConfig || userConfig.password !== password || userConfig.plant !== "1730") {
+                alert("Invalid Plant 1730 credentials. Please check your username and password.");
+                return;
+            }
+
+            // Store basic info so other pages can read it later (if desired)
+            const sessionInfo = {
+                username: username,
+                plant: userConfig.plant,
+                role: userConfig.role || "user",
+                loginTime: new Date().toISOString()
+            };
+            try {
+                localStorage.setItem("novus1730_user", JSON.stringify(sessionInfo));
+            } catch (err) {
+                console.warn("Unable to access localStorage:", err);
+            }
+
+            // Redirect to the main dashboard
+            window.location.href = "staff-meeting-dashboard.html";
+        });
+    </script>
+</body>
+</html>
