@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Needs Action – Novus 1730 Ops Hub</title>
     <link rel="stylesheet" href="css/styles.css" />
-
     <style>
         /* Make the Needs Action column wider and allow wrapping */
         .na-text-cell {
@@ -27,6 +26,7 @@
             <nav class="nav-center">
                 <a href="staff-meeting-dashboard.html">Meeting Dashboard</a>
                 <a href="weekly-meeting.html">Weekly Meeting</a>
+                <a href="dds-dashboard.html">DDS Dashboard</a>
                 <a href="needs-action.html" class="active">Needs Action</a>
                 <a href="budget.html">Budget</a>
             </nav>
@@ -43,9 +43,9 @@
             <section class="page-header">
                 <h1 class="page-title">Needs Action</h1>
                 <p class="page-subtitle">
-                    View and update completion dates for items in the
-                    <code>Needs Action</code> sheet of
-                    <code>data/all_department_data_2026.xlsx</code>.
+                    View and update completion dates for items in the <code>Needs Action</code> sheet of<br>
+                    <code>all_department_data_2026.xlsx</code> hosted on GitHub.<br>
+                    <strong>Data updates when you push a new version of the file to the repo.</strong>
                 </p>
             </section>
 
@@ -136,12 +136,14 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <script>
-        const NEEDS_DATA_FILE = "data/all_department_data_2026.xlsx";
-        const NEEDS_SHEET_NAME = "Needs Action";
+        // =========================================================================
+        // CONFIG – CHANGE THESE TWO LINES WITH YOUR ACTUAL GITHUB INFO
+        // =========================================================================
+        const EXCEL_URL = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY_NAME/main/data/all_department_data_2026.xlsx";
+        const SHEET_NAME = "Needs Action";
 
         let needsRows = [];
         let filteredRows = [];
-
         let nextRowId = 0; // internal IDs, still useful for editing
 
         const deptSelect   = document.getElementById("na-dept");
@@ -152,7 +154,7 @@
         const completedCountEl = document.getElementById("na-completed-count");
         const tableBody        = document.getElementById("na-table-body");
 
-        // ===== Helper functions =====
+        // ===== Helper functions (unchanged) =====
         function safeString(v) {
             if (v === null || v === undefined) return "";
             return String(v);
@@ -164,17 +166,14 @@
 
         function parseExcelDate(value) {
             if (!value && value !== 0) return null;
-
             if (value instanceof Date) {
                 return isNaN(value) ? null : value;
             }
-
             if (typeof value === "number") {
                 const base = new Date(Date.UTC(1899, 11, 30));
                 const d = new Date(base.getTime() + value * 86400000);
                 return isNaN(d) ? null : d;
             }
-
             const d = new Date(value);
             return isNaN(d) ? null : d;
         }
@@ -193,20 +192,19 @@
             return hasCompleted ? "completed" : "open";
         }
 
-        // ===== Load Needs Action sheet =====
+        // ===== Load Needs Action sheet from GitHub =====
         async function loadNeedsActionSheet() {
             try {
-                const resp = await fetch(NEEDS_DATA_FILE);
+                const resp = await fetch(EXCEL_URL);
                 if (!resp.ok) {
-                    throw new Error("Failed to load data: " + resp.statusText);
+                    throw new Error(`Failed to fetch Excel: ${resp.status} ${resp.statusText}`);
                 }
                 const buf = await resp.arrayBuffer();
-                const wb = XLSX.read(buf, { type: "array" });
+                const wb = XLSX.read(buf, { type: "array", cellDates: true, raw: false });
 
-                const ws = wb.Sheets[NEEDS_SHEET_NAME];
+                const ws = wb.Sheets[SHEET_NAME];
                 if (!ws) {
-                    console.error("Sheet not found:", NEEDS_SHEET_NAME);
-                    return;
+                    throw new Error(`Sheet "${SHEET_NAME}" not found in the Excel file`);
                 }
 
                 let rows = XLSX.utils.sheet_to_json(ws, {
@@ -221,33 +219,19 @@
                 initFilters();
                 applyFilters();
             } catch (err) {
-                console.error(err);
-                alert("Error loading Needs Action data. See console for details.");
+                console.error("Error loading Needs Action data:", err);
+                alert(
+                    "Failed to load Needs Action data from GitHub.\n\n" +
+                    "Possible causes:\n" +
+                    "• Wrong GitHub username/repo in EXCEL_URL\n" +
+                    "• File not uploaded to /data/ folder\n" +
+                    "• Repo is private (must be public for raw access without login)\n" +
+                    "• Network issue or browser blocking raw.githubusercontent.com\n\n" +
+                    "Test the URL directly in your browser first.\n" +
+                    "Page will show empty table until data loads."
+                );
+                tableBody.innerHTML = `<tr><td colspan="6" style="padding:0.5rem;">Error loading data from GitHub</td></tr>`;
             }
-        }
-
-        function initFilters() {
-            if (!needsRows.length) return;
-
-            const deptSet = new Set();
-            needsRows.forEach(r => {
-                const d = r["Department"];
-                if (d !== null && d !== undefined && String(d).trim() !== "") {
-                    deptSet.add(String(d).trim());
-                }
-            });
-
-            const depts = Array.from(deptSet).sort((a, b) => a.localeCompare(b));
-
-            // Clear existing except "All"
-            while (deptSelect.options.length > 1) deptSelect.remove(1);
-
-            depts.forEach(dep => {
-                const o1 = document.createElement("option");
-                o1.value = dep;
-                o1.textContent = dep;
-                deptSelect.appendChild(o1);
-            });
         }
 
         // ===== Mark a row as completed with a chosen date (in-memory) =====
@@ -340,7 +324,7 @@
                 const naCell = document.createElement("td");
                 naCell.textContent = safeString(row["Needs Action"]);
                 naCell.style.padding = "0.35rem 0.4rem";
-                naCell.classList.add("na-text-cell");   // <<< Wider, wrapping cell
+                naCell.classList.add("na-text-cell");
 
                 const dcCell = document.createElement("td");
                 dcCell.textContent = formatDateShort(dateCompleted);
@@ -391,6 +375,31 @@
                 tr.appendChild(actionCell);
 
                 tableBody.appendChild(tr);
+            });
+        }
+
+        // ===== Init department dropdown =====
+        function initFilters() {
+            if (!needsRows.length) return;
+
+            const deptSet = new Set();
+            needsRows.forEach(r => {
+                const d = r["Department"];
+                if (d !== null && d !== undefined && String(d).trim() !== "") {
+                    deptSet.add(String(d).trim());
+                }
+            });
+
+            const depts = Array.from(deptSet).sort((a, b) => a.localeCompare(b));
+
+            // Clear existing except "All"
+            while (deptSelect.options.length > 1) deptSelect.remove(1);
+
+            depts.forEach(dep => {
+                const o1 = document.createElement("option");
+                o1.value = dep;
+                o1.textContent = dep;
+                deptSelect.appendChild(o1);
             });
         }
 
