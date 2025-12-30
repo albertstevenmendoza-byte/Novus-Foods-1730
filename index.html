@@ -21,7 +21,7 @@
             <div class="form-grid">
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label for="username">Username</label>
-                    <input id="username" name="username" type="text" autocomplete="username" required />
+                    <input id="username" name="username" type="text" autocomplete="username" required autofocus />
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label for="password">Password</label>
@@ -32,46 +32,42 @@
             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
                 Sign In
             </button>
+
+            <!-- Optional: small feedback area -->
+            <div id="login-error" style="color: #dc2626; font-size: 0.9rem; margin-top: 0.75rem; text-align: center; min-height: 1.2em;"></div>
         </form>
 
         <p class="login-footer-text">
             Plant 1730 internal tool.<br>
-            Only configured usernames &amp; passwords for Plant 1730 are allowed.
+            Hosted on GitHub Pages – only configured usernames & passwords work.<br>
+            Contact your admin if you need access.
         </p>
     </main>
 
     <script>
-        // ===== PLANT-SPECIFIC FRONT-END AUTH (DEMO ONLY) =====
-        //
-        // This is *front-end only* – good enough for an internal demo,
-        // but not secure for internet exposure. For real production auth,
-        // you'd move this check to a backend.
-        //
-        // Edit the ALLOWED_USERS object below to match your real users
-        // and plant IDs.
-
+        // ===== FRONT-END AUTH (DEMO ONLY – NOT SECURE FOR REAL USE) =====
         const ALLOWED_USERS = {
-            // === EXAMPLES – CHANGE THESE ===
-            // username: { password: "...", plant: "1730", role: "..." }
-
+            // CHANGE THESE TO YOUR REAL TEAM CREDENTIALS
             "amendoza": {
-                password: "1730data",   // <-- change
+                password: "1730data",
                 plant: "1730",
                 role: "admin"
             },
             "mcaballero": {
-                password: "1730lead",   // <-- change
+                password: "novus26",
                 plant: "1730",
                 role: "admin"
             },
-            "guest1730": {
-                password: "guest1730",  // <-- change or remove
+            "manager1730": {
+                password: "viewer1730",
                 plant: "1730",
                 role: "viewer"
             }
+            // Add more users here as needed
         };
 
         const form = document.getElementById("login-form");
+        const errorEl = document.getElementById("login-error");
 
         form.addEventListener("submit", function (e) {
             e.preventDefault();
@@ -80,32 +76,35 @@
             const password = document.getElementById("password").value.trim();
 
             if (!username || !password) {
-                alert("Please enter both username and password.");
+                errorEl.textContent = "Please enter both username and password.";
                 return;
             }
 
-            const userConfig = ALLOWED_USERS[username];
+            const userConfig = ALLOWED_USERS[username.toLowerCase()];
 
-            // Check: user exists, password matches, and plant is 1730
             if (!userConfig || userConfig.password !== password || userConfig.plant !== "1730") {
-                alert("Invalid Plant 1730 credentials. Please check your username and password.");
+                errorEl.textContent = "Invalid Plant 1730 credentials. Try again.";
                 return;
             }
 
-            // Store basic info so other pages can read it later (if desired)
+            // Clear any previous error
+            errorEl.textContent = "";
+
+            // Store session info (still front-end only)
             const sessionInfo = {
                 username: username,
                 plant: userConfig.plant,
                 role: userConfig.role || "user",
                 loginTime: new Date().toISOString()
             };
+
             try {
                 localStorage.setItem("novus1730_user", JSON.stringify(sessionInfo));
             } catch (err) {
-                console.warn("Unable to access localStorage:", err);
+                console.warn("localStorage unavailable:", err);
             }
 
-            // Redirect to the main dashboard
+            // Redirect to main dashboard
             window.location.href = "staff-meeting-dashboard.html";
         });
     </script>
