@@ -6,40 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Weekly Meeting – Novus 1730 Ops Hub</title>
     <link rel="stylesheet" href="css/styles.css" />
-
     <style>
         .page {
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
-
         .top-nav {
             padding-inline: 1.5rem;
         }
-
         .main-content {
             width: 100%;
             max-width: 1400px;
             margin: 1.25rem auto 2.5rem;
             padding: 0 1.5rem;
         }
-
         .page-header {
             margin-bottom: 1rem;
         }
-
         .page-title {
             margin-bottom: 0.25rem;
         }
-
         .page-subtitle {
             max-width: 900px;
             font-size: 0.9rem;
         }
-
         /* Carousel header */
-
         .dept-carousel-header {
             display: flex;
             align-items: center;
@@ -48,7 +40,6 @@
             margin: 1rem 0 1.25rem;
             flex-wrap: wrap;
         }
-
         .dept-carousel-label {
             font-weight: 600;
             font-size: 0.95rem;
@@ -56,7 +47,6 @@
             border-radius: 999px;
             background: #e2e8f0;
         }
-
         .dept-carousel-btn {
             border-radius: 999px;
             border: 1px solid var(--border, #cbd5e1);
@@ -65,41 +55,33 @@
             cursor: pointer;
             font-size: 0.85rem;
         }
-
         .dept-carousel-btn:hover {
             background: #f1f5f9;
         }
-
         .dept-carousel-hint {
             text-align: center;
             font-size: 0.78rem;
             color: var(--muted, #64748b);
             margin-bottom: 1rem;
         }
-
         /* Department layout */
-
         .dept-section {
             margin-bottom: 1.5rem;
             display: none; /* shown via JS */
         }
-
         .dept-section.active {
             display: block;
         }
-
         .dept-title {
             font-size: 1rem;
             font-weight: 600;
             margin-bottom: 0.4rem;
         }
-
         .dept-subtitle {
             font-size: 0.8rem;
             color: var(--muted, #64748b);
             margin-bottom: 0.5rem;
         }
-
         .dept-grid {
             display: grid;
             grid-template-columns: 1.2fr 1.2fr;
@@ -109,7 +91,6 @@
                 "graphs graphs";
             gap: 0.8rem;
         }
-
         .dept-box {
             border-radius: 0.75rem;
             border: 1px solid var(--border, #e2e8f0);
@@ -117,38 +98,31 @@
             box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
             padding: 0.7rem 0.85rem;
         }
-
         .dept-box-title {
             font-size: 0.9rem;
             font-weight: 600;
             margin-bottom: 0.4rem;
         }
-
         .dept-box-body {
             font-size: 0.85rem;
         }
-
         /* === LISTS FOR PRIOR/CURRENT ITEMS === */
-
         .list-container {
             display: flex;
             flex-direction: column;
             gap: 0.4rem;
         }
-
         .item-list {
             list-style: none;
             padding: 0;
             margin: 0;
         }
-
         .item-row {
             display: flex;
             align-items: center;
             gap: 0.4rem;
             padding: 0.2rem 0;
         }
-
         .status-btn {
             width: 16px;
             height: 16px;
@@ -158,27 +132,21 @@
             cursor: pointer;
             flex-shrink: 0;
         }
-
         .status-none {
             background: #e2e8f0;
         }
-
         .status-green {
             background: #16a34a;
         }
-
         .status-yellow {
             background: #eab308;
         }
-
         .status-red {
             background: #dc2626;
         }
-
         .item-text {
             flex: 1;
         }
-
         .item-delete-btn {
             border-radius: 999px;
             border: 1px solid #cbd5e1;
@@ -187,18 +155,15 @@
             padding: 0.1rem 0.4rem;
             cursor: pointer;
         }
-
         .item-delete-btn:hover {
             background: #fee2e2;
             border-color: #fecaca;
         }
-
         .item-add-row {
             display: flex;
             gap: 0.4rem;
             margin-top: 0.2rem;
         }
-
         .item-input {
             flex: 1;
             border-radius: 0.5rem;
@@ -207,7 +172,6 @@
             font-size: 0.8rem;
             background: #f8fafc;
         }
-
         .item-add-btn {
             border-radius: 0.5rem;
             border: 1px solid #2563eb;
@@ -218,31 +182,26 @@
             cursor: pointer;
             white-space: nowrap;
         }
-
         .item-add-btn:hover {
             background: #1d4ed8;
             border-color: #1d4ed8;
         }
-
         .dept-box-graphs {
             min-height: 160px;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
         }
-
         .graphs-hint {
             font-size: 0.78rem;
             color: var(--muted, #64748b);
         }
-
         .graphs-placeholder-row {
             flex: 1;
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
         }
-
         .graph-slot {
             flex: 1;
             min-width: 220px;
@@ -260,57 +219,45 @@
             box-sizing: border-box;
             cursor: pointer;
         }
-
         .graph-slot:hover {
             background: #e2e8f0;
         }
-
         .slot-label {
             font-size: 0.78rem;
             margin-bottom: 0.15rem;
         }
-
         .slot-main-text {
             font-size: 0.8rem;
         }
-
         .slot-sub-text {
             font-size: 0.72rem;
             color: #64748b;
         }
-
         .slot-canvas-wrap {
             flex: 1;
             margin-top: 0.25rem;
             position: relative;
         }
-
         .slot-canvas-wrap canvas {
             width: 100% !important;
             height: 100% !important;
             max-height: 120px;
         }
-
         /* Metric card display inside slot */
-
         .slot-metric-value {
             font-size: 1.4rem;
             font-weight: 700;
             margin-top: 0.3rem;
         }
-
         .slot-metric-sub {
             font-size: 0.75rem;
             color: #64748b;
             margin-top: 0.1rem;
         }
-
         /* Modal for configuring slots */
-
         .hidden {
             display: none !important;
         }
-
         .slot-config-overlay {
             position: fixed;
             inset: 0;
@@ -320,7 +267,6 @@
             justify-content: center;
             z-index: 1000;
         }
-
         .slot-config-modal {
             background: #ffffff;
             border-radius: 0.75rem;
@@ -329,32 +275,27 @@
             box-shadow: 0 20px 40px rgba(15, 23, 42, 0.3);
             font-size: 0.88rem;
         }
-
         .slot-config-modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 0.6rem;
         }
-
         .slot-config-title {
             font-weight: 600;
             font-size: 0.95rem;
         }
-
         .slot-config-close {
             border: none;
             background: transparent;
             cursor: pointer;
             font-size: 1rem;
         }
-
         .slot-config-body {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
         }
-
         .slot-config-body label {
             display: flex;
             flex-direction: column;
@@ -362,7 +303,6 @@
             font-size: 0.8rem;
             text-align: left;
         }
-
         .slot-config-body select {
             padding: 0.25rem 0.35rem;
             font-size: 0.85rem;
@@ -370,14 +310,12 @@
             border: 1px solid #cbd5e1;
             background: #f8fafc;
         }
-
         .slot-config-footer {
             display: flex;
             justify-content: flex-end;
             gap: 0.4rem;
             margin-top: 0.7rem;
         }
-
         .slot-config-btn {
             font-size: 0.78rem;
             padding: 0.25rem 0.6rem;
@@ -386,29 +324,24 @@
             background: #ffffff;
             cursor: pointer;
         }
-
         .slot-config-btn.primary {
             background: #2563eb;
             border-color: #2563eb;
             color: #ffffff;
         }
-
         .slot-config-btn.danger {
             border-color: #ef4444;
             color: #ef4444;
         }
-
         .slot-config-hint {
             font-size: 0.76rem;
             color: #64748b;
             margin-top: 0.2rem;
         }
-
         @media (max-width: 900px) {
             .main-content {
                 padding: 0 0.75rem;
             }
-
             .dept-grid {
                 grid-template-columns: 1fr;
                 grid-template-areas:
@@ -427,14 +360,13 @@
                 <div class="logo-mark">🍅</div>
                 <span class="logo-text">1730 Ops Hub</span>
             </div>
-
             <nav class="nav-center">
                 <a href="staff-meeting-dashboard.html">Staff Meeting</a>
                 <a href="weekly-meeting.html" class="active">Weekly Meeting</a>
+                <a href="dds-dashboard.html">DDS Dashboard</a>
                 <a href="needs-action.html">Needs Action</a>
                 <a href="budget.html">Budget</a>
             </nav>
-
             <div class="nav-right">
                 <button class="logout-btn" onclick="window.location.href='index.html'">
                     Logout
@@ -448,17 +380,18 @@
                 <h1 class="page-title">Weekly Meeting Overview</h1>
                 <p class="page-subtitle">
                     Move through each department in sequence. For every department, capture Prior Week Updates,
-                    Current Week Focus, and define chart slots by clicking them. Each slot pulls live data from
-                    <code>all_department_data_2026.xlsx</code>.
+                    Current Week Focus, and define chart slots by clicking them. Data comes from
+                    <code>all_department_data_2026.xlsx</code> hosted on GitHub.<br>
+                    <strong>Charts update when you push a new version of the Excel file to the repo.</strong>
                 </p>
             </section>
 
             <!-- Carousel controls -->
             <section>
                 <div class="dept-carousel-header">
-                    <button id="btn-prev-dept" class="dept-carousel-btn">&larr; Previous</button>
+                    <button id="btn-prev-dept" class="dept-carousel-btn">← Previous</button>
                     <span class="dept-carousel-label" id="dept-label">SAP</span>
-                    <button id="btn-next-dept" class="dept-carousel-btn">Next &rarr;</button>
+                    <button id="btn-next-dept" class="dept-carousel-btn">Next →</button>
                 </div>
                 <div class="dept-carousel-hint">
                     Use the buttons above to move through SAP → Master Plan in order.
@@ -485,7 +418,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -498,7 +430,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -534,7 +465,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -547,7 +477,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -583,7 +512,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -596,7 +524,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -632,7 +559,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -645,7 +571,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -681,7 +606,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -694,7 +618,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -730,7 +653,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -743,7 +665,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -779,7 +700,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -792,7 +712,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -828,7 +747,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -841,7 +759,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -877,7 +794,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -890,7 +806,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -926,7 +841,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -939,7 +853,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -975,7 +888,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -988,7 +900,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -1024,7 +935,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -1037,7 +947,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -1073,7 +982,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -1086,7 +994,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -1122,7 +1029,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -1135,7 +1041,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -1171,7 +1076,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: current;">
                         <div class="dept-box-title">Current Week Focus</div>
                         <div class="dept-box-body">
@@ -1184,7 +1088,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="dept-box" style="grid-area: graphs;">
                         <div class="dept-box-title">Graphs</div>
                         <div class="dept-box-body dept-box-graphs">
@@ -1200,7 +1103,6 @@
                     </div>
                 </div>
             </section>
-
         </main>
     </div>
 
@@ -1211,7 +1113,7 @@
                 <div class="slot-config-title">
                     Configure visual for <span id="slot-config-title-dept">Department</span>
                 </div>
-                <button class="slot-config-close" id="slot-config-close-btn" aria-label="Close">&times;</button>
+                <button class="slot-config-close" id="slot-config-close-btn" aria-label="Close">×</button>
             </div>
             <div class="slot-config-body">
                 <label>
@@ -1246,12 +1148,16 @@
         </div>
     </div>
 
-    <!-- Excel + charts -->
+    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        const DATA_FILE = "data/all_department_data_2026.xlsx";
+        // =========================================================================
+        // CONFIG – CHANGE THESE TWO LINES WITH YOUR ACTUAL GITHUB INFO
+        // =========================================================================
+        const EXCEL_URL = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY_NAME/main/data/all_department_data_2026.xlsx";
+
         const SLOT_STORAGE_KEY = "novus_1730_weekly_slot_configs_v1";
         const LIST_STORAGE_KEY = "novus_1730_weekly_items_v1";
 
@@ -1280,7 +1186,7 @@
 
         let departmentData = {};
         let slotConfigs = {}; // { slotId: { deptSheet, metric, chartType } }
-        const slotCharts = new Map(); // slotId -> Chart
+        const slotCharts = new Map(); // slotId → Chart
         let activeSlotId = null;
         let activeSlotDept = null;
 
@@ -1288,16 +1194,15 @@
         let weeklyItems = {};
 
         // DOM refs for modal
-        const overlayEl = document.getElementById("slot-config-overlay");
-        const modalDeptTitleEl = document.getElementById("slot-config-title-dept");
-        const deptSheetSelectEl = document.getElementById("cfg-dept-sheet");
-        const metricSelectEl = document.getElementById("cfg-metric");
-        const chartTypeSelectEl = document.getElementById("cfg-chart-type");
-        const btnCancel = document.getElementById("slot-config-cancel");
-        thead = btnCancel; // dummy ref to avoid unused warning in some environments
-        const btnClear = document.getElementById("slot-config-clear");
-        const btnSave = document.getElementById("slot-config-save");
-        const btnCloseX = document.getElementById("slot-config-close-btn");
+        const overlayEl           = document.getElementById("slot-config-overlay");
+        const modalDeptTitleEl    = document.getElementById("slot-config-title-dept");
+        const deptSheetSelectEl   = document.getElementById("cfg-dept-sheet");
+        const metricSelectEl      = document.getElementById("cfg-metric");
+        const chartTypeSelectEl   = document.getElementById("cfg-chart-type");
+        const btnCancel           = document.getElementById("slot-config-cancel");
+        const btnClear            = document.getElementById("slot-config-clear");
+        const btnSave             = document.getElementById("slot-config-save");
+        const btnCloseX           = document.getElementById("slot-config-close-btn");
 
         function safeString(v) {
             if (v === null || v === undefined) return "";
@@ -1330,7 +1235,6 @@
         }
 
         /* ==== LIST ITEM STORAGE ==== */
-
         function loadWeeklyItems() {
             try {
                 const raw = localStorage.getItem(LIST_STORAGE_KEY);
@@ -1382,7 +1286,6 @@
                 li.dataset.index = String(index);
 
                 const status = item.status || "none";
-
                 const statusBtn = document.createElement("button");
                 statusBtn.type = "button";
                 statusBtn.className = `status-btn status-${status}`;
@@ -1442,7 +1345,6 @@
 
                 ul.addEventListener("click", (e) => {
                     const target = e.target;
-
                     if (target.classList.contains("status-btn")) {
                         const li = target.closest(".item-row");
                         if (!li) return;
@@ -1450,22 +1352,13 @@
                         const item = weeklyItems[dept][section][idx];
                         const currentStatus = item.status || "none";
                         const newStatus = nextStatus(currentStatus);
-
                         item.status = newStatus;
-
-                        target.classList.remove(
-                            "status-none",
-                            "status-green",
-                            "status-yellow",
-                            "status-red"
-                        );
+                        target.classList.remove("status-none", "status-green", "status-yellow", "status-red");
                         target.classList.add(`status-${newStatus}`);
                         target.dataset.status = newStatus;
-
                         saveWeeklyItems();
                         return;
                     }
-
                     if (target.classList.contains("item-delete-btn")) {
                         const li = target.closest(".item-row");
                         if (!li) return;
@@ -1480,7 +1373,6 @@
         }
 
         /* ==== SLOT CONFIG STORAGE ==== */
-
         function loadSlotConfigs() {
             try {
                 const raw = localStorage.getItem(SLOT_STORAGE_KEY);
@@ -1504,25 +1396,41 @@
             }
         }
 
+        // ──────────────────────────────────────────────────────────────
+        // Load Excel from GitHub raw URL
+        // ──────────────────────────────────────────────────────────────
         async function loadAllDepartmentData() {
-            const resp = await fetch(DATA_FILE);
-            if (!resp.ok) {
-                throw new Error("Failed to load " + DATA_FILE + ": " + resp.statusText);
-            }
-            const buf = await resp.arrayBuffer();
-            const wb = XLSX.read(buf, { type: "array" });
+            try {
+                const resp = await fetch(EXCEL_URL);
+                if (!resp.ok) {
+                    throw new Error(`Failed to load Excel: ${resp.status} ${resp.statusText}`);
+                }
+                const buf = await resp.arrayBuffer();
+                const wb = XLSX.read(buf, { type: "array", cellDates: true, raw: false });
 
-            wb.SheetNames.forEach(sheetName => {
-                const ws = wb.Sheets[sheetName];
-                if (!ws) return;
-                const rows = XLSX.utils.sheet_to_json(ws, {
-                    defval: null,
-                    raw: false
+                wb.SheetNames.forEach(sheetName => {
+                    const ws = wb.Sheets[sheetName];
+                    if (!ws) return;
+                    const rows = XLSX.utils.sheet_to_json(ws, {
+                        defval: null,
+                        raw: false
+                    });
+                    departmentData[sheetName] = rows;
                 });
-                departmentData[sheetName] = rows;
-            });
 
-            console.log("Weekly meeting loaded sheets:", Object.keys(departmentData));
+                console.log("Weekly meeting loaded sheets:", Object.keys(departmentData));
+            } catch (err) {
+                console.error("Excel load error:", err);
+                alert(
+                    "Failed to load all_department_data_2026.xlsx from GitHub for Weekly Meeting.\n\n" +
+                    "Possible causes:\n" +
+                    "• Wrong GitHub username/repo in EXCEL_URL\n" +
+                    "• File not uploaded to /data/ folder\n" +
+                    "• Repo is private (raw access requires public repo)\n" +
+                    "• Network / CORS issue (test on GitHub Pages, not local file://)\n\n" +
+                    "Charts will be empty until data loads successfully."
+                );
+            }
         }
 
         function getMetricColumnsForDept(deptSheet) {
@@ -1542,20 +1450,13 @@
 
         function showDept(index) {
             if (!deptSections.length) return;
+            if (index < 0) index = deptSections.length - 1;
+            if (index >= deptSections.length) index = 0;
 
-            if (index < 0) {
-                index = deptSections.length - 1;
-            } else if (index >= deptSections.length) {
-                index = 0;
-            }
             currentDeptIndex = index;
 
             deptSections.forEach((sec, i) => {
-                if (i === currentDeptIndex) {
-                    sec.classList.add("active");
-                } else {
-                    sec.classList.remove("active");
-                }
+                sec.classList.toggle("active", i === currentDeptIndex);
             });
 
             const activeSection = deptSections[currentDeptIndex];
@@ -1563,6 +1464,7 @@
                 activeSection.dataset.deptName ||
                 activeSection.querySelector(".dept-title")?.textContent ||
                 "Department";
+
             deptLabel.textContent = name;
         }
 
@@ -1570,7 +1472,6 @@
         btnNextDept.addEventListener("click", () => showDept(currentDeptIndex + 1));
 
         // Charts
-
         function destroySlotChart(slotId) {
             const chart = slotCharts.get(slotId);
             if (chart) {
@@ -1585,29 +1486,20 @@
                 const rawDate = safeString(getField(r, "Date")).trim();
                 if (!rawDate) return;
                 const val = parseNumber(r[metric]);
-                if (!byDate[rawDate]) {
-                    byDate[rawDate] = { sum: 0, count: 0 };
-                }
+                if (!byDate[rawDate]) byDate[rawDate] = { sum: 0, count: 0 };
                 byDate[rawDate].sum += val;
                 byDate[rawDate].count += 1;
             });
 
             const dates = Object.keys(byDate);
-            if (!dates.length) {
-                return { labels: [], data: [] };
-            }
+            if (!dates.length) return { labels: [], data: [] };
 
-            dates.sort((a, b) => {
-                const da = new Date(a);
-                const db = new Date(b);
-                return da - db;
-            });
+            dates.sort((a, b) => new Date(a) - new Date(b));
 
             const labels = dates;
             const data = dates.map(d => {
                 const obj = byDate[d];
-                if (!obj || obj.count === 0) return 0;
-                return obj.sum / obj.count;
+                return obj.count > 0 ? obj.sum / obj.count : 0;
             });
 
             return { labels, data };
@@ -1618,13 +1510,10 @@
             if (!rows.length) return null;
 
             const { labels, data } = buildTimeSeriesData(rows, cfg.metric);
-            if (data.length) {
-                return data[data.length - 1]; // latest daily average
-            }
+            if (data.length) return data[data.length - 1]; // latest
 
             // Fallback: overall average
-            let sum = 0;
-            let count = 0;
+            let sum = 0, count = 0;
             rows.forEach(r => {
                 const v = parseNumber(r[cfg.metric]);
                 sum += v;
@@ -1642,7 +1531,6 @@
             }
 
             if (cfg.chartType === "Metric") {
-                // Metric handled in renderSlotDisplay (no Chart.js)
                 destroySlotChart(slotId);
                 return;
             }
@@ -1668,36 +1556,24 @@
             const ctx = canvas.getContext("2d");
             destroySlotChart(slotId);
 
-            const type = (cfg.chartType === "Bar")
-                ? "bar"
-                : (cfg.chartType === "Pie")
-                    ? "pie"
-                    : (cfg.chartType === "Scatter")
-                        ? "scatter"
-                        : "line";
+            const type = cfg.chartType === "Bar" ? "bar"
+                      : cfg.chartType === "Pie" ? "pie"
+                      : cfg.chartType === "Scatter" ? "scatter"
+                      : "line";
 
             let chartConfig;
 
             if (type === "pie") {
                 chartConfig = {
                     type: "pie",
-                    data: {
-                        labels,
-                        datasets: [{
-                            label: cfg.metric,
-                            data
-                        }]
-                    },
+                    data: { labels, datasets: [{ label: cfg.metric, data }] },
                     options: {
                         responsive: true,
                         plugins: {
                             legend: { position: "bottom" },
                             tooltip: {
                                 callbacks: {
-                                    label: c => {
-                                        const v = c.raw;
-                                        return `${c.label}: ${v.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
-                                    }
+                                    label: c => `${c.label}: ${c.raw.toLocaleString("en-US", { maximumFractionDigits: 2 })}`
                                 }
                             }
                         }
@@ -1720,7 +1596,7 @@
                             tooltip: {
                                 callbacks: {
                                     label: c => {
-                                        const v = c.raw && c.raw.y;
+                                        const v = c.raw.y;
                                         const idx = c.dataIndex;
                                         const label = labels[idx] || "";
                                         return `${label}: ${v.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
@@ -1729,27 +1605,15 @@
                             }
                         },
                         scales: {
-                            x: {
-                                beginAtZero: true,
-                                ticks: { autoSkip: true, maxTicksLimit: 6 }
-                            },
-                            y: {
-                                beginAtZero: true
-                            }
+                            x: { beginAtZero: true, ticks: { autoSkip: true, maxTicksLimit: 6 } },
+                            y: { beginAtZero: true }
                         }
                     }
                 };
             } else {
-                // line / bar
                 chartConfig = {
-                    type: type,
-                    data: {
-                        labels,
-                        datasets: [{
-                            label: cfg.metric,
-                            data
-                        }]
-                    },
+                    type,
+                    data: { labels, datasets: [{ label: cfg.metric, data }] },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
@@ -1757,20 +1621,13 @@
                             legend: { display: false },
                             tooltip: {
                                 callbacks: {
-                                    label: c => {
-                                        const v = c.raw;
-                                        return `${c.label}: ${v.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
-                                    }
+                                    label: c => `${c.label}: ${c.raw.toLocaleString("en-US", { maximumFractionDigits: 2 })}`
                                 }
                             }
                         },
                         scales: {
-                            x: {
-                                ticks: { autoSkip: true, maxTicksLimit: 6 }
-                            },
-                            y: {
-                                beginAtZero: true
-                            }
+                            x: { ticks: { autoSkip: true, maxTicksLimit: 6 } },
+                            y: { beginAtZero: true }
                         }
                     }
                 };
@@ -1790,12 +1647,8 @@
             if (!cfg || !cfg.deptSheet || !cfg.metric) {
                 slot.innerHTML = `
                     <div class="slot-label"><strong>${dept}</strong></div>
-                    <div class="slot-main-text">
-                        Empty visual slot
-                    </div>
-                    <div class="slot-sub-text">
-                        Click to choose data sheet, metric & visual type.
-                    </div>
+                    <div class="slot-main-text">Empty visual slot</div>
+                    <div class="slot-sub-text">Click to choose data sheet, metric & visual type.</div>
                 `;
                 return;
             }
@@ -1804,43 +1657,30 @@
 
             if (cfg.chartType === "Metric") {
                 const metricVal = computeMetricCardValue(cfg);
-                const textVal =
-                    metricVal != null
-                        ? metricVal.toLocaleString("en-US", { maximumFractionDigits: 2 })
-                        : "N/A";
+                const textVal = metricVal != null
+                    ? metricVal.toLocaleString("en-US", { maximumFractionDigits: 2 })
+                    : "N/A";
 
                 slot.innerHTML = `
                     <div class="slot-label"><strong>${dept}</strong></div>
-                    <div class="slot-main-text">
-                        Metric – ${cfg.metric}
-                    </div>
-                    <div class="slot-metric-value">
-                        ${textVal}
-                    </div>
-                    <div class="slot-metric-sub">
-                        Source: ${cfg.deptSheet} • click to edit
-                    </div>
+                    <div class="slot-main-text">Metric – ${cfg.metric}</div>
+                    <div class="slot-metric-value">${textVal}</div>
+                    <div class="slot-metric-sub">Source: ${cfg.deptSheet} • click to edit</div>
                 `;
                 return;
             }
 
             slot.innerHTML = `
                 <div class="slot-label"><strong>${dept}</strong></div>
-                <div class="slot-main-text">
-                    ${chartLabel} – ${cfg.metric}
-                </div>
-                <div class="slot-sub-text">
-                    Source: ${cfg.deptSheet} • click to edit
-                </div>
-                <div class="slot-canvas-wrap">
-                    <canvas></canvas>
-                </div>
+                <div class="slot-main-text">${chartLabel} – ${cfg.metric}</div>
+                <div class="slot-sub-text">Source: ${cfg.deptSheet} • click to edit</div>
+                <div class="slot-canvas-wrap"><canvas></canvas></div>
             `;
+
             renderSlotChart(slot);
         }
 
         // Modal logic
-
         function openConfigModal(slotId, deptName) {
             activeSlotId = slotId;
             activeSlotDept = deptName;
@@ -1860,18 +1700,17 @@
 
             const chosenDeptSheet = cfg.deptSheet || DATA_DEPARTMENTS[0];
             const metrics = chosenDeptSheet ? getMetricColumnsForDept(chosenDeptSheet) : [];
+
             metricSelectEl.innerHTML = '<option value="">Select metric</option>';
             metrics.forEach(m => {
-                const selected = m === cfg.metric ? "selected" : "";
                 const opt = document.createElement("option");
                 opt.value = m;
                 opt.textContent = m;
-                if (selected) opt.selected = true;
+                if (m === cfg.metric) opt.selected = true;
                 metricSelectEl.appendChild(opt);
             });
 
             chartTypeSelectEl.value = cfg.chartType || "Metric";
-
             overlayEl.classList.remove("hidden");
         }
 
@@ -1893,18 +1732,10 @@
             });
         });
 
-        btnCancel.addEventListener("click", () => {
-            closeConfigModal();
-        });
-
-        btnCloseX.addEventListener("click", () => {
-            closeConfigModal();
-        });
-
-        overlayEl.addEventListener("click", (e) => {
-            if (e.target === overlayEl) {
-                closeConfigModal();
-            }
+        btnCancel.addEventListener("click", closeConfigModal);
+        btnCloseX.addEventListener("click", closeConfigModal);
+        overlayEl.addEventListener("click", e => {
+            if (e.target === overlayEl) closeConfigModal();
         });
 
         btnClear.addEventListener("click", () => {
@@ -1918,6 +1749,7 @@
 
         btnSave.addEventListener("click", () => {
             if (!activeSlotId) return;
+
             const deptSheet = deptSheetSelectEl.value;
             const metric = metricSelectEl.value;
             const chartType = chartTypeSelectEl.value || "Metric";
@@ -1932,6 +1764,7 @@
 
             const slot = document.querySelector(`.graph-slot[data-slot-id="${activeSlotId}"]`);
             if (slot) renderSlotDisplay(slot);
+
             closeConfigModal();
         });
 
@@ -1954,7 +1787,7 @@
 
                 renderSlotDisplay(slot);
 
-                slot.addEventListener("click", (e) => {
+                slot.addEventListener("click", e => {
                     e.stopPropagation();
                     openConfigModal(slotId, deptName);
                 });
@@ -1963,12 +1796,14 @@
 
         window.addEventListener("load", async () => {
             showDept(0);
+
             try {
                 await loadAllDepartmentData();
             } catch (err) {
                 console.error(err);
                 alert("Error loading all_department_data_2026.xlsx for Weekly Meeting. See console for details.");
             }
+
             initGraphSlots();
             initListContainers();
         });
