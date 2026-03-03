@@ -1,415 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Needs Action – Novus 1730 Ops Hub</title>
-    <link rel="stylesheet" href="css/styles.css" />
-    <style>
-        /* Make the Needs Action column wider and allow wrapping */
-        .na-text-cell {
-            max-width: 600px;        /* adjust if you want even more */
-            white-space: normal;
-            word-wrap: break-word;
-        }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Needs Action – Novus Foods Ops Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"></noscript>
+  <script src="novus-core.js" defer></script>
+  <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{--bg:#f4f6fb;--surface:#fff;--surface2:#f8fafc;--border:#e2e8f0;--border2:#cbd5e1;--ink:#0f172a;--ink2:#334155;--ink3:#64748b;--ink4:#94a3b8;--blue:#2563eb;--blue-l:#3b82f6;--blue-ll:#dbeafe;--blue-glow:rgba(37,99,235,.12);--green:#059669;--green-l:#10b981;--red:#dc2626;--red-l:#ef4444;--amber:#d97706;--radius:14px;--radius-sm:8px;--nav-h:58px;--ease:cubic-bezier(.4,0,.2,1);}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',system-ui,sans-serif;font-size:13.5px;line-height:1.55;background:var(--bg);color:var(--ink);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");}
+    .page{max-width:1600px;margin:0 auto;padding:0 20px 60px;}
+    .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);margin-bottom:24px;will-change:transform;transform:translateZ(0);}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--blue-l));border-radius:8px;display:flex;align-items:center;justify-content:center;}
+    .logo-icon svg{width:16px;height:16px;fill:white;}
+    .logo-text{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;}
+    .logo-text span{color:var(--blue);}
+    .nav-tabs{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;overflow-x:auto;scrollbar-width:none;}
+    .nav-tabs::-webkit-scrollbar{display:none;}
+    .nav-tab{color:var(--ink3);text-decoration:none;font-weight:500;font-size:.82rem;padding:6px 14px;border-radius:7px;transition:all .15s;}
+    .nav-tab:hover{background:var(--surface);color:var(--ink2);}
+    .nav-tab.active{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:transform .1s,filter .1s;position:relative;overflow:hidden;}
+    .btn:active{transform:scale(.97);}
+    .btn-brand{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;box-shadow:0 2px 8px rgba(37,99,235,.25);}
+    .btn-brand:hover{filter:brightness(1.07);}
+    .btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--ink2);}
+    .btn-danger{background:var(--red-l);color:white;}
+    .btn-complete{background:var(--green);color:white;padding:5px 10px;font-size:.75rem;border-radius:6px;border:none;cursor:pointer;}
+    .header-section{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding:0 4px;}
+    .page-title{font-size:1.5rem;font-weight:800;color:var(--ink);letter-spacing:-.02em;}
+    .page-subtitle{color:var(--ink3);font-size:.9rem;}
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.02);}
+    .panel-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));padding:10px 16px;display:flex;align-items:center;justify-content:space-between;}
+    .panel-title{color:white;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.02em;}
+    .panel-body{padding:16px;}
+    .filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;}
+    .form-group label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;}
+    select{width:100%;padding:9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:.85rem;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2394a3b8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;}
+    select:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px var(--blue-glow);}
+    .metric-row{display:flex;gap:12px;margin-bottom:4px;}
+    .metric-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;flex:1;text-align:center;}
+    .metric-label{font-size:.65rem;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;}
+    .metric-value{font-size:1.6rem;font-weight:800;color:var(--ink);line-height:1;}
+    .table-container{overflow-x:auto;}
+    .data-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+    .data-table th{background:var(--blue-ll);color:var(--blue);font-weight:700;font-size:.68rem;text-transform:uppercase;padding:10px;text-align:left;border-bottom:2px solid var(--blue-l);}
+    .data-table td{padding:12px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+    .data-table tr:hover td{background:var(--surface2);}
+    .na-text-cell{min-width:300px;max-width:500px;line-height:1.5;color:var(--ink2);}
+    .date-mono{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--ink3);}
+    .date-input-sm{padding:5px;border:1px solid var(--border2);border-radius:5px;font-family:'DM Mono',monospace;font-size:.75rem;margin-right:6px;}
+    #save-msg{font-family:'DM Mono',monospace;font-weight:600;}
+    ::-webkit-scrollbar{width:7px;height:7px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+    .upload-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease both;}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .upload-modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:36px 40px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.18);animation:slideUp .25s ease both;}
+    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .upload-modal h2{font-size:1.15rem;font-weight:800;color:var(--ink);margin-bottom:6px;}
+    .upload-modal p{font-size:.82rem;color:var(--ink3);margin-bottom:24px;line-height:1.6;}
+    .upload-drop-zone{border:2px dashed var(--border2);border-radius:var(--radius-sm);padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:20px;background:var(--surface2);}
+    .upload-drop-zone:hover,.upload-drop-zone.drag-over{border-color:var(--blue-l);background:var(--blue-ll);}
+    .upload-drop-zone input[type="file"]{display:none;}
+    .upload-drop-zone .drop-icon{font-size:2rem;margin-bottom:10px;}
+    .upload-drop-zone .drop-label{font-size:.85rem;font-weight:600;color:var(--ink2);}
+    .upload-drop-zone .drop-sub{font-size:.75rem;color:var(--ink3);margin-top:4px;}
+    .upload-drop-zone .drop-chosen{font-size:.8rem;color:var(--green);font-weight:700;margin-top:8px;}
+    .upload-modal .btn-upload{width:100%;padding:11px;background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.3);}
+    .upload-modal .btn-upload:disabled{opacity:.5;cursor:not-allowed;}
+  </style>
 </head>
 <body>
-    <div class="page">
-        <header class="top-nav">
-            <div class="nav-left">
-                <div class="logo-mark">🍅</div>
-                <span class="logo-text">1730 Plant Data</span>
-            </div>
+<div class="top-nav">
+  <div class="logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm0 11h7v7H3zm11-11h7v7h-7zm0 11h7v7h-7z"/></svg></div>
+    <span class="logo-text">Novus <span>Foods</span> Ops</span>
+  </div>
+  <nav class="nav-tabs">
+    <a class="nav-tab" href="staff-meeting-dashboard.html">Meeting Dashboard</a>
+    <a class="nav-tab" href="dds-dashboard.html">DDS Dashboard</a>
+    <a class="nav-tab" href="needs-action.html">Needs Action</a>
+    <a class="nav-tab" href="sap-audit.html">SAP Audit</a>
+    <a class="nav-tab" href="inventory-control.html">Inventory Control</a>
+  </nav>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button class="btn btn-ghost" onclick="sessionStorage.removeItem('novus_xlsx_b64');location.reload();" style="font-size:.75rem;">📂 Change File</button>
+    <button class="btn btn-danger" onclick="NovusCore.navigateTo('index.html')">Logout</button>
+  </div>
+</div>
 
-            <nav class="nav-center">
-                <a href="staff-meeting-dashboard.html">Meeting Dashboard</a>
-                <a href="weekly-meeting.html">Weekly Meeting</a>
-                <a href="dds-dashboard.html">DDS Dashboard</a>
-                <a href="needs-action.html" class="active">Needs Action</a>
-                <a href="budget.html">Budget</a>
-            </nav>
-
-            <div class="nav-right">
-                <button class="logout-btn" onclick="window.location.href='index.html'">
-                    Logout
-                </button>
-            </div>
-        </header>
-
-        <main class="main-content">
-            <!-- HEADER -->
-            <section class="page-header">
-                <h1 class="page-title">Needs Action</h1>
-                <p class="page-subtitle">
-                    View and update completion dates for items in the <code>Needs Action</code> sheet of<br>
-                    <code>all_department_data_2026.xlsx</code> hosted on GitHub.<br>
-                    <strong>Data updates when you push a new version of the file to the repo.</strong>
-                </p>
-            </section>
-
-            <!-- SIMPLE FILTER BAR: ONLY DEPARTMENT + STATUS -->
-            <section>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="na-dept">Department</label>
-                        <select id="na-dept">
-                            <option value="">All</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="na-status">Status</label>
-                        <select id="na-status">
-                            <option value="open">Open (no Date Completed)</option>
-                            <option value="completed">Completed</option>
-                            <option value="all">All</option>
-                        </select>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SUMMARY (NO GRAPH) -->
-            <section style="margin-top: 1.5rem;">
-                <div class="page-header">
-                    <h2 class="page-title" style="font-size: 1.1rem;">Summary</h2>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
-                    <div class="card">
-                        <div class="card-title">Counts</div>
-                        <div class="card-body">
-                            <div style="display:flex; flex-direction:column; gap:0.25rem; font-size:0.9rem;">
-                                <div><strong>Total items:</strong> <span id="na-total-count">–</span></div>
-                                <div><strong>Open:</strong> <span id="na-open-count">–</span></div>
-                                <div><strong>Completed:</strong> <span id="na-completed-count">–</span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TABLE ONLY -->
-            <section style="margin-top: 1.5rem;">
-                <div class="page-header">
-                    <h2 class="page-title" style="font-size: 1.1rem;">Needs Action List</h2>
-                    <p class="page-subtitle">
-                        Filter by Department and Status. For open items, choose a completion date and apply it
-                        (changes are in-memory for this session).
-                    </p>
-                </div>
-
-                <div class="card">
-                    <div class="card-body" style="overflow-x: auto;">
-                        <table class="table" id="na-table" style="width:100%; border-collapse: collapse;">
-                            <!-- Column widths: Date | Needs Action (wide) | Date Completed | Dept | Status | Actions -->
-                            <colgroup>
-                                <col style="width: 10%;">
-                                <col style="width: 40%;">
-                                <col style="width: 15%;">
-                                <col style="width: 15%;">
-                                <col style="width: 10%;">
-                                <col style="width: 10%;">
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th style="text-align:left;">Date</th>
-                                    <th style="text-align:left;">Needs Action</th>
-                                    <th style="text-align:left;">Date Completed</th>
-                                    <th style="text-align:left;">Department</th>
-                                    <th style="text-align:left;">Status</th>
-                                    <th style="text-align:left;">Completion / Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="na-table-body">
-                                <!-- Rows injected by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-        </main>
+<div class="page">
+  <div class="header-section">
+    <div>
+      <h1 class="page-title">Needs Action Tracker</h1>
+      <p class="page-subtitle">Departmental action items and task monitoring</p>
     </div>
+    <div style="text-align:right;">
+      <button id="btn-save-excel" class="btn btn-brand" onclick="exportUpdatedExcel()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Changes to Excel
+      </button>
+      <div id="save-msg" style="font-size:0.7rem;color:var(--green);margin-top:6px;display:none;">✓ FILE DOWNLOADED</div>
+    </div>
+  </div>
 
-    <!-- SheetJS for Excel reading -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Data Filters</span></div>
+      <div class="panel-body">
+        <div class="filter-grid">
+          <div class="form-group"><label>Department</label><select id="na-dept"><option value="">All Departments</option></select></div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="na-status">
+              <option value="open">Open (Active)</option>
+              <option value="completed">Completed</option>
+              <option value="all">All Items</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Summary Metrics</span></div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Total Items</div><div class="metric-value" id="na-total-count">—</div></div>
+          <div class="metric-box"><div class="metric-label">Open Items</div><div class="metric-value" style="color:var(--red);" id="na-open-count">—</div></div>
+          <div class="metric-box"><div class="metric-label">Completed</div><div class="metric-value" style="color:var(--green);" id="na-completed-count">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        // =========================================================================
-        // CONFIG – CHANGE THESE TWO LINES WITH YOUR ACTUAL GITHUB INFO
-        // =========================================================================
-        const EXCEL_URL = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY_NAME/main/data/all_department_data_2026.xlsx";
-        const SHEET_NAME = "Needs Action";
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">Action Items Log</span></div>
+    <div class="panel-body">
+      <div class="table-container">
+        <table class="data-table" id="na-table">
+          <thead>
+            <tr>
+              <th style="width:110px;">Created</th>
+              <th>Needs Action Description</th>
+              <th style="width:120px;">Completed</th>
+              <th style="width:150px;">Dept</th>
+              <th style="width:100px;">Status</th>
+              <th style="width:240px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="na-table-body">
+            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">Initializing tracker...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
-        let needsRows = [];
-        let filteredRows = [];
-        let nextRowId = 0; // internal IDs, still useful for editing
+<script>
+const NEEDS_DATA_FILE="all_department_data_2026.xlsx"; // legacy name kept
+const NEEDS_SHEET_NAME="Needs Action";
+const UPLOAD_CACHE_KEY="novus_xlsx_b64";
+let fullWorkbook=null,needsRows=[],filteredRows=[];
 
-        const deptSelect   = document.getElementById("na-dept");
-        const statusSelect = document.getElementById("na-status");
+function showUploadModal(onSuccess){const overlay=document.createElement("div");overlay.className="upload-overlay";overlay.innerHTML=`<div class="upload-modal"><h2>📂 Upload Data File</h2><p>This page reads the <strong>Needs Action</strong> sheet from <strong>all_department_data_2026.xlsx</strong>.<br>Upload your workbook to continue. Cached for this session.</p><div class="upload-drop-zone" id="drop-zone" onclick="document.getElementById('na-file-input').click()"><input type="file" id="na-file-input" accept=".xlsx,.xls"/><div class="drop-icon">📊</div><div class="drop-label">Click to browse or drag & drop</div><div class="drop-sub">Accepts .xlsx or .xls</div><div class="drop-chosen" id="drop-chosen" style="display:none;"></div></div><button class="btn-upload" id="btn-upload-confirm" disabled>Load Tracker</button></div>`;document.body.appendChild(overlay);let chosenFile=null;const input=overlay.querySelector("#na-file-input"),dropZone=overlay.querySelector("#drop-zone"),chosenEl=overlay.querySelector("#drop-chosen"),confirmBtn=overlay.querySelector("#btn-upload-confirm");function setFile(f){if(!f)return;chosenFile=f;chosenEl.textContent="✓ "+f.name+" ("+(f.size/1024).toFixed(0)+" KB)";chosenEl.style.display="block";confirmBtn.disabled=false;}input.addEventListener("change",()=>setFile(input.files[0]));dropZone.addEventListener("dragover",e=>{e.preventDefault();dropZone.classList.add("drag-over");});dropZone.addEventListener("dragleave",()=>dropZone.classList.remove("drag-over"));dropZone.addEventListener("drop",e=>{e.preventDefault();dropZone.classList.remove("drag-over");setFile(e.dataTransfer.files[0]);});confirmBtn.addEventListener("click",()=>{if(!chosenFile)return;confirmBtn.disabled=true;confirmBtn.textContent="Reading…";const reader=new FileReader();reader.onload=e=>{const b64=btoa(String.fromCharCode(...new Uint8Array(e.target.result)));try{sessionStorage.setItem(UPLOAD_CACHE_KEY,b64);}catch(_){}overlay.remove();onSuccess(e.target.result);};reader.readAsArrayBuffer(chosenFile);});}
 
-        const totalCountEl     = document.getElementById("na-total-count");
-        const openCountEl      = document.getElementById("na-open-count");
-        const completedCountEl = document.getElementById("na-completed-count");
-        const tableBody        = document.getElementById("na-table-body");
+function getUploadedBuffer(){return new Promise((resolve,reject)=>{const cached=sessionStorage.getItem(UPLOAD_CACHE_KEY);if(cached){try{const bin=atob(cached);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);resolve(buf.buffer);return;}catch(_){sessionStorage.removeItem(UPLOAD_CACHE_KEY);}}showUploadModal(resolve);});}
+const deptSelect=document.getElementById("na-dept"),statusSelect=document.getElementById("na-status");
+const totalCountEl=document.getElementById("na-total-count"),openCountEl=document.getElementById("na-open-count"),completedCountEl=document.getElementById("na-completed-count"),tableBody=document.getElementById("na-table-body"),saveMsg=document.getElementById("save-msg");
 
-        // ===== Helper functions (unchanged) =====
-        function safeString(v) {
-            if (v === null || v === undefined) return "";
-            return String(v);
-        }
+function safeString(v){return(v===null||v===undefined)?"":String(v);}
+function pad2(n){return String(n).padStart(2,"0");}
+function parseExcelDate(value){if(!value&&value!==0)return null;if(value instanceof Date)return isNaN(value)?null:value;if(typeof value==="number"){const base=new Date(Date.UTC(1899,11,30));return new Date(base.getTime()+value*86400000);}const d=new Date(value);return isNaN(d)?null:d;}
+function formatDateShort(d){if(!d||!(d instanceof Date)||isNaN(d))return"";return`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;}
+function rowStatus(row){const dcRaw=row["Date Completed"];return(dcRaw!==null&&dcRaw!==undefined&&String(dcRaw).trim()!=="")?"completed":"open";}
 
-        function pad2(n) {
-            return String(n).padStart(2, "0");
-        }
+async function loadNeedsActionSheet(){
+  try {
+    const buf=await getUploadedBuffer();
+    fullWorkbook=XLSX.read(buf,{type:"array"});
+    const ws=fullWorkbook.Sheets[NEEDS_SHEET_NAME];
+    if(!ws){tableBody.innerHTML=`<tr><td colspan="6" style="text-align:center;">Sheet "${NEEDS_SHEET_NAME}" not found.</td></tr>`;return;}
+    let rows=XLSX.utils.sheet_to_json(ws,{defval:null,cellDates:true,raw:false});
+    needsRows=rows.map((r,idx)=>({_id:idx,...r}));
+    initFilters(); applyFilters();
+  } catch(err) {
+    console.error(err);
+    tableBody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:red;padding:40px;">Error loading Excel file.</td></tr>`;
+  }
+}
 
-        function parseExcelDate(value) {
-            if (!value && value !== 0) return null;
-            if (value instanceof Date) {
-                return isNaN(value) ? null : value;
-            }
-            if (typeof value === "number") {
-                const base = new Date(Date.UTC(1899, 11, 30));
-                const d = new Date(base.getTime() + value * 86400000);
-                return isNaN(d) ? null : d;
-            }
-            const d = new Date(value);
-            return isNaN(d) ? null : d;
-        }
+function initFilters(){
+  const deptSet=new Set();
+  needsRows.forEach(r=>{if(r["Department"])deptSet.add(String(r["Department"]).trim());});
+  const depts=Array.from(deptSet).sort();
+  while(deptSelect.options.length>1)deptSelect.remove(1);
+  depts.forEach(dep=>{const o=document.createElement("option");o.value=dep;o.textContent=dep;deptSelect.appendChild(o);});
+}
 
-        function formatDateShort(d) {
-            if (!d || !(d instanceof Date) || isNaN(d)) return "";
-            const y = d.getFullYear();
-            const m = pad2(d.getMonth() + 1);
-            const day = pad2(d.getDate());
-            return `${y}-${m}-${day}`;
-        }
+function markRowCompleted(rowId,completionDateStr){
+  const row=needsRows.find(r=>r._id===rowId);if(!row)return;
+  let finalDateStr=completionDateStr&&completionDateStr.trim()?completionDateStr.trim():formatDateShort(new Date());
+  if(!confirm(`Mark completed on ${finalDateStr}?`))return;
+  row["Date Completed"]=finalDateStr;
+  const btn=document.getElementById("btn-save-excel");
+  btn.style.background="var(--amber)";
+  btn.innerHTML="💾 Unsaved Changes (Click to Export)";
+  applyFilters();
+}
 
-        function rowStatus(row) {
-            const dcRaw = row["Date Completed"];
-            const hasCompleted = dcRaw !== null && dcRaw !== undefined && String(dcRaw).trim() !== "";
-            return hasCompleted ? "completed" : "open";
-        }
+function exportUpdatedExcel(){
+  if(!fullWorkbook)return;
+  const cleanData=needsRows.map(r=>{const{_id,...rest}=r;return rest;});
+  const newSheet=XLSX.utils.json_to_sheet(cleanData);
+  fullWorkbook.Sheets[NEEDS_SHEET_NAME]=newSheet;
+  XLSX.writeFile(fullWorkbook,"all_department_data_2026.xlsx");
+  const btn=document.getElementById("btn-save-excel");
+  btn.style.background="";
+  btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Changes to Excel`;
+  saveMsg.style.display="block";
+  setTimeout(()=>{saveMsg.style.display="none";},3000);
+  NovusCore.Toast.success("Excel file downloaded ✓");
+  // Force fresh upload next time since file changed
+  sessionStorage.removeItem(UPLOAD_CACHE_KEY);
+}
 
-        // ===== Load Needs Action sheet from GitHub =====
-        async function loadNeedsActionSheet() {
-            try {
-                const resp = await fetch(EXCEL_URL);
-                if (!resp.ok) {
-                    throw new Error(`Failed to fetch Excel: ${resp.status} ${resp.statusText}`);
-                }
-                const buf = await resp.arrayBuffer();
-                const wb = XLSX.read(buf, { type: "array", cellDates: true, raw: false });
+function applyFilters(){
+  const selDept=deptSelect.value,selStatus=statusSelect.value;
+  filteredRows=needsRows.filter(row=>{
+    if(selDept&&safeString(row["Department"]).trim()!==selDept)return false;
+    const st=rowStatus(row);
+    if(selStatus==="open"&&st!=="open")return false;
+    if(selStatus==="completed"&&st!=="completed")return false;
+    return true;
+  });
+  renderSummaryAndTable();
+}
 
-                const ws = wb.Sheets[SHEET_NAME];
-                if (!ws) {
-                    throw new Error(`Sheet "${SHEET_NAME}" not found in the Excel file`);
-                }
+function renderSummaryAndTable(){
+  let open=0,comp=0;
+  filteredRows.forEach(r=>{const st=rowStatus(r);if(st==="open")open++;else comp++;});
+  totalCountEl.textContent=filteredRows.length;
+  openCountEl.textContent=open;
+  completedCountEl.textContent=comp;
+  renderTable();
+}
 
-                let rows = XLSX.utils.sheet_to_json(ws, {
-                    defval: null,
-                    cellDates: true,
-                    raw: false
-                });
+function renderTable(){
+  tableBody.innerHTML="";
+  if(!filteredRows.length){tableBody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">No items match current filters.</td></tr>`;return;}
+  filteredRows.forEach(row=>{
+    const tr=document.createElement("tr");
+    const status=rowStatus(row);
+    tr.innerHTML=`<td class="date-mono">${formatDateShort(parseExcelDate(row["Date"]))}</td><td class="na-text-cell">${safeString(row["Needs Action"])}</td><td class="date-mono">${formatDateShort(parseExcelDate(row["Date Completed"]))}</td><td style="font-weight:600;color:var(--blue);">${safeString(row["Department"])}</td><td><span style="font-weight:700;color:${status==='open'?'var(--red)':'var(--green)'};">${status==='open'?'Open':'Completed'}</span></td><td id="action-${row._id}"></td>`;
+    const actionCell=tr.querySelector(`#action-${row._id}`);
+    if(status==="open"){
+      const input=document.createElement("input");input.type="date";input.className="date-input-sm";input.value=formatDateShort(new Date());
+      const btn=document.createElement("button");btn.className="btn btn-complete";btn.textContent="Complete";
+      btn.onclick=()=>markRowCompleted(row._id,input.value);
+      actionCell.appendChild(input);actionCell.appendChild(btn);
+    } else {actionCell.innerHTML=`<span style="color:var(--ink4)">—</span>`;}
+    tableBody.appendChild(tr);
+  });
+}
 
-                needsRows = rows.map((r, idx) => ({ _id: idx, ...r }));
-                nextRowId = needsRows.length;
-
-                initFilters();
-                applyFilters();
-            } catch (err) {
-                console.error("Error loading Needs Action data:", err);
-                alert(
-                    "Failed to load Needs Action data from GitHub.\n\n" +
-                    "Possible causes:\n" +
-                    "• Wrong GitHub username/repo in EXCEL_URL\n" +
-                    "• File not uploaded to /data/ folder\n" +
-                    "• Repo is private (must be public for raw access without login)\n" +
-                    "• Network issue or browser blocking raw.githubusercontent.com\n\n" +
-                    "Test the URL directly in your browser first.\n" +
-                    "Page will show empty table until data loads."
-                );
-                tableBody.innerHTML = `<tr><td colspan="6" style="padding:0.5rem;">Error loading data from GitHub</td></tr>`;
-            }
-        }
-
-        // ===== Mark a row as completed with a chosen date (in-memory) =====
-        function markRowCompleted(rowId, completionDateStr) {
-            const row = needsRows.find(r => r._id === rowId);
-            if (!row) return;
-
-            let finalDateStr = completionDateStr && completionDateStr.trim()
-                ? completionDateStr.trim()
-                : formatDateShort(new Date());
-
-            const confirmMsg = `Set Date Completed to ${finalDateStr} for this item?`;
-            if (!confirm(confirmMsg)) return;
-
-            row["Date Completed"] = finalDateStr;
-            applyFilters();
-        }
-
-        // ===== Filtering logic (Department + Status only) =====
-        function applyFilters() {
-            if (!needsRows.length) {
-                filteredRows = [];
-                renderSummaryAndTable();
-                return;
-            }
-
-            const selectedDept = deptSelect.value;
-            const selectedStatus = statusSelect.value; // open / completed / all
-
-            filteredRows = needsRows.filter(row => {
-                if (selectedDept) {
-                    const deptVal = safeString(row["Department"]).trim();
-                    if (deptVal !== selectedDept) return false;
-                }
-
-                const st = rowStatus(row);
-                if (selectedStatus === "open" && st !== "open") return false;
-                if (selectedStatus === "completed" && st !== "completed") return false;
-
-                return true;
-            });
-
-            renderSummaryAndTable();
-        }
-
-        // ===== Rendering =====
-        function renderSummaryAndTable() {
-            const totalCount = filteredRows.length;
-            let openCount = 0;
-            let completedCount = 0;
-
-            filteredRows.forEach(r => {
-                const st = rowStatus(r);
-                if (st === "open") openCount++;
-                else if (st === "completed") completedCount++;
-            });
-
-            totalCountEl.textContent     = totalCount.toString();
-            openCountEl.textContent      = openCount.toString();
-            completedCountEl.textContent = completedCount.toString();
-
-            renderTable();
-        }
-
-        function renderTable() {
-            tableBody.innerHTML = "";
-
-            if (!filteredRows.length) {
-                const tr = document.createElement("tr");
-                const td = document.createElement("td");
-                td.colSpan = 6;
-                td.textContent = "No rows match the current filters.";
-                td.style.padding = "0.5rem";
-                tr.appendChild(td);
-                tableBody.appendChild(tr);
-                return;
-            }
-
-            filteredRows.forEach(row => {
-                const tr = document.createElement("tr");
-
-                const date = parseExcelDate(row["Date"]);
-                const dateCompleted = parseExcelDate(row["Date Completed"]);
-                const status = rowStatus(row);
-
-                const dateCell = document.createElement("td");
-                dateCell.textContent = formatDateShort(date);
-                dateCell.style.padding = "0.35rem 0.4rem";
-
-                const naCell = document.createElement("td");
-                naCell.textContent = safeString(row["Needs Action"]);
-                naCell.style.padding = "0.35rem 0.4rem";
-                naCell.classList.add("na-text-cell");
-
-                const dcCell = document.createElement("td");
-                dcCell.textContent = formatDateShort(dateCompleted);
-                dcCell.style.padding = "0.35rem 0.4rem";
-
-                const deptCell = document.createElement("td");
-                deptCell.textContent = safeString(row["Department"]);
-                deptCell.style.padding = "0.35rem 0.4rem";
-
-                const statusCell = document.createElement("td");
-                statusCell.textContent = status === "open" ? "Open" : "Completed";
-                statusCell.style.padding = "0.35rem 0.4rem";
-
-                const actionCell = document.createElement("td");
-                actionCell.style.padding = "0.35rem 0.4rem";
-                actionCell.style.whiteSpace = "nowrap";
-
-                if (status === "open") {
-                    const completionInput = document.createElement("input");
-                    completionInput.type = "date";
-                    completionInput.value = formatDateShort(new Date());
-                    completionInput.style.fontSize = "0.75rem";
-                    completionInput.style.padding = "0.15rem 0.25rem";
-                    completionInput.style.marginRight = "0.3rem";
-
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.textContent = "Set Completed";
-                    btn.className = "btn btn-secondary";
-                    btn.style.fontSize = "0.75rem";
-                    btn.style.padding = "0.15rem 0.5rem";
-
-                    btn.addEventListener("click", () => {
-                        markRowCompleted(row._id, completionInput.value);
-                    });
-
-                    actionCell.appendChild(completionInput);
-                    actionCell.appendChild(btn);
-                } else {
-                    actionCell.textContent = "—";
-                }
-
-                tr.appendChild(dateCell);
-                tr.appendChild(naCell);
-                tr.appendChild(dcCell);
-                tr.appendChild(deptCell);
-                tr.appendChild(statusCell);
-                tr.appendChild(actionCell);
-
-                tableBody.appendChild(tr);
-            });
-        }
-
-        // ===== Init department dropdown =====
-        function initFilters() {
-            if (!needsRows.length) return;
-
-            const deptSet = new Set();
-            needsRows.forEach(r => {
-                const d = r["Department"];
-                if (d !== null && d !== undefined && String(d).trim() !== "") {
-                    deptSet.add(String(d).trim());
-                }
-            });
-
-            const depts = Array.from(deptSet).sort((a, b) => a.localeCompare(b));
-
-            // Clear existing except "All"
-            while (deptSelect.options.length > 1) deptSelect.remove(1);
-
-            depts.forEach(dep => {
-                const o1 = document.createElement("option");
-                o1.value = dep;
-                o1.textContent = dep;
-                deptSelect.appendChild(o1);
-            });
-        }
-
-        // ===== Events =====
-        deptSelect.addEventListener("change", applyFilters);
-        statusSelect.addEventListener("change", applyFilters);
-
-        window.addEventListener("load", () => {
-            loadNeedsActionSheet();
-        });
-    </script>
+deptSelect.onchange=applyFilters;
+statusSelect.onchange=applyFilters;
+window.onload=loadNeedsActionSheet;
+</script>
 </body>
 </html>
