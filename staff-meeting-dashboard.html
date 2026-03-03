@@ -1,1074 +1,832 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Staff Meeting Dashboard – Novus 1730 Ops Hub</title>
-    <link rel="stylesheet" href="css/styles.css" />
-    <style>
-        /* === LAYOUT WIDENING / FULLER SCREEN === */
-        .page {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .top-nav {
-            padding-inline: 1.5rem;
-        }
-        .main-content {
-            width: 100%;
-            max-width: 1400px;
-            margin: 1.25rem auto 2.5rem;
-            padding: 0 1.5rem;
-        }
-        .card {
-            width: 100%;
-        }
-        .page-header {
-            margin-bottom: 1rem;
-        }
-        .page-title {
-            margin-bottom: 0.1rem;
-        }
-        .page-subtitle {
-            max-width: 900px;
-        }
-        /* === BUILDER / GRID === */
-        .builder-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 0.9rem;
-        }
-        .builder-actions {
-            margin-top: 0.9rem;
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            align-items: flex-end;
-        }
-        /* === GROUPS & WIDGETS === */
-        .dashboard-groups {
-            display: flex;
-            flex-direction: column;
-            gap: 1.1rem;
-            margin-top: 1.25rem;
-        }
-        .dashboard-group {
-            border-radius: 0.75rem;
-            border: 1px solid var(--border, #e2e8f0);
-            padding: 0.85rem 1rem;
-            background: rgba(255, 255, 255, 0.94);
-            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-        }
-        .dashboard-group-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.65rem;
-        }
-        .dashboard-group-title {
-            font-weight: 600;
-            font-size: 1rem;
-        }
-        .dashboard-group-meta {
-            font-size: 0.78rem;
-            color: var(--muted, #64748b);
-        }
-        .dashboard-group-widgets {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 0.9rem;
-        }
-        .widget-card {
-            border-radius: 0.75rem;
-            border: 1px solid var(--border, #e2e8f0);
-            padding: 0.7rem 0.85rem;
-            background: #f8fafc;
-        }
-        .widget-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 0.4rem;
-            margin-bottom: 0.4rem;
-        }
-        .widget-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-        .widget-subtitle {
-            font-size: 0.78rem;
-            color: var(--muted, #64748b);
-        }
-        .widget-metric-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-top: 0.3rem;
-        }
-        /* === CHART HEIGHT CONTROL === */
-        .widget-chart-container {
-            position: relative;
-            width: 100%;
-            height: 250px;   /* tweak this to make charts shorter/taller */
-        }
-        .widget-chart {
-            width: 100% !important;
-            height: 100% !important;
-            display: block;
-        }
-        .btn-sm {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.55rem;
-        }
-        .tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.1rem 0.4rem;
-            border-radius: 999px;
-            background: #e2e8f0;
-            font-size: 0.7rem;
-            color: #0f172a;
-        }
-        .tag-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 999px;
-            background: #0f172a;
-        }
-        .field-hint {
-            font-size: 0.7rem;
-            color: var(--muted, #64748b);
-            margin-top: 0.15rem;
-        }
-        @media (max-width: 700px) {
-            .top-nav {
-                padding-inline: 0.75rem;
-            }
-            .main-content {
-                padding: 0 0.75rem;
-                margin-top: 1rem;
-            }
-            .dashboard-group-widgets {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Meeting Dashboard – Novus Foods Ops Hub</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap"></noscript>
+
+  <script src="novus-core.js" defer></script>
+
+  <script>
+    window.__libs = { chartjs: false, xlsx: false };
+    function _checkLibsReady() {
+      if (window.__libs.chartjs && window.__libs.xlsx && window.__libsCallback)
+        window.__libsCallback();
+    }
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/chart.js"
+          onload="window.__libs.chartjs=true;_checkLibsReady()"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
+          onload="window.__libs.xlsx=true;_checkLibsReady()"></script>
+
+  <style>
+    :root {
+      --bg:#f4f6fb; --surface:#ffffff; --surface2:#f8fafc;
+      --border:#e2e8f0; --border2:#cbd5e1;
+      --ink:#0f172a; --ink2:#334155; --ink3:#64748b; --ink4:#94a3b8;
+      --blue:#2563eb; --blue-l:#3b82f6; --blue-ll:#dbeafe; --blue-glow:rgba(37,99,235,.12);
+      --teal:#0d9488; --teal-l:#14b8a6; --teal-ll:#ccfbf1;
+      --green:#059669; --green-l:#10b981; --red:#dc2626; --red-l:#ef4444; --amber:#d97706;
+      --radius:14px; --radius-sm:8px; --radius-xs:5px; --nav-h:58px;
+      --ease:cubic-bezier(.4,0,.2,1); --ease-out:cubic-bezier(0,0,.2,1);
+      --ease-spring:cubic-bezier(.34,1.56,.64,1);
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'DM Sans',system-ui,sans-serif; font-size:13.5px; line-height:1.55;
+      background:var(--bg); color:var(--ink); overflow-x:hidden;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");
+    }
+    @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+    .skeleton { border-radius:var(--radius-xs); background:linear-gradient(90deg,#e8edf4 25%,#f4f7fb 50%,#e8edf4 75%); background-size:600px 100%; animation:shimmer 1.4s infinite linear; }
+    .skeleton-group { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:24px; }
+    .skeleton-header { height:46px; border-radius:12px 12px 0 0; margin:-14px -14px 16px; }
+    .skeleton-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:20px; }
+    .skeleton-card { height:290px; border-radius:var(--radius-sm); }
+    .page { max-width:1760px; margin:0 auto; padding:0 20px 60px; }
+    .top-nav {
+      height:var(--nav-h); background:var(--surface); border-bottom:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:center; padding:0 28px;
+      position:sticky; top:0; z-index:200;
+      box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+      margin-bottom:24px; will-change:transform; transform:translateZ(0);
+    }
+    .logo { display:flex; align-items:center; gap:10px; }
+    .logo-icon { width:30px; height:30px; background:linear-gradient(135deg,var(--blue),var(--blue-l)); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .logo-icon svg { width:16px; height:16px; fill:white; }
+    .logo-text { font-size:1.05rem; font-weight:700; color:var(--ink); letter-spacing:-.02em; }
+    .logo-text span { color:var(--blue); }
+    .nav-tabs { display:flex; gap:2px; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:3px; overflow-x:auto; scrollbar-width:none; }
+    .nav-tabs::-webkit-scrollbar { display:none; }
+    .nav-tab { color:var(--ink3); text-decoration:none; font-weight:500; font-size:.82rem; padding:6px 14px; border-radius:7px; transition:background .12s var(--ease),color .12s var(--ease); white-space:nowrap; }
+    .nav-tab:hover { background:var(--surface); color:var(--ink2); }
+    .nav-tab.active { background:var(--surface); color:var(--blue); font-weight:600; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius-sm); font-size:.82rem; font-weight:600; font-family:inherit; cursor:pointer; border:none; transition:transform .12s var(--ease-spring),filter .12s,box-shadow .12s; letter-spacing:-.01em; position:relative; overflow:hidden; }
+    .btn:active:not(:disabled) { transform:scale(.96); }
+    .btn-ghost { background:transparent; border:1px solid var(--border2); color:var(--ink2); }
+    .btn-ghost:hover { background:var(--bg); }
+    .btn-primary { background:linear-gradient(135deg,var(--green),var(--green-l)); color:white; box-shadow:0 2px 8px rgba(5,150,105,.28); }
+    .btn-primary:hover { filter:brightness(1.07); transform:translateY(-1px); box-shadow:0 4px 14px rgba(5,150,105,.38); }
+    .btn-danger { background:var(--red-l); color:white; padding:5px 11px; font-size:.75rem; }
+    .panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:24px; overflow:hidden; }
+    .panel-header { background:linear-gradient(135deg,var(--blue),var(--blue-l)); padding:11px 18px; display:flex; align-items:center; justify-content:space-between; }
+    .panel-title { color:white; font-weight:700; font-size:.9rem; letter-spacing:-.01em; }
+    .panel-body { padding:16px 18px; }
+    .builder-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+    .builder-row + .builder-row { margin-top:12px; padding-top:12px; border-top:1px dashed var(--border); }
+    .field { display:flex; flex-direction:column; gap:5px; }
+    .field-label { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3); }
+    select, input[type="text"], input[type="date"] {
+      font-family:inherit; font-size:.84rem; color:var(--ink); background:var(--surface2);
+      border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 11px;
+      transition:border-color .15s,box-shadow .15s; appearance:none; -webkit-appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2394a3b8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 10px center; padding-right:28px;
+    }
+    input[type="date"], input[type="text"] { background-image:none; padding-right:11px; }
+    select:focus, input:focus { outline:none; border-color:var(--blue-l); box-shadow:0 0 0 3px var(--blue-glow); }
+    select:disabled { opacity:.45; cursor:not-allowed; }
+    .checkbox-row { display:flex; align-items:center; gap:8px; padding-top:22px; }
+    .checkbox-row input[type="checkbox"] { width:15px; height:15px; accent-color:var(--blue); cursor:pointer; }
+    .checkbox-row label { font-size:.82rem; font-weight:500; color:var(--ink2); cursor:pointer; }
+    .builder-actions { margin-top:16px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    #data-status { font-size:.72rem; font-family:'DM Mono',monospace; color:var(--ink3); margin-left:auto; }
+    #data-status.ok { color:var(--green); }
+    #data-status.error { color:var(--red); }
+    .group { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:24px; overflow:hidden; animation:fadeUp .28s var(--ease-out) both; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+    .group-header { background:linear-gradient(135deg,var(--blue),var(--blue-l)); padding:11px 16px; display:flex; justify-content:space-between; align-items:center; }
+    .group-title { color:white; font-weight:700; font-size:.9rem; }
+    .group-widgets { display:grid; grid-template-columns:repeat(var(--cols,4),1fr); align-items:stretch; gap:16px; padding:16px; }
+    @media(max-width:860px){ .group-widgets{grid-template-columns:repeat(2,1fr)!important} }
+    @media(max-width:560px){ .group-widgets{grid-template-columns:1fr!important} }
+    .widget { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; display:flex; flex-direction:column; gap:10px; min-height:320px; animation:fadeUp .22s var(--ease-out) both; transition:box-shadow .2s,border-color .2s; }
+    .widget:hover { box-shadow:0 4px 18px rgba(0,0,0,.07); border-color:var(--border2); }
+    .widget-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+    .widget-title { font-size:.88rem; font-weight:700; color:var(--ink); letter-spacing:-.01em; line-height:1.3; }
+    .btn-remove { background:none; border:none; color:var(--ink4); font-size:1.1rem; line-height:1; cursor:pointer; padding:2px 4px; border-radius:4px; flex-shrink:0; transition:color .12s,background .12s; }
+    .btn-remove:hover { color:var(--red-l); background:#fef2f2; }
+    .badge { display:inline-flex; align-items:center; gap:4px; font-size:.62rem; font-weight:700; font-family:'DM Mono',monospace; text-transform:uppercase; letter-spacing:.04em; padding:2px 7px; border-radius:4px; margin-top:3px; }
+    .badge::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; opacity:.75; }
+    .badge-sum      { background:var(--blue-ll); color:var(--blue); }
+    .badge-weighted { background:var(--teal-ll); color:var(--teal); }
+    .badge-avg      { background:#f3e8ff; color:#7c3aed; }
+    .metric-value { font-size:2.8rem; font-weight:700; letter-spacing:-.04em; text-align:center; padding:18px 0 6px; line-height:1; }
+    .metric-sub { text-align:center; font-size:.7rem; font-family:'DM Mono',monospace; color:var(--ink3); padding-bottom:10px; }
+    .chart-wrap { position:relative; flex:1; min-height:200px; width:100%; }
+    .empty-state { text-align:center; padding:64px 24px; color:var(--ink3); }
+    .empty-state-icon { font-size:2.5rem; margin-bottom:12px; opacity:.4; }
+    .empty-state h3 { font-size:1rem; color:var(--ink2); margin-bottom:6px; }
+    .empty-state p { font-size:.82rem; }
+    ::-webkit-scrollbar { width:7px; height:7px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
+
+    /* ── UPLOAD MODAL ── */
+    .upload-overlay {
+      position:fixed; inset:0; background:rgba(15,23,42,.55); backdrop-filter:blur(4px);
+      z-index:1000; display:flex; align-items:center; justify-content:center;
+      animation:fadeIn .2s ease both;
+    }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .upload-modal {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:36px 40px; width:100%; max-width:480px;
+      box-shadow:0 20px 60px rgba(0,0,0,.18);
+      animation:slideUp .25s var(--ease-spring) both;
+    }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+    .upload-modal h2 { font-size:1.15rem; font-weight:800; color:var(--ink); margin-bottom:6px; letter-spacing:-.02em; }
+    .upload-modal p  { font-size:.82rem; color:var(--ink3); margin-bottom:24px; line-height:1.6; }
+    .upload-drop-zone {
+      border:2px dashed var(--border2); border-radius:var(--radius-sm);
+      padding:32px 20px; text-align:center; cursor:pointer;
+      transition:border-color .15s, background .15s; margin-bottom:20px;
+      background:var(--surface2);
+    }
+    .upload-drop-zone:hover, .upload-drop-zone.drag-over {
+      border-color:var(--blue-l); background:var(--blue-ll);
+    }
+    .upload-drop-zone input[type="file"] { display:none; }
+    .upload-drop-zone .drop-icon { font-size:2rem; margin-bottom:10px; }
+    .upload-drop-zone .drop-label { font-size:.85rem; font-weight:600; color:var(--ink2); }
+    .upload-drop-zone .drop-sub   { font-size:.75rem; color:var(--ink3); margin-top:4px; }
+    .upload-drop-zone .drop-chosen { font-size:.8rem; color:var(--green); font-weight:700; margin-top:8px; }
+    .upload-modal .btn-upload {
+      width:100%; padding:11px; background:linear-gradient(135deg,var(--blue),var(--blue-l));
+      color:white; border:none; border-radius:var(--radius-sm); font-family:inherit;
+      font-size:.9rem; font-weight:700; cursor:pointer;
+      box-shadow:0 2px 8px rgba(37,99,235,.3);
+      transition:filter .12s, transform .1s;
+    }
+    .upload-modal .btn-upload:hover { filter:brightness(1.07); transform:translateY(-1px); }
+    .upload-modal .btn-upload:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  </style>
 </head>
 <body>
-    <div class="page">
-        <header class="top-nav">
-            <div class="nav-left">
-                <div class="logo-mark">🍅</div>
-                <span class="logo-text">1730 Plant Data</span>
-            </div>
-            <nav class="nav-center">
-                <a href="staff-meeting-dashboard.html" class="active">Meeting Dashboard</a>
-                <a href="weekly-meeting.html">Weekly Meeting</a>
-                <a href="dds-dashboard.html">DDS Dashboard</a>
-                <a href="needs-action.html">Needs Action</a>
-                <a href="budget.html">Budget</a>
-            </nav>
-            <div class="nav-right">
-                <button class="logout-btn" onclick="window.location.href='index.html'">
-                    Logout
-                </button>
-            </div>
-        </header>
 
-        <main class="main-content">
-            <!-- HEADER -->
-            <section class="page-header">
-                <h1 class="page-title">Customized Dashboard</h1>
-                <p class="page-subtitle">
-                    Build your own dashboard from <code>all_department_data_2026.xlsx</code> hosted on GitHub.<br>
-                    Groups persist in your browser even after logout (using <code>localStorage</code>).<br>
-                    <strong>Data updates when you push a new version of the Excel file to the repo.</strong>
-                </p>
-            </section>
+<div class="top-nav">
+  <div class="logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm0 11h7v7H3zm11-11h7v7h-7zm0 11h7v7h-7z"/></svg></div>
+    <span class="logo-text">Novus <span>Foods</span> Ops</span>
+  </div>
+  <nav class="nav-tabs">
+    <a class="nav-tab" href="staff-meeting-dashboard.html">Meeting Dashboard</a>
+    <a class="nav-tab" href="dds-dashboard.html">DDS Dashboard</a>
+    <a class="nav-tab" href="needs-action.html">Needs Action</a>
+    <a class="nav-tab" href="sap-audit.html">SAP Audit</a>
+    <a class="nav-tab" href="Inventory-control.html">Inventory Control</a>
+  </nav>
+  <button class="btn btn-ghost" onclick="location.reload()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>
+    Refresh
+  </button>
+  <button class="btn btn-ghost" onclick="sessionStorage.removeItem('novus_xlsx_b64');location.reload();" title="Upload a different data file" style="font-size:.75rem;">
+    📂 Change File
+  </button>
+</div>
 
-            <!-- BUILDER / CONTROLS -->
-            <section>
-                <div class="card">
-                    <div class="card-title">Add a Metric Widget</div>
-                    <div class="card-body">
-                        <div class="builder-grid">
-                            <div class="form-group">
-                                <label for="builder-dept">Department (Sheet)</label>
-                                <select id="builder-dept">
-                                    <option value="">Select department</option>
-                                    <option value="Inventory Control">Inventory Control</option>
-                                    <option value="Production">Production</option>
-                                    <option value="Warehouse">Warehouse</option>
-                                    <option value="SAP">SAP</option>
-                                    <option value="Maintenance">Maintenance</option>
-                                    <option value="QA">QA</option>
-                                    <option value="Finance">Finance</option>
-                                    <option value="HR | Training">HR | Training</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="builder-metric">Metric</label>
-                                <select id="builder-metric" disabled>
-                                    <option value="">Select a department first</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="builder-category">Category (optional)</label>
-                                <select id="builder-category" disabled>
-                                    <option value="">None</option>
-                                </select>
-                                <p class="field-hint">
-                                    Production → Line; Inventory Control / Warehouse → City.
-                                </p>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="builder-timegrain">Time grain</label>
-                                <select id="builder-timegrain">
-                                    <option value="day">Day</option>
-                                    <option value="week">Week</option>
-                                    <option value="month">Month</option>
-                                    <option value="year">Year</option>
-                                    <option value="latest">Latest day</option>
-                                </select>
-                                <p class="field-hint">
-                                    "Latest day" uses only the most recent Date in that sheet.
-                                </p>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="builder-chart-type">Visualization</label>
-                                <select id="builder-chart-type">
-                                    <option value="metric">Metric Card</option>
-                                    <option value="bar">Bar Chart</option>
-                                    <option value="line">Line Chart</option>
-                                    <option value="scatter">Scatter Plot</option>
-                                    <option value="pie">Pie Chart</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="builder-group-name">Group name</label>
-                                <input id="builder-group-name" type="text" placeholder="e.g. Warehouse KPIs" />
-                                <p class="field-hint">
-                                    Widgets with the same group name appear in the same row.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="builder-actions">
-                            <button id="btn-add-widget" class="btn btn-primary">
-                                + Add widget to group
-                            </button>
-                            <button id="btn-clear-dashboard" class="btn btn-outline btn-sm" type="button">
-                                Clear all widgets
-                            </button>
-                            <span style="font-size:0.8rem; color:var(--muted);">
-                                Dashboard layout is saved automatically.
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- DASHBOARD GROUPS -->
-            <section style="margin-top: 1.25rem;">
-                <div class="page-header">
-                    <h2 class="page-title" style="font-size: 1.05rem;">Your Dashboard</h2>
-                    <p class="page-subtitle">
-                        Each group fills one row; widgets inside are auto-arranged. Changes persist via <code>localStorage</code>.
-                    </p>
-                </div>
-                <div id="dashboard-groups" class="dashboard-groups">
-                    <!-- Groups + widgets injected by JS -->
-                </div>
-            </section>
-        </main>
+<div class="page">
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">Widget Builder</span></div>
+    <div class="panel-body">
+      <div class="builder-row">
+        <div class="field">
+          <span class="field-label">Department</span>
+          <select id="builder-dept">
+            <option value="">Select department</option>
+            <option>Inventory Control</option><option>Production</option><option>Warehouse</option>
+            <option>SAP</option><option>SAP PSA Tracking</option><option>Maintenance</option>
+            <option>QA</option><option>Finance</option>
+          </select>
+        </div>
+        <div class="field"><span class="field-label">Metric</span><select id="builder-metric" disabled><option value="">Select dept first</option></select></div>
+        <div class="field"><span class="field-label">Category</span><select id="builder-category" disabled><option value="">None</option></select></div>
+        <div class="checkbox-row"><input type="checkbox" id="builder-split-cat"><label for="builder-split-cat">Split into separate graphs</label></div>
+        <div class="field">
+          <span class="field-label">Visualization</span>
+          <select id="builder-chart-type">
+            <option value="metric">Metric Card</option>
+            <option value="line">Line Chart</option>
+            <option value="bar">Bar Chart</option>
+          </select>
+        </div>
+        <div class="field"><span class="field-label">Group Name</span><input id="builder-group-name" type="text" placeholder="e.g. PSA Monitoring"/></div>
+      </div>
+      <div class="builder-row">
+        <div class="field"><span class="field-label">Start Date</span><input id="global-start-date" type="date" onchange="render()"/></div>
+        <div class="field"><span class="field-label">End Date</span><input id="global-end-date" type="date" onchange="render()"/></div>
+        <div class="field">
+          <span class="field-label">Group By (Time)</span>
+          <select id="global-aggregation" onchange="render()">
+            <option value="day">Day</option><option value="week">Week</option><option value="month">Month</option>
+          </select>
+        </div>
+      </div>
+      <div class="builder-actions">
+        <button id="btn-add" class="btn btn-primary">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+          Add Widget
+        </button>
+        <button id="btn-clear" class="btn btn-ghost">Clear All</button>
+        <span id="data-status">Loading data…</span>
+      </div>
     </div>
+  </div>
+  <div id="dashboard-groups"></div>
+</div>
 
-    <!-- Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════════════════ */
+const DATA_FILE   = "all_department_data_2026.xlsx"; // legacy name kept for compatibility
+const STORAGE_KEY = "novus_dash_v3";
+const UPLOAD_CACHE_KEY = "novus_xlsx_b64"; // sessionStorage key for cached file bytes
 
-    <script>
-        // =========================================================================
-        // CONFIG – CHANGE THESE TWO LINES WITH YOUR ACTUAL GITHUB INFO
-        // =========================================================================
-        const EXCEL_URL = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY_NAME/main/data/all_department_data_2026.xlsx";
+/* ── UPLOAD MODAL ─────────────────────────────────────────── */
+function showUploadModal(onSuccess) {
+  const overlay = document.createElement("div");
+  overlay.className = "upload-overlay";
+  overlay.id = "upload-overlay";
+  overlay.innerHTML = `
+    <div class="upload-modal">
+      <h2>📂 Upload Data File</h2>
+      <p>This dashboard reads from <strong>all_department_data_2026.xlsx</strong>.<br>
+         Upload your workbook to load the dashboard. It stays cached for this session so you only need to upload once per visit.</p>
+      <div class="upload-drop-zone" id="drop-zone" onclick="document.getElementById('file-upload-input').click()">
+        <input type="file" id="file-upload-input" accept=".xlsx,.xls" />
+        <div class="drop-icon">📊</div>
+        <div class="drop-label">Click to browse or drag & drop</div>
+        <div class="drop-sub">Accepts .xlsx or .xls</div>
+        <div class="drop-chosen" id="drop-chosen" style="display:none;"></div>
+      </div>
+      <button class="btn-upload" id="btn-upload-confirm" disabled>Load Dashboard</button>
+    </div>`;
+  document.body.appendChild(overlay);
 
-        const DASHBOARD_STORAGE_KEY = "novus_1730_staff_dashboard_v1";
-        const DEPT_CATEGORY_COLUMN = {
-            "Production": "Line",
-            "Inventory Control": "City",
-            "Warehouse": "City"
-        };
-        const NON_METRIC_COLUMNS = new Set([
-            "Date", "City", "Line", "Notes", "Near Miss",
-            "Needs Action", "Date Completed", "Department"
-        ]);
+  let chosenFile = null;
+  const input = overlay.querySelector("#file-upload-input");
+  const dropZone = overlay.querySelector("#drop-zone");
+  const chosenEl = overlay.querySelector("#drop-chosen");
+  const confirmBtn = overlay.querySelector("#btn-upload-confirm");
 
-        let departmentData = {};
-        let dashboardGroups = [];
+  function setFile(f) {
+    if (!f) return;
+    chosenFile = f;
+    chosenEl.textContent = "✓ " + f.name + " (" + (f.size/1024).toFixed(0) + " KB)";
+    chosenEl.style.display = "block";
+    confirmBtn.disabled = false;
+  }
 
-        const deptSelect       = document.getElementById("builder-dept");
-        const metricSelect     = document.getElementById("builder-metric");
-        const categorySelect   = document.getElementById("builder-category");
-        const timeGrainSelect  = document.getElementById("builder-timegrain");
-        const chartTypeSelect  = document.getElementById("builder-chart-type");
-        const groupNameInput   = document.getElementById("builder-group-name");
-        const addWidgetBtn     = document.getElementById("btn-add-widget");
-        const clearDashboardBtn = document.getElementById("btn-clear-dashboard");
-        const groupsContainer  = document.getElementById("dashboard-groups");
+  input.addEventListener("change", () => setFile(input.files[0]));
+  dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+  dropZone.addEventListener("drop", e => {
+    e.preventDefault(); dropZone.classList.remove("drag-over");
+    setFile(e.dataTransfer.files[0]);
+  });
 
-        const widgetCharts = new Map();
+  confirmBtn.addEventListener("click", () => {
+    if (!chosenFile) return;
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "Reading…";
+    const reader = new FileReader();
+    reader.onload = e => {
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(e.target.result)));
+      try { sessionStorage.setItem(UPLOAD_CACHE_KEY, b64); } catch(_) {}
+      overlay.remove();
+      onSuccess(e.target.result);
+    };
+    reader.readAsArrayBuffer(chosenFile);
+  });
+}
 
-        // ──────────────────────────────────────────────────────────────
-        // Helpers (unchanged from your original)
-        // ──────────────────────────────────────────────────────────────
-        function safeString(v) {
-            if (v === null || v === undefined) return "";
-            return String(v);
+function getUploadedBuffer() {
+  return new Promise((resolve, reject) => {
+    const cached = sessionStorage.getItem(UPLOAD_CACHE_KEY);
+    if (cached) {
+      try {
+        const bin = atob(cached);
+        const buf = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+        resolve(buf.buffer);
+        return;
+      } catch(_) { sessionStorage.removeItem(UPLOAD_CACHE_KEY); }
+    }
+    showUploadModal(resolve);
+  });
+}
+
+const DEPT_CAT_COL = {
+  "Production":        "Line",
+  "Inventory Control": "City",
+  "Warehouse":         "City",
+  "SAP PSA Tracking":  "PSA Bin"
+};
+
+const NON_METRIC = new Set([
+  "Date","City","Line","Notes","Near Miss","Department","PSA Bin","_jsDate"
+]);
+
+// ─── AGGREGATION RULES ────────────────────────────────
+// Metrics in this set must NEVER be summed across rows.
+// They are averaged, optionally weighted by a time column.
+const AVG_METRICS = new Set([
+  // OEE components
+  "OEE","oee",
+  "Availability","Performance","Quality Rate",
+  // Rate / efficiency metrics
+  "Attainment","Attainment %",
+  "Fill Rate %","Fill Rate",
+  "Completion %","Bin Accuracy",
+  "PEM %",
+  // Any metric whose name contains these keywords (checked below)
+]);
+const AVG_KEYWORDS = [
+  "oee","rate","efficiency","attainment",
+  "completion","accuracy","yield","availability","performance"
+];
+
+// Columns used to weight OEE / efficiency averages.
+// First column found in the row wins.
+const WEIGHT_COLS = [
+  "Planned Production Time","Scheduled Time","Runtime Hours",
+  "Available Time","Shift Hours","Hours"
+];
+
+const COLORS = [
+  {b:"#2563eb",bg:"rgba(37,99,235,.45)"},{b:"#0d9488",bg:"rgba(13,148,136,.45)"},
+  {b:"#d97706",bg:"rgba(217,119,6,.45)"},{b:"#dc2626",bg:"rgba(220,38,38,.45)"},
+  {b:"#7c3aed",bg:"rgba(124,58,237,.45)"},{b:"#0891b2",bg:"rgba(8,145,178,.45)"},
+  {b:"#db2777",bg:"rgba(219,39,119,.45)"},
+];
+
+/* ═══════════════════════════════════════════════════════
+   AGGREGATION TYPE DETECTION
+═══════════════════════════════════════════════════════ */
+// Returns 'fill-rate' | 'weighted-avg' | 'avg' | 'sum'
+function aggType(metricName) {
+  if (metricName === "Fill Rate %") return "fill-rate";
+  if (AVG_METRICS.has(metricName)) return "weighted-avg";
+  const lower = metricName.toLowerCase();
+  if (AVG_KEYWORDS.some(k => lower.includes(k))) return "weighted-avg";
+  return "sum";
+}
+
+// Find first available weight column value in a row
+function weightOf(row) {
+  for (const col of WEIGHT_COLS) {
+    const v = row[col];
+    if (v != null && v !== "" && !isNaN(Number(v))) {
+      const n = Number(v);
+      if (n > 0) return n;
+    }
+  }
+  return null; // no weight column present — fall back to plain average
+}
+
+// Normalise OEE: SAP often stores it as 0–1 decimal; convert to 0–100
+function normaliseRate(v, metricName) {
+  const n = num(v);
+  // If the stored value is ≤ 1.5 and the metric looks like a % or OEE/rate,
+  // treat it as a decimal fraction and multiply by 100
+  const lower = metricName.toLowerCase();
+  const looksLikeDecimal =
+    lower.includes("oee") || lower.includes("rate") ||
+    lower.includes("attainment") || lower.includes("efficiency") ||
+    lower.includes("completion") || lower.includes("accuracy") ||
+    lower.includes("availability") || lower.includes("performance") ||
+    metricName.includes("%");
+  if (looksLikeDecimal && n > 0 && n <= 1.5) return n * 100;
+  return n;
+}
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+let deptData = {};
+let groups   = [];
+let charts   = {};
+let uid      = 1;
+
+const $ = id => document.getElementById(id);
+let output;
+
+/* ═══════════════════════════════════════════════════════
+   DATE UTILS
+═══════════════════════════════════════════════════════ */
+function excelToUTC(v) {
+  if (v == null || v === "") return null;
+  if (typeof v === "number") {
+    const d = new Date((v - (v > 59 ? 25569 : 25568)) * 86400000);
+    return isNaN(d) ? null : d;
+  }
+  const s = String(v).trim(); let m;
+  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/))) return new Date(Date.UTC(+m[3],+m[1]-1,+m[2]));
+  return null;
+}
+
+function aggKey(d, mode) {
+  if (!d) return null;
+  const y=d.getUTCFullYear(), mo=d.getUTCMonth(), day=d.getUTCDate();
+  if (mode==="month") return `${y}-${p2(mo+1)}`;
+  if (mode==="week") {
+    const t=new Date(Date.UTC(y,mo,day)), dow=t.getUTCDay()||7;
+    t.setUTCDate(day+4-dow);
+    const ys=new Date(Date.UTC(t.getUTCFullYear(),0,1));
+    const wk=Math.ceil((((t-ys)/864e5)+1)/7);
+    return `${t.getUTCFullYear()}-W${p2(wk)}`;
+  }
+  return `${y}-${p2(mo+1)}-${p2(day)}`;
+}
+const p2 = n => String(n).padStart(2,"0");
+
+/* ═══════════════════════════════════════════════════════
+   DATA LOAD
+═══════════════════════════════════════════════════════ */
+async function loadData() {
+  const st = $("data-status");
+  try {
+    const buf = await getUploadedBuffer();
+    const wb  = XLSX.read(buf, {type:"array", cellDates:false});
+    wb.SheetNames.forEach(name => {
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], {defval:null});
+      rows.forEach(r => { r._jsDate = excelToUTC(r.Date); });
+      deptData[name] = rows;
+    });
+    const keys = Object.keys(deptData);
+    st.className = "ok";
+    st.textContent = keys.length
+      ? `✓ ${keys.length} sheet${keys.length>1?"s":""} loaded`
+      : "⚠ No sheets found";
+  } catch(e) {
+    console.error(e);
+    st.className = "error";
+    st.textContent = `⚠ ${e.message}`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   BUILDER
+═══════════════════════════════════════════════════════ */
+function onDeptChange() {
+  const dept = $("builder-dept").value;
+  const mSel = $("builder-metric"), cSel = $("builder-category");
+  mSel.innerHTML = '<option value="">Select metric</option>';
+  cSel.innerHTML = '<option value="">None</option>';
+  mSel.disabled = cSel.disabled = true;
+  const rows = deptData[dept];
+  if (!rows?.length) return;
+  Object.keys(rows[0]).forEach(col => {
+    if (NON_METRIC.has(col)) return;
+    mSel.appendChild(new Option(col, col));
+  });
+  mSel.disabled = false;
+  const cat = DEPT_CAT_COL[dept];
+  if (cat) { cSel.appendChild(new Option(cat, cat)); cSel.disabled = false; }
+}
+
+function onAdd() {
+  const dept      = $("builder-dept").value;
+  const metric    = $("builder-metric").value;
+  const catField  = $("builder-category").value || null;
+  const chartType = $("builder-chart-type").value;
+  const gName     = $("builder-group-name").value.trim() || dept || "Untitled";
+
+  if (!dept)   return NovusCore.Toast.warning("Please select a department.");
+  if (!metric) return NovusCore.Toast.warning("Please select a metric.");
+
+  let g = groups.find(g => g.name === gName);
+  if (!g) { g = {id:uid++, name:gName, widgets:[]}; groups.push(g); }
+
+  if ($("builder-split-cat").checked && catField) {
+    const cats = [...new Set(deptData[dept].map(r=>str(r[catField])))].filter(Boolean).sort();
+    cats.forEach((v,i) => g.widgets.push({id:uid++, dept, metric, chartType, catField, filterValue:v, ci:i}));
+  } else {
+    g.widgets.push({id:uid++, dept, metric, chartType, catField});
+  }
+  persist(); render();
+  NovusCore.Toast.success("Widget added ✓");
+}
+
+/* ═══════════════════════════════════════════════════════
+   MUTATORS
+═══════════════════════════════════════════════════════ */
+function removeWidget(gId, wId) {
+  const g = groups.find(g=>g.id===gId); if(!g) return;
+  g.widgets = g.widgets.filter(w=>w.id!==wId);
+  if (!g.widgets.length) groups = groups.filter(x=>x.id!==gId);
+  persist(); render();
+}
+function removeGroup(gId) { groups = groups.filter(g=>g.id!==gId); persist(); render(); }
+function persist() { try{localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));}catch(_){} }
+
+/* ═══════════════════════════════════════════════════════
+   ROW FILTER
+═══════════════════════════════════════════════════════ */
+function filterRows(rows) {
+  const sv = $("global-start-date").value, ev = $("global-end-date").value;
+  const s0 = sv ? Date.UTC(+sv.slice(0,4),+sv.slice(5,7)-1,+sv.slice(8,10)) : null;
+  const e0 = ev ? Date.UTC(+ev.slice(0,4),+ev.slice(5,7)-1,+ev.slice(8,10)) : null;
+  return rows.filter(r => {
+    if (!r._jsDate) return false;
+    const t = r._jsDate.getTime();
+    if (s0!==null && t<s0) return false;
+    if (e0!==null && t>e0) return false;
+    return true;
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   AGGREGATION
+   Returns { labels, data, agg } where agg is the method used.
+═══════════════════════════════════════════════════════ */
+function aggregateMetric(rows, metric, mode) {
+  const type = aggType(metric);
+  const map  = {};   // key → bucket
+
+  rows.forEach(r => {
+    const k = aggKey(r._jsDate, mode);
+    if (!k) return;
+
+    if (!map[k]) {
+      map[k] = {
+        // sum path
+        sumV: 0,
+        // fill-rate path
+        ship: 0, sched: 0,
+        // weighted-avg path
+        weightedSum: 0, totalWeight: 0,
+        // plain-avg fallback
+        plainSum: 0, plainCount: 0,
+      };
+    }
+
+    const bucket = map[k];
+
+    if (type === "fill-rate") {
+      bucket.ship  += num(r["Number of cases shipped"]);
+      bucket.sched += num(r["Number of cases scheduled to ship"]);
+
+    } else if (type === "weighted-avg") {
+      const v = normaliseRate(r[metric], metric);
+      const w = weightOf(r);
+      if (!isNaN(v)) {
+        if (w !== null) {
+          // Weighted: accumulate v*w and total weight separately
+          bucket.weightedSum  += v * w;
+          bucket.totalWeight  += w;
+        } else {
+          // No weight column — plain average
+          bucket.plainSum   += v;
+          bucket.plainCount += 1;
         }
+      }
 
-        function parseNumber(v) {
-            if (v === null || v === undefined || v === "") return 0;
-            if (typeof v === "number") return v;
-            let s = String(v).trim();
-            if (!s) return 0;
-            const isNegative = s.includes("(") && s.includes(")");
-            s = s.replace(/[^0-9.\-]/g, "");
-            if (!s) return 0;
-            let num = parseFloat(s);
-            if (isNaN(num)) return 0;
-            if (isNegative && num > 0) num = -num;
-            return num;
-        }
+    } else {
+      // sum
+      bucket.sumV += num(r[metric]);
+    }
+  });
 
-        function formatNumber(v) {
-            const num = parseNumber(v);
-            return num.toLocaleString("en-US", { maximumFractionDigits: 2 });
-        }
+  const labels = Object.keys(map).sort();
 
-        function uuid() {
-            if (crypto.randomUUID) return crypto.randomUUID();
-            return "id_" + Math.random().toString(36).slice(2) + "_" + Date.now();
-        }
+  const data = labels.map(k => {
+    const b = map[k];
+    if (type === "fill-rate") {
+      return b.sched > 0 ? (b.ship / b.sched) * 100 : 0;
+    }
+    if (type === "weighted-avg") {
+      // Prefer weighted average; fall back to plain average
+      if (b.totalWeight > 0) return b.weightedSum / b.totalWeight;
+      if (b.plainCount  > 0) return b.plainSum    / b.plainCount;
+      return 0;
+    }
+    return b.sumV;
+  });
 
-        function getField(row, fieldName) {
-            if (!row || typeof row !== "object") return undefined;
-            const target = String(fieldName).trim().toLowerCase();
-            for (const key of Object.keys(row)) {
-                if (key.trim().toLowerCase() === target) {
-                    return row[key];
+  return { labels, data, type };
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════ */
+function render() {
+  Object.values(charts).forEach(c=>{try{c.destroy();}catch(_){}});
+  charts = {}; output.innerHTML = "";
+
+  const mode   = $("global-aggregation").value;
+  const mLabel = mode[0].toUpperCase()+mode.slice(1);
+
+  if (!groups.length) {
+    output.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><h3>No widgets yet</h3><p>Use the Widget Builder above to add your first visualization.</p></div>`;
+    return;
+  }
+
+  groups.forEach((g, gi) => {
+    const el = document.createElement("div");
+    el.className = "group";
+    el.style.animationDelay = `${gi * 40}ms`;
+    el.innerHTML = `<div class="group-header"><span class="group-title">${esc(g.name)}</span><button class="btn btn-danger" onclick="removeGroup(${g.id})">× Remove Group</button></div><div class="group-widgets"></div>`;
+    const wc = el.querySelector(".group-widgets");
+    wc.style.setProperty("--cols", Math.min(g.widgets.length, 4));
+    g.widgets.forEach((w, wi) => buildWidget(wc, g, w, mode, mLabel, wi));
+    output.appendChild(el);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   BUILD ONE WIDGET
+═══════════════════════════════════════════════════════ */
+function buildWidget(container, g, w, mode, mLabel, wi) {
+  // Determine badge label and style based on aggregation type
+  const type = aggType(w.metric);
+  let mDesc, bClass;
+  if (type === "fill-rate")    { mDesc = "Weighted Avg"; bClass = "badge-weighted"; }
+  else if (type === "weighted-avg") { mDesc = "Wtd Avg";  bClass = "badge-avg"; }
+  else                         { mDesc = "Sum";          bClass = "badge-sum"; }
+
+  const badgeTxt = `${mLabel} · ${mDesc}`;
+  const color    = COLORS[(w.ci ?? 0) % COLORS.length];
+  const title    = w.filterValue ? `${w.metric} (${w.filterValue})` : w.metric;
+
+  // Filter rows
+  let rows = filterRows(deptData[w.dept] || []);
+  if (w.filterValue && w.catField)
+    rows = rows.filter(r => str(r[w.catField]) === w.filterValue);
+
+  // ── AGGREGATE ──────────────────────────────────────
+  const { labels, data } = aggregateMetric(rows, w.metric, mode);
+
+  // ── CARD SHELL ─────────────────────────────────────
+  const card = document.createElement("div");
+  card.className = "widget";
+  card.style.animationDelay = `${wi * 30}ms`;
+  card.innerHTML = `
+    <div class="widget-head">
+      <div>
+        <div class="widget-title">${esc(title)}</div>
+        <span class="badge ${bClass}">${esc(badgeTxt)}</span>
+      </div>
+      <button class="btn-remove" title="Remove" onclick="removeWidget(${g.id},${w.id})">×</button>
+    </div>`;
+
+  // ── METRIC CARD ────────────────────────────────────
+  if (w.chartType === "metric") {
+    const last = data.length ? data[data.length - 1] : 0;
+    const isPercent = type !== "sum" || w.metric.includes("%");
+    const disp = isPercent ? last.toFixed(1) + "%" : last.toLocaleString();
+    const inner = document.createElement("div");
+    inner.innerHTML = `
+      <div class="metric-value" style="color:${color.b}">${esc(disp)}</div>
+      <div class="metric-sub">
+        ${labels.length ? `Latest: ${esc(labels[labels.length-1])}` : "No data"}
+        ${labels.length > 1 ? ` &middot; ${labels.length} periods` : ""}
+      </div>`;
+    card.appendChild(inner);
+
+  // ── CHART ──────────────────────────────────────────
+  } else {
+    const wrap   = document.createElement("div");
+    wrap.className = "chart-wrap";
+    const canvas = document.createElement("canvas");
+    const cid    = `c${g.id}_${w.id}`;
+    canvas.id    = cid;
+    wrap.appendChild(canvas);
+    card.appendChild(wrap);
+
+    const isPercent = type !== "sum" || w.metric.includes("%");
+
+    requestAnimationFrame(() => {
+      if (!canvas.isConnected) return;
+      try {
+        charts[cid] = new Chart(canvas.getContext("2d"), {
+          type: w.chartType,
+          data: {
+            labels,
+            datasets: [{
+              label: badgeTxt,
+              data,
+              borderColor: color.b,
+              backgroundColor: color.bg,
+              borderWidth: 2,
+              pointRadius: labels.length > 60 ? 0 : 3,
+              pointHoverRadius: 5,
+              fill: w.chartType !== "line",
+              tension: 0.35,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 400, easing: "easeOutQuart" },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: "rgba(15,23,42,.88)",
+                titleFont: { family:"'DM Sans'", size:11, weight:"600" },
+                bodyFont:  { family:"'DM Mono'", size:11 },
+                padding: 10, cornerRadius: 8,
+                callbacks: {
+                  label: ctx => {
+                    const v = ctx.parsed.y;
+                    return "  " + (isPercent ? v.toFixed(2)+"%" : v.toLocaleString());
+                  }
                 }
-            }
-            return undefined;
-        }
-
-        function getTimeBucket(rawDateStr, timeGrain) {
-            const s = safeString(rawDateStr).trim();
-            if (!s) return "";
-            const d = new Date(s);
-            if (isNaN(d)) return s;
-            const yyyy = d.getFullYear();
-            const mm = String(d.getMonth() + 1).padStart(2, "0");
-            const dd = String(d.getDate()).padStart(2, "0");
-            if (timeGrain === "month") return `${yyyy}-${mm}`;
-            if (timeGrain === "year")  return `${yyyy}`;
-            if (timeGrain === "week") {
-                const date = new Date(d.getTime());
-                const dayNum = (date.getUTCDay() + 6) % 7;
-                date.setUTCDate(date.getUTCDate() - dayNum + 3);
-                const firstThursday = new Date(Date.UTC(date.getUTCFullYear(), 0, 4));
-                const diff = date - firstThursday;
-                const week = 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
-                return `${yyyy}-W${String(week).padStart(2, "0")}`;
-            }
-            return `${yyyy}-${mm}-${dd}`;
-        }
-
-        function filterRowsByTimeGrain(rows, timeGrain) {
-            if (timeGrain !== "latest") return rows;
-            let latestTs = null;
-            let latestDateStr = null;
-            rows.forEach(r => {
-                const raw = safeString(getField(r, "Date")).trim();
-                if (!raw) return;
-                const d = new Date(raw);
-                if (isNaN(d)) return;
-                const ts = d.getTime();
-                if (latestTs === null || ts > latestTs) {
-                    latestTs = ts;
-                    latestDateStr = raw;
+              }
+            },
+            scales: {
+              x: {
+                grid: { color:"rgba(0,0,0,.04)" },
+                ticks: { maxTicksLimit:12, maxRotation:40, font:{size:10,family:"'DM Mono'"}, color:"#94a3b8" }
+              },
+              y: {
+                beginAtZero: !isPercent,
+                // For OEE / rates cap suggestion at 100%
+                ...(isPercent ? { suggestedMax: 100 } : {}),
+                grid: { color:"rgba(0,0,0,.04)" },
+                ticks: {
+                  font: { size:10, family:"'DM Mono'" }, color:"#94a3b8",
+                  callback: v => isPercent ? v.toFixed(1)+"%" : v.toLocaleString()
                 }
-            });
-            if (latestDateStr === null) return rows;
-            return rows.filter(r => safeString(getField(r, "Date")).trim() === latestDateStr);
-        }
-
-        // ──────────────────────────────────────────────────────────────
-        // Load Excel from GitHub raw URL
-        // ──────────────────────────────────────────────────────────────
-        async function loadAllDepartmentData() {
-            try {
-                const resp = await fetch(EXCEL_URL);
-                if (!resp.ok) {
-                    throw new Error(`Failed to load Excel: ${resp.status} ${resp.statusText}`);
-                }
-                const buf = await resp.arrayBuffer();
-                const wb = XLSX.read(buf, { type: "array", cellDates: true, raw: false });
-
-                console.log("Workbook sheets:", wb.SheetNames);
-
-                wb.SheetNames.forEach(sheetName => {
-                    const ws = wb.Sheets[sheetName];
-                    if (!ws) return;
-                    const rows = XLSX.utils.sheet_to_json(ws, {
-                        defval: null,
-                        raw: false
-                    });
-                    departmentData[sheetName] = rows;
-                });
-
-                console.log("Loaded departmentData keys:", Object.keys(departmentData));
-            } catch (err) {
-                console.error("Excel load error:", err);
-                alert(
-                    "Failed to load all_department_data_2026.xlsx from GitHub.\n\n" +
-                    "Possible causes:\n" +
-                    "• Wrong GitHub username/repo in the EXCEL_URL\n" +
-                    "• File not uploaded to /data/ folder\n" +
-                    "• Repo is private (make it public or use authenticated access)\n" +
-                    "• Network / CORS issue (test on GitHub Pages, not local file://)\n\n" +
-                    "Dashboard will be empty until data loads successfully."
-                );
+              }
             }
-        }
-
-        // ──────────────────────────────────────────────────────────────
-        // The rest of your code remains unchanged below this point
-        // (builder controls, add widget, render functions, charts, etc.)
-        // ──────────────────────────────────────────────────────────────
-
-        function refreshMetricOptionsForDept(dept) {
-            metricSelect.innerHTML = "";
-            metricSelect.disabled = true;
-            const placeholderOpt = document.createElement("option");
-            placeholderOpt.value = "";
-            placeholderOpt.textContent = dept ? "Select metric" : "Select a department first";
-            metricSelect.appendChild(placeholderOpt);
-
-            const rows = departmentData[dept];
-            if (!dept || !rows || !rows.length) {
-                if (dept && (!rows || !rows.length)) {
-                    console.warn("No data rows for sheet:", dept);
-                }
-                return;
-            }
-
-            const sample = rows[0] || {};
-            const cols = Object.keys(sample);
-            console.log("Columns for dept", dept, ":", cols);
-
-            cols.forEach(col => {
-                if (NON_METRIC_COLUMNS.has(col)) return;
-                const opt = document.createElement("option");
-                opt.value = col;
-                opt.textContent = col;
-                metricSelect.appendChild(opt);
-            });
-            metricSelect.disabled = false;
-        }
-
-        function refreshCategoryOptionsForDept(dept) {
-            categorySelect.innerHTML = "";
-            const noneOpt = document.createElement("option");
-            noneOpt.value = "";
-            noneOpt.textContent = "None";
-            categorySelect.appendChild(noneOpt);
-            categorySelect.disabled = true;
-
-            const catCol = DEPT_CATEGORY_COLUMN[dept];
-            if (!catCol) return;
-
-            const opt = document.createElement("option");
-            opt.value = catCol;
-            opt.textContent = catCol;
-            categorySelect.appendChild(opt);
-            categorySelect.disabled = false;
-        }
-
-        function initBuilderControls() {
-            deptSelect.addEventListener("change", () => {
-                const dept = deptSelect.value;
-                refreshMetricOptionsForDept(dept);
-                refreshCategoryOptionsForDept(dept);
-            });
-
-            addWidgetBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                handleAddWidget();
-            });
-
-            clearDashboardBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                if (!confirm("Clear all groups and widgets from dashboard?")) return;
-                clearAllGroups();
-            });
-        }
-
-        function handleAddWidget() {
-            const dept = deptSelect.value;
-            const metric = metricSelect.value;
-            const chartType = chartTypeSelect.value;
-            const categoryField = categorySelect.value || "";
-            const timeGrain = timeGrainSelect.value || "day";
-            let groupName = groupNameInput.value.trim();
-
-            if (!dept) { alert("Please select a department (sheet)."); return; }
-            if (!metric) { alert("Please select a metric."); return; }
-            if (!departmentData[dept] || !departmentData[dept].length) {
-                alert(`No data loaded for "${dept}". Check sheet name & workbook.`);
-                return;
-            }
-
-            if (!groupName) groupName = dept + " Group";
-
-            let group = dashboardGroups.find(g => g.name === groupName);
-            if (!group) {
-                group = { id: uuid(), name: groupName, widgets: [] };
-                dashboardGroups.push(group);
-            }
-
-            const widgetConfig = {
-                id: uuid(),
-                dept,
-                metric,
-                chartType,
-                categoryField,
-                timeGrain
-            };
-
-            group.widgets.push(widgetConfig);
-            saveDashboardLayout();
-            renderAllGroups();
-        }
-
-        function saveDashboardLayout() {
-            try {
-                const payload = {
-                    groups: dashboardGroups,
-                    savedAt: new Date().toISOString()
-                };
-                localStorage.setItem(DASHBOARD_STORAGE_KEY, JSON.stringify(payload));
-            } catch (err) {
-                console.error("Error saving dashboard layout:", err);
-            }
-        }
-
-        function loadDashboardLayout() {
-            try {
-                const raw = localStorage.getItem(DASHBOARD_STORAGE_KEY);
-                if (!raw) { dashboardGroups = []; return; }
-                const payload = JSON.parse(raw);
-                if (!payload || !Array.isArray(payload.groups)) {
-                    console.warn("Dashboard layout malformed in localStorage.");
-                    dashboardGroups = [];
-                    return;
-                }
-                dashboardGroups = payload.groups;
-            } catch (err) {
-                console.error("Error loading dashboard layout:", err);
-                dashboardGroups = [];
-            }
-        }
-
-        function clearAllGroups() {
-            widgetCharts.forEach(chart => chart.destroy());
-            widgetCharts.clear();
-            dashboardGroups = [];
-            saveDashboardLayout();
-            renderAllGroups();
-        }
-
-        function computeMetricAggregate(dept, metric, timeGrain) {
-            const grain = timeGrain || "day";
-            const allRows = departmentData[dept] || [];
-            const rows = filterRowsByTimeGrain(allRows, grain);
-            if (!rows.length) return 0;
-
-            let total = 0;
-            let count = 0;
-            rows.forEach(r => {
-                const v = parseNumber(r[metric]);
-                if (!Number.isNaN(v)) {
-                    total += v;
-                    count += 1;
-                }
-            });
-
-            if (["week", "month", "year"].includes(grain)) {
-                return count ? total / count : 0;
-            }
-            return total;
-        }
-
-        function renderAllGroups() {
-            widgetCharts.forEach(chart => chart.destroy());
-            widgetCharts.clear();
-            groupsContainer.innerHTML = "";
-
-            if (!dashboardGroups.length) {
-                const emptyMsg = document.createElement("p");
-                emptyMsg.style.fontSize = "0.85rem";
-                emptyMsg.style.color = "var(--muted, #64748b)";
-                emptyMsg.textContent = "No widgets yet. Use the form above to add your first widget.";
-                groupsContainer.appendChild(emptyMsg);
-                return;
-            }
-
-            dashboardGroups.forEach(group => {
-                const groupEl = document.createElement("div");
-                groupEl.className = "dashboard-group";
-
-                const headerEl = document.createElement("div");
-                headerEl.className = "dashboard-group-header";
-
-                const titleWrap = document.createElement("div");
-                const title = document.createElement("div");
-                title.className = "dashboard-group-title";
-                title.textContent = group.name;
-
-                const meta = document.createElement("div");
-                meta.className = "dashboard-group-meta";
-                meta.textContent = `${group.widgets.length} widget${group.widgets.length === 1 ? "" : "s"}`;
-
-                titleWrap.appendChild(title);
-                titleWrap.appendChild(meta);
-
-                const actionsWrap = document.createElement("div");
-                actionsWrap.style.display = "flex";
-                actionsWrap.style.gap = "0.4rem";
-
-                const deleteBtn = document.createElement("button");
-                deleteBtn.className = "btn btn-outline btn-sm";
-                deleteBtn.textContent = "Remove group";
-                deleteBtn.addEventListener("click", () => {
-                    if (!confirm(`Remove group "${group.name}" and all its widgets?`)) return;
-                    dashboardGroups = dashboardGroups.filter(g => g.id !== group.id);
-                    saveDashboardLayout();
-                    renderAllGroups();
-                });
-                actionsWrap.appendChild(deleteBtn);
-
-                headerEl.appendChild(titleWrap);
-                headerEl.appendChild(actionsWrap);
-
-                const widgetsWrap = document.createElement("div");
-                widgetsWrap.className = "dashboard-group-widgets";
-
-                group.widgets.forEach(widgetConfig => {
-                    const widgetEl = renderWidget(group, widgetConfig);
-                    widgetsWrap.appendChild(widgetEl);
-                });
-
-                groupEl.appendChild(headerEl);
-                groupEl.appendChild(widgetsWrap);
-                groupsContainer.appendChild(groupEl);
-            });
-        }
-
-        function renderWidget(group, widgetConfig) {
-            const { id, dept, metric, chartType, categoryField, timeGrain = "day" } = widgetConfig;
-
-            const wrapper = document.createElement("div");
-            wrapper.className = "widget-card";
-
-            const header = document.createElement("div");
-            header.className = "widget-header";
-
-            const left = document.createElement("div");
-            const title = document.createElement("div");
-            title.className = "widget-title";
-            title.textContent = `${metric} (${dept})`;
-
-            const subtitle = document.createElement("div");
-            subtitle.className = "widget-subtitle";
-
-            const timeLabelMap = {
-                day: "Day",
-                week: "Week",
-                month: "Month",
-                year: "Year",
-                latest: "Latest day"
-            };
-            const timeLabel = timeLabelMap[timeGrain] || "Day";
-
-            if (categoryField) {
-                subtitle.textContent = `${chartType.toUpperCase()} • Category: ${categoryField} • ${timeLabel}`;
-            } else {
-                subtitle.textContent = `${chartType.toUpperCase()} • No category • ${timeLabel}`;
-            }
-
-            left.appendChild(title);
-            left.appendChild(subtitle);
-
-            const right = document.createElement("div");
-            right.style.display = "flex";
-            right.style.alignItems = "center";
-            right.style.gap = "0.25rem";
-
-            const tag = document.createElement("span");
-            tag.className = "tag";
-            const dot = document.createElement("span");
-            dot.className = "tag-dot";
-            const tagText = document.createElement("span");
-            tagText.textContent = chartType === "metric" ? "Metric card" : "Chart";
-            tag.appendChild(dot);
-            tag.appendChild(tagText);
-
-            const deleteBtn = document.createElement("button");
-            deleteBtn.className = "btn btn-outline btn-sm";
-            deleteBtn.textContent = "✕";
-            deleteBtn.title = "Remove widget";
-            deleteBtn.addEventListener("click", () => {
-                const g = dashboardGroups.find(g => g.id === group.id);
-                if (!g) return;
-                g.widgets = g.widgets.filter(w => w.id !== id);
-                saveDashboardLayout();
-                renderAllGroups();
-            });
-
-            right.appendChild(tag);
-            right.appendChild(deleteBtn);
-
-            header.appendChild(left);
-            header.appendChild(right);
-
-            wrapper.appendChild(header);
-
-            if (chartType === "metric") {
-                const valueEl = document.createElement("div");
-                valueEl.className = "widget-metric-value";
-                const val = computeMetricAggregate(dept, metric, timeGrain);
-                valueEl.textContent = formatNumber(val);
-                wrapper.appendChild(valueEl);
-            } else {
-                const chartContainer = document.createElement("div");
-                chartContainer.className = "widget-chart-container";
-                const canvas = document.createElement("canvas");
-                canvas.className = "widget-chart";
-                canvas.id = `chart_${id}`;
-                chartContainer.appendChild(canvas);
-                wrapper.appendChild(chartContainer);
-
-                const ctx = canvas.getContext("2d");
-                const chart = buildChartForWidget(
-                    ctx,
-                    dept,
-                    metric,
-                    chartType,
-                    categoryField,
-                    timeGrain
-                );
-                if (chart) widgetCharts.set(id, chart);
-            }
-
-            return wrapper;
-        }
-
-        function buildChartForWidget(ctx, dept, metric, chartType, categoryField, timeGrain) {
-            const grain = timeGrain || "day";
-            let rows = departmentData[dept] || [];
-            rows = filterRowsByTimeGrain(rows, grain);
-            if (!rows.length) return null;
-
-            const useAverage = ["week", "month", "year"].includes(grain);
-
-            if (categoryField) {
-                const firstRow = rows[0] || {};
-                const hasDate = Object.keys(firstRow).some(k => k.trim().toLowerCase() === "date");
-
-                if (hasDate) {
-                    const catDateMap = {};
-                    const bucketSet = new Set();
-                    rows.forEach(r => {
-                        const rawCat = getField(r, categoryField);
-                        const cat = safeString(rawCat ?? "").trim() || "(blank)";
-                        const rawDate = getField(r, "Date");
-                        const bucket = getTimeBucket(rawDate, grain === "latest" ? "day" : grain) || "(blank)";
-                        const val = parseNumber(r[metric]);
-                        bucketSet.add(bucket);
-                        if (!catDateMap[cat]) catDateMap[cat] = {};
-                        if (!catDateMap[cat][bucket]) catDateMap[cat][bucket] = { sum: 0, count: 0 };
-                        catDateMap[cat][bucket].sum += val;
-                        catDateMap[cat][bucket].count += 1;
-                    });
-
-                    const labels = Array.from(bucketSet).sort();
-                    const categories = Object.keys(catDateMap);
-                    if (!labels.length || !categories.length) return null;
-
-                    const datasets = categories.map(cat => {
-                        const seriesData = labels.map(d => {
-                            const cell = catDateMap[cat][d];
-                            if (!cell) return 0;
-                            return useAverage && cell.count ? cell.sum / cell.count : cell.sum;
-                        });
-                        return { label: cat, data: seriesData };
-                    });
-
-                    const chartTypeForTime = (chartType === "scatter") ? "scatter" : "line";
-
-                    return new Chart(ctx, {
-                        type: chartTypeForTime,
-                        data: {
-                            labels: chartTypeForTime === "scatter" ? undefined : labels,
-                            datasets: chartTypeForTime === "scatter"
-                                ? datasets.map(ds => ({
-                                    label: ds.label,
-                                    data: ds.data.map((y, i) => ({ x: i + 1, y }))
-                                  }))
-                                : datasets
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { position: "bottom" },
-                                tooltip: {
-                                    callbacks: {
-                                        label: c => {
-                                            const val = c.raw && c.raw.y !== undefined ? c.raw.y : c.raw;
-                                            return `${c.dataset.label}: ${formatNumber(val)}`;
-                                        }
-                                    }
-                                }
-                            },
-                            scales: {
-                                x: chartTypeForTime === "scatter" ? { beginAtZero: true } : undefined,
-                                y: { beginAtZero: true }
-                            }
-                        }
-                    });
-                }
-
-                // Category only (no date)
-                const catMap = {};
-                rows.forEach(r => {
-                    const rawCat = getField(r, categoryField);
-                    const key = safeString(rawCat ?? "").trim() || "(blank)";
-                    const val = parseNumber(r[metric]);
-                    if (!catMap[key]) catMap[key] = 0;
-                    catMap[key] += val;
-                });
-
-                const labels = Object.keys(catMap);
-                const data = labels.map(k => catMap[k]);
-                if (!labels.length) return null;
-
-                if (chartType === "bar") {
-                    return new Chart(ctx, {
-                        type: "bar",
-                        data: { labels, datasets: [{ data }] },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { callbacks: { label: c => `${c.label}: ${formatNumber(c.raw)}` } }
-                            },
-                            scales: { y: { beginAtZero: true } }
-                        }
-                    });
-                } else if (chartType === "pie") {
-                    return new Chart(ctx, {
-                        type: "pie",
-                        data: { labels, datasets: [{ data }] },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { position: "bottom" },
-                                tooltip: { callbacks: { label: c => `${c.label}: ${formatNumber(c.raw)}` } }
-                            }
-                        }
-                    });
-                } else if (chartType === "line" || chartType === "scatter") {
-                    const isScatter = chartType === "scatter";
-                    return new Chart(ctx, {
-                        type: isScatter ? "scatter" : "line",
-                        data: {
-                            labels: isScatter ? undefined : labels,
-                            datasets: [{
-                                data: isScatter
-                                    ? labels.map((lbl, i) => ({ x: i + 1, y: data[i] }))
-                                    : data
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: c => {
-                                            const val = isScatter ? c.raw?.y : c.raw;
-                                            const label = isScatter ? labels[c.dataIndex] : c.label || "";
-                                            return `${label}: ${formatNumber(val)}`;
-                                        }
-                                    }
-                                }
-                            },
-                            scales: isScatter ? { x: { beginAtZero: true }, y: { beginAtZero: true } } : { y: { beginAtZero: true } }
-                        }
-                    });
-                }
-                return null;
-            }
-
-            // No category field
-            const firstRow = rows[0] || {};
-            const hasDate = Object.keys(firstRow).some(k => k.trim().toLowerCase() === "date");
-
-            if (hasDate) {
-                const byBucket = {};
-                rows.forEach(r => {
-                    const rawDate = getField(r, "Date");
-                    const bucket = getTimeBucket(rawDate, grain === "latest" ? "day" : grain) || "(blank)";
-                    const val = parseNumber(r[metric]);
-                    if (!byBucket[bucket]) byBucket[bucket] = { sum: 0, count: 0 };
-                    byBucket[bucket].sum += val;
-                    byBucket[bucket].count += 1;
-                });
-
-                const labels = Object.keys(byBucket).sort();
-                const data = labels.map(d => {
-                    const cell = byBucket[d];
-                    if (!cell) return 0;
-                    return useAverage && cell.count ? cell.sum / cell.count : cell.sum;
-                });
-
-                if (!labels.length) return null;
-
-                if (chartType === "pie") {
-                    return new Chart(ctx, {
-                        type: "pie",
-                        data: { labels, datasets: [{ data }] },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { position: "bottom" },
-                                tooltip: { callbacks: { label: c => `${c.label}: ${formatNumber(c.raw)}` } }
-                            }
-                        }
-                    });
-                }
-
-                const isScatter = chartType === "scatter";
-                return new Chart(ctx, {
-                    type: isScatter ? "scatter" : chartType,
-                    data: {
-                        labels: isScatter ? undefined : labels,
-                        datasets: [{
-                            data: isScatter
-                                ? labels.map((lbl, i) => ({ x: i + 1, y: data[i] }))
-                                : data
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: c => {
-                                        const val = isScatter ? c.raw?.y : c.raw;
-                                        const label = isScatter ? labels[c.dataIndex] : c.label || "";
-                                        return `${label}: ${formatNumber(val)}`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: isScatter ? { x: { beginAtZero: true }, y: { beginAtZero: true } } : { y: { beginAtZero: true } }
-                    }
-                });
-            } else {
-                const total = computeMetricAggregate(dept, metric, grain);
-                const labels = ["Total"];
-                const data = [total];
-
-                if (chartType === "pie") {
-                    return new Chart(ctx, {
-                        type: "pie",
-                        data: { labels, datasets: [{ data }] },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { position: "bottom" },
-                                tooltip: { callbacks: { label: c => `${c.label}: ${formatNumber(c.raw)}` } }
-                            }
-                        }
-                    });
-                }
-
-                const isScatter = chartType === "scatter";
-                return new Chart(ctx, {
-                    type: isScatter ? "scatter" : chartType,
-                    data: {
-                        labels: isScatter ? undefined : labels,
-                        datasets: [{
-                            data: isScatter ? [{ x: 1, y: total }] : data
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: c => {
-                                        const val = isScatter ? c.raw?.y : c.raw;
-                                        const label = isScatter ? "Total" : c.label || "";
-                                        return `${label}: ${formatNumber(val)}`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: isScatter ? { x: { beginAtZero: true, max: 2 }, y: { beginAtZero: true } } : { y: { beginAtZero: true } }
-                    }
-                });
-            }
-        }
-
-        async function initPage() {
-            try {
-                await loadAllDepartmentData();
-                if (Object.keys(departmentData).length === 0) {
-                    console.warn("No sheets loaded – builder will have no metrics available.");
-                }
-            } catch (err) {
-                console.error("Init error:", err);
-            }
-
-            initBuilderControls();
-            loadDashboardLayout();
-            renderAllGroups();
-        }
-
-        window.addEventListener("load", () => {
-            initPage();
+          }
         });
-    </script>
+      } catch(e) {
+        console.error(e);
+        wrap.innerHTML = `<div style="color:var(--red);padding:16px;font-size:.78rem;">⚠ ${esc(e.message)}</div>`;
+      }
+    });
+  }
+
+  container.appendChild(card);
+}
+
+/* ═══════════════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════════════ */
+function str(v) { return v==null ? "" : String(v); }
+function num(v) {
+  if (v==null||v===""||v==="DNR") return 0;
+  if (typeof v==="number") return isNaN(v)?0:v;
+  const n = parseFloat(String(v).replace(/[^0-9.\-]/g,""));
+  return isNaN(n)?0:n;
+}
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+document.addEventListener("DOMContentLoaded", () => {
+  output = $("dashboard-groups");
+  $("builder-dept").addEventListener("change", onDeptChange);
+  $("btn-add").addEventListener("click", onAdd);
+  $("btn-clear").addEventListener("click", () => {
+    if (confirm("Clear all widgets?")) {
+      groups = [];
+      try { localStorage.removeItem(STORAGE_KEY); } catch(_) {}
+      render();
+    }
+  });
+  output.innerHTML = `
+    <div class="skeleton-group">
+      <div class="skeleton skeleton-header"></div>
+      <div class="skeleton-cards">
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
+    </div>`;
+});
+
+window.__libsCallback = async () => {
+  await loadData();
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      groups = JSON.parse(saved);
+      groups.forEach(g => { g.id=uid++; g.widgets.forEach(w=>{w.id=uid++;}); });
+    }
+  } catch(_) { groups = []; }
+  render();
+};
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.__libs.chartjs && window.__libs.xlsx) window.__libsCallback();
+  });
+}
+</script>
 </body>
 </html>
