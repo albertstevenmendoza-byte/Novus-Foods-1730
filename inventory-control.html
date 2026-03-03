@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory Control – Novus Foods Ops Hub</title>
+  
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ═══════════════════════════════════════════
+       DESIGN TOKENS (Matched to DDS Dashboard)
+    ═══════════════════════════════════════════ */
+    :root {
+      --bg:        #f4f6fb;
+      --surface:   #ffffff;
+      --surface2:  #f8fafc;
+      --border:    #e2e8f0;
+      --border2:   #cbd5e1;
+      --ink:       #0f172a;
+      --ink2:      #334155;
+      --ink3:      #64748b;
+      --ink4:      #94a3b8;
+      --blue:      #2563eb;
+      --blue-l:    #3b82f6;
+      --blue-ll:   #dbeafe;
+      --green:     #059669;
+      --green-l:   #10b981;
+      --red:       #dc2626;
+      --red-l:     #ef4444;
+      --amber:     #d97706;
+      --purple:    #8b5cf6;
+      --radius:    14px;
+      --radius-sm: 8px;
+      --nav-h:     58px;
+      --ease:      cubic-bezier(.4,0,.2,1);
+      --shadow:    0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      background: var(--bg);
+      color: var(--ink);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");
+    }
+
+    .page { max-width: 1800px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; }
+
+    /* ── NAVIGATION ── */
+    .top-nav {
+      height: var(--nav-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 28px; position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+      margin-bottom: 24px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-l) 100%);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon svg { width: 16px; height: 16px; fill: white; }
+    .logo-text { font-size: 1.05rem; font-weight: 700; color: var(--ink); letter-spacing: -.02em; }
+    .logo-text span { color: var(--blue); }
+
+    .nav-tabs {
+      display: flex; gap: 2px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 3px;
+    }
+    .nav-tab {
+      color: var(--ink3); text-decoration: none; font-weight: 500;
+      font-size: .82rem; padding: 6px 14px; border-radius: 7px;
+      transition: all .15s var(--ease);
+    }
+    .nav-tab:hover { background: var(--surface); color: var(--ink2); }
+    .nav-tab.active { background: var(--surface); color: var(--blue); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+
+    /* ── BUTTONS ── */
+    .btn-run, .view-btn, .tab, .btn-download, .btn-lang, .btn-danger, .hide-btn, .staff-day-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 20px; border-radius: var(--radius-sm);
+      font-size: .85rem; font-weight: 600; cursor: pointer; border: none;
+      transition: all .12s var(--ease); font-family: inherit;
+    }
+    .btn-run { background: var(--green); color: white; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2); }
+    .btn-lang { background: var(--ink2); color: white; }
+    .btn-danger { background: var(--red-l); color: white; }
+    
+    /* ── PANELS ── */
+    .panel, .section, .upload-container, .loss-container, .metric-card, .staff-sub-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.02);
+    }
+    .section-header, .staff-header-blue, .panel-header {
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-l) 100%);
+      color: white; padding: 12px 20px; font-weight: 700; font-size: 0.95rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* ── UPLOAD SECTION ── */
+    .upload-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 20px; align-items: flex-end; padding: 20px; }
+    .upload-box label { display: block; font-size: .7rem; font-weight: 700; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
+    input[type="file"] {
+      width: 100%; padding: 10px; border: 1px dashed var(--border2); border-radius: var(--radius-sm);
+      background: var(--surface2); font-size: .75rem; cursor: pointer;
+    }
+
+    /* ── FINANCIAL IMPACT ── */
+    .loss-container { border-top: 5px solid var(--red); padding: 24px; text-align: center; }
+    .loss-amount { font-size: 2.8rem; font-weight: 800; color: var(--red); letter-spacing: -1px; }
+    .loss-breakdown { display: flex; justify-content: center; gap: 60px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
+
+    /* ── METRICS ── */
+    .metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .metric-card { padding: 20px; text-align: center; }
+    .metric-val { font-size: 2rem; font-weight: 800; color: var(--ink); line-height: 1; margin-bottom: 6px; display: block; }
+    .metric-lbl { font-size: .65rem; color: var(--ink3); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+
+    /* ── TABS ── */
+    .view-tabs, .tabs-container, .staff-day-tabs { display: flex; gap: 4px; background: #e2e8f0; padding: 4px; border-radius: 10px; margin-bottom: 20px; width: fit-content; }
+    .view-btn, .tab, .staff-day-btn { background: transparent; color: var(--ink3); border-radius: 7px; padding: 8px 16px; }
+    .view-btn.active, .tab.active, .staff-day-btn.active { background: white; color: var(--blue); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+    /* ── TABLES ── */
+    .table-scroll { overflow-x: auto; max-height: 500px; }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    th {
+      background: var(--blue-ll); color: var(--blue); font-weight: 700; padding: 12px;
+      text-align: left; border-bottom: 2px solid var(--blue-l); position: sticky; top: 0; z-index: 10;
+      font-size: .68rem; text-transform: uppercase;
+    }
+    td { padding: 12px; border-bottom: 1px solid var(--border); color: var(--ink2); }
+    tr:hover td { background: var(--surface2); }
+
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: .65rem; font-weight: 700; text-transform: uppercase; }
+    .badge-red { background: rgba(220, 38, 38, 0.1); color: var(--red); }
+    .badge-green { background: rgba(16, 185, 129, 0.1); color: var(--green-l); }
+    .badge-yellow { background: rgba(245, 158, 11, 0.1); color: var(--amber); }
+
+    /* ── FORM ELEMENTS ── */
+    .filter-select, .search-input, .staff-input {
+      padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--surface2); color: var(--ink); font-family: inherit; font-size: .82rem; outline: none;
+    }
+    .staff-input:focus { border-color: var(--blue); background: white; }
+
+    /* ── STAFF MODEL ── */
+    .staff-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; }
+    .staff-sub-table { border-radius: var(--radius-sm); }
+    .staff-day-tabs { background: var(--ink2); }
+    .staff-day-btn { color: rgba(255,255,255,0.7); }
+    .staff-day-btn.active { background: white; color: var(--ink); }
+
+    .hidden { display: none; }
+
+    /* Print Overrides */
+    .printing-mode .view-tabs, .printing-mode .action-bar, .printing-mode .staff-day-tabs { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm0 11h7v7H3zm11-11h7v7h-7zm0 11h7v7h-7z"/></svg>
+      </div>
+      <span class="logo-text" data-t="logoText">Novus Foods Inventory Control</span>
+    </div>
+    <nav class="nav-tabs">
+      <a class="nav-tab" href="staff-meeting-dashboard.html" data-t="navMeeting">Meeting Dashboard</a>
+      <a class="nav-tab" href="dds-dashboard.html" data-t="navDDS">DDS Dashboard</a>
+      <a class="nav-tab" href="needs-action.html" data-t="navAction">Needs Action</a>
+      <a class="nav-tab" href="sap-audit.html" data-t="navSAP">SAP Audit</a>
+      <a class="nav-tab active" href="Inventory-control.html" data-t="navInventory">Inventory Control</a>
+    </nav>
+    <div style="display:flex;gap:8px;">
+      <button onclick="toggleLanguage()" class="btn-lang" id="lang-btn">🇺🇸 EN / 🇲🇽 ES</button>
+      <button onclick="resetApplication()" class="btn-danger" data-t="resetHub">Reset Hub</button>
+    </div>
+  </div>
+
+  <div class="page">
+    
+    <div class="upload-container">
+      <div class="upload-grid">
+        <div class="upload-box">
+          <label data-t="labelPlanned">Planned Usage Workbook</label>
+          <input type="file" id="input-planned" accept=".xlsx, .xls" />
+        </div>
+        <div class="upload-box">
+          <label data-t="labelPhysical">Physical Stock Workbook</label>
+          <input type="file" id="input-physical" accept=".xlsx, .xls" />
+        </div>
+        <button class="btn-run" onclick="processInventory()" data-t="btnRun">Run Analysis</button>
+      </div>
+    </div>
+
+    <div id="results-container" class="hidden">
+      
+      <div class="view-tabs">
+        <button class="view-btn active" onclick="switchView('dashboard', this)" data-t="tabInvDash">Inventory Dashboard</button>
+        <button class="view-btn" onclick="switchView('batching', this)" data-t="tabBatchRep">Batching Report (3xx Items)</button>
+        <button class="view-btn" onclick="switchView('staffmodel', this)" data-t="tabStaffMod">Batching Staff Model</button>
+      </div>
+
+      <div class="action-bar" style="margin-bottom: 20px;">
+        <button id="btn-reset-hidden" class="btn-reset hidden" style="background:#64748b; color:white; padding:8px 16px; border-radius:8px; border:none; cursor:pointer;" onclick="resetHidden()"><span data-t="showHidden">Show All Hidden Items</span> (<span id="hidden-count">0</span>)</button>
+      </div>
+
+      <!-- VIEW: DASHBOARD -->
+      <div id="view-dashboard">
+        <div class="loss-container">
+          <div class="loss-label" data-t="lossLabel">Estimated Financial Impact (Expired Materials)</div>
+          <div class="loss-amount" id="total-loss">$0.00</div>
+          <div class="loss-breakdown">
+            <div class="loss-item">
+              <div class="loss-item-val" id="loss-fresh">$0.00</div>
+              <div class="loss-item-lbl" data-t="lossFresh">Fresh (330)<br>@ $1.50/lb</div>
+            </div>
+            <div class="loss-item">
+              <div class="loss-item-val" id="loss-thaw">$0.00</div>
+              <div class="loss-item-lbl" data-t="lossThaw">Thawed (239)<br>@ $1.25/lb</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric-card"><span id="stat-items" class="metric-val">0</span><span class="metric-lbl" data-t="statItems">Tracked Items (2xx, 3xx, 4xx)</span></div>
+          <div class="metric-card" style="border-top: 4px solid var(--red);"><span id="stat-shortage" class="metric-val" style="color: var(--red);">0</span><span class="metric-lbl" data-t="statShort">Shortages Found</span></div>
+          <div class="metric-card" style="border-top: 4px solid var(--amber);"><span id="stat-expiring" class="metric-val" style="color: var(--amber);">0</span><span class="metric-lbl" data-t="statExpMat">Expiring Materials</span></div>
+          <div class="metric-card" style="border-top: 4px solid #8b0000;"><span id="stat-expired" class="metric-val" style="color: #8b0000;">0 lbs</span><span class="metric-lbl" data-t="statAlreadyExp">Already Expired</span></div>
+        </div>
+
+        <div class="action-bar" style="margin-bottom: 20px; display: flex; gap: 10px;">
+          <button class="btn-download" style="background:var(--amber); color:white;" onclick="downloadActionItems()" data-t="btnDlDisc">Download Discrepancy Report</button>
+          <button class="btn-download" style="background:var(--blue); color:white;" onclick="downloadCerritosReport()" data-t="btnDlCerritos">Cerritos Cycle Count Report</button>
+          <button class="btn-download" style="background:var(--purple); color:white;" onclick="downloadExpiringItems()" data-t="btnDlExp">Download Expiring Items (Bin Specific)</button>
+        </div>
+
+        <div class="tabs-container" id="day-tabs">
+          <button class="tab active" onclick="setDayFilter('All', this)" data-t="dayFull">Full Week</button>
+          <button class="tab" onclick="setDayFilter('Monday', this)" data-t="dayMon">Mon</button>
+          <button class="tab" onclick="setDayFilter('Tuesday', this)" data-t="dayTue">Tue</button>
+          <button class="tab" onclick="setDayFilter('Wednesday', this)" data-t="dayWed">Wed</button>
+          <button class="tab" onclick="setDayFilter('Thursday', this)" data-t="dayThu">Thu</button>
+          <button class="tab" onclick="setDayFilter('Friday', this)" data-t="dayFri">Fri</button>
+          <button class="tab" onclick="setDayFilter('Saturday', this)" data-t="daySat">Sat</button>
+          <button class="tab" onclick="setDayFilter('Sunday', this)" data-t="daySun">Sun</button>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <span id="inventory-title" data-t="invTitle">Inventory Discrepancy Report (2xx, 3xx, 4xx Only)</span>
+            <select id="inventory-filter" class="filter-select" onchange="renderInventoryTable()">
+              <option value="all" data-t="optAll">Show All Items</option>
+              <option value="action" data-t="optAction">Shortage & Low Stock Only</option>
+              <option value="sto" data-t="optSTOs">STOs in Schedule (4xx)</option>
+            </select>
+          </div>
+          <div class="table-scroll">
+            <table id="table-inventory">
+              <thead><tr><th data-t="thProd">Product</th><th data-t="thDesc">Description</th><th data-t="thBin">Bin(s)</th><th data-t="thPlan">Planned Usage</th><th data-t="thWith">Withdrawn</th><th data-t="thOH">On-Hand</th><th data-t="thStat">Status</th><th data-t="thAct">Actions</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tabs-container expiring-tab-bar" id="expiring-tabs">
+          <button class="tab active" onclick="setExpiringFilter('All', this)" data-t="expAll">All Expiring</button>
+          <button class="tab" onclick="setExpiringFilter('1', this)">1*</button>
+          <button class="tab" onclick="setExpiringFilter('2', this)">2*</button>
+          <button class="tab" onclick="setExpiringFilter('3', this)">3*</button>
+        </div>
+        <div class="section" style="border-color: var(--amber);">
+          <div class="section-header" style="background: var(--amber);">
+              <div style="display: flex; align-items: center; gap: 15px;">
+                <span id="expiring-title"><span data-t="expTitle">Expiring Materials</span> (<span data-t="next">Next</span> <span id="expiry-days-label">10</span> <span data-t="days">Days</span>)</span>
+                <input type="range" id="expiry-slider" min="1" max="30" value="10" oninput="updateExpirySlider(this.value)" style="cursor: pointer; accent-color: white;">
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="text" id="expiring-search" class="search-input" data-t-placeholder="searchPlaceholder" placeholder="Search..." onkeyup="renderExpiringTable()">
+                <select id="expiring-status-filter" class="filter-select" onchange="renderExpiringTable()">
+                    <option value="all" data-t="optAll">Show All</option>
+                    <option value="expired" data-t="optExpOnly">Already Expired Only</option>
+                    <option value="short-shelf-life" data-t="optShortShelf">Short Shelf Life (≤3 Days)</option>
+                </select>
+              </div>
+          </div>
+          <div class="table-scroll">
+            <table id="table-expiring">
+              <thead>
+                <tr>
+                  <th data-t="thProd">Product</th><th data-t="thDesc">Description</th><th data-t="thBatch">Batch</th><th data-t="thBin">Bin</th><th data-t="thQty">Qty</th><th data-t="thCost">Cost</th><th data-t="thRec">Receipt Date</th><th data-t="thExp">Expiry</th><th data-t="thDaysUntil">Days Until Expiry</th><th data-t="thInSched">In Schedule?</th><th data-t="thStat">Status</th><th data-t="thAct">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: BATCHING MATRIX -->
+      <div id="view-batching" class="hidden">
+        <div class="action-bar" style="margin-bottom: 15px;">
+          <button class="btn-download" style="background:var(--purple); color:white;" onclick="downloadBatchingReport()" data-t="btnDlBatch">Download Batching Matrix (Excel)</button>
+        </div>
+        <div class="section" style="border-color: var(--purple);">
+          <div class="section-header" style="background: var(--purple);">
+            <span data-t="batchReqTitle">Batching Requirements (3xx Series Only)</span>
+            <input type="text" id="batching-search" class="search-input" data-t-placeholder="searchDescPlaceholder" placeholder="Search..." onkeyup="renderBatchingReport()">
+          </div>
+          <div class="table-scroll">
+            <table id="table-batching">
+              <thead>
+                <tr>
+                  <th data-t="thProd">Product</th><th data-t="thDesc">Description</th><th data-t="dayMon">Mon</th><th data-t="dayTue">Tue</th><th data-t="dayWed">Wed</th><th data-t="dayThu">Thu</th><th data-t="dayFri">Fri</th><th data-t="daySat">Sat</th><th data-t="daySun">Sun</th><th style="background: rgba(0,0,0,0.05);" data-t="thTotal">Total</th><th data-t="thAct">Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: STAFF MODEL -->
+      <div id="view-staffmodel" class="hidden">
+        <div class="print-only-header">
+            <h1 style="color: #1e3a8a; margin: 0;">NOVUS FOODS</h1>
+            <p style="margin: 0; font-weight: 700;">OPERATIONS HUB | BATCHING DIVISION</p>
+        </div>
+
+        <div class="staff-header-blue" data-t="staffHeader">Batching Staff Model</div>
+        
+        <div style="background:white; border: 1px solid var(--border); padding: 20px; display: flex; gap: 40px; align-items: center; margin-bottom: 20px; border-radius: 0 0 12px 12px;">
+            <div><b data-t="smDate">Date:</b> <input type="text" id="sm-input-date" class="staff-input fill-highlight" style="width: 200px;"></div>
+            <div><b data-t="smSuper">Supervisor:</b> <input type="text" id="sm-input-supervisor" class="staff-input fill-highlight" style="width: 200px;"></div>
+        </div>
+
+        <div class="action-bar" style="margin-bottom: 20px; display: flex; gap: 10px;">
+          <button class="btn-download" style="background: var(--red-l); color:white;" onclick="downloadStaffModelPDF()" data-t="btnDlPDF">📄 Download as PDF</button>
+          <button class="btn-download" style="background: var(--purple); color:white;" onclick="downloadStaffModelImage()" data-t="btnDlImg">📸 Download as Image</button>
+          <button class="btn-download" style="background: var(--blue); color:white;" onclick="emailStaffModel()" data-t="btnEmail">📧 Email Report</button>
+        </div>
+
+        <div class="staff-day-tabs">
+            <button class="staff-day-btn active" onclick="setStaffDay('Monday', this)" data-t="dayMonday">Monday</button>
+            <button class="staff-day-btn" onclick="setStaffDay('Tuesday', this)" data-t="dayTuesday">Tuesday</button>
+            <button class="staff-day-btn" onclick="setStaffDay('Wednesday', this)" data-t="dayWednesday">Wednesday</button>
+            <button class="staff-day-btn" onclick="setStaffDay('Thursday', this)" data-t="dayThursday">Thursday</button>
+            <button class="staff-day-btn" onclick="setStaffDay('Friday', this)" data-t="dayFriday">Friday</button>
+            <button class="staff-day-btn" onclick="setStaffDay('Saturday', this)" data-t="daySaturday">Saturday</button>
+            <button class="staff-day-btn" onclick="setStaffDay('Sunday', this)" data-t="daySunday">Sunday</button>
+        </div>
+
+        <div class="staff-grid">
+          <div>
+            <div class="staff-sub-header" data-t="smSumHeader">Planned Summary Table</div>
+            <div class="staff-sub-table">
+                <table>
+                    <thead><tr><th data-t="thCat">Category</th><th data-t="thPlanLbs">Planned (lbs)</th><th data-t="thActLbs">Actual (lbs)</th><th data-t="thVar">Var</th></tr></thead>
+                    <tbody id="sm-summary-body"></tbody>
+                </table>
+            </div>
+            <div class="staff-sub-header" data-t="smDirHeader">Planned Direct Tasks</div>
+            <div class="staff-sub-table">
+                <table>
+                    <thead><tr><th data-t="thTask">Task</th><th data-t="thVol">Volume</th><th data-t="thReqT">Req. Time (min)</th><th data-t="thHrs">Hrs.</th><th data-t="thFTE">FTE</th></tr></thead>
+                    <tbody id="sm-direct-body"></tbody>
+                    <tfoot>
+                        <tr class="total-row-bold">
+                            <td colspan="3" style="text-align:right" data-t="totalDirHrs">Total Direct Hours:</td>
+                            <td id="sm-total-direct-hrs">0</td>
+                            <td id="sm-total-direct-fte">0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+          </div>
+          <div>
+            <div class="staff-sub-header" data-t="smStaffHeader">Staff Information</div>
+            <div class="staff-sub-table">
+                <table>
+                    <tr><td data-t="smTotalLbsPlan">Total Pounds Planned to Cut</td><td id="sm-total-lbs-planned" style="font-weight: bold; color: var(--blue);">0</td></tr>
+                    <tr><td data-t="smTotalLbsAct">Actual Pounds Cut</td><td id="sm-total-lbs-actual" style="font-weight: bold; color: var(--green);">0</td></tr>
+                    <tr><td data-t="smAvailFTE">Available FTE</td><td><input type="number" id="sm-input-fte" class="staff-input fill-highlight" oninput="saveStaffState()"></td></tr>
+                    <tr><td data-t="smAvailReg">Available Regular Hours</td><td id="sm-reg-hrs">0</td></tr>
+                    <tr><td data-t="smOTAllowed">OT Hours Allowed</td><td id="sm-ot-hrs" style="color:var(--red); font-weight:bold;">0</td></tr>
+                    <tr><td data-t="smReqHrs">Required Hours</td><td id="sm-total-req-hrs" style="font-weight:bold;">0</td></tr>
+                    <tr style="border-top: 2px solid var(--border);"><td data-t="smPlanRegCost">Planned Regular Hour Cost</td><td id="sm-reg-cost" style="font-weight: bold; color: #2c5282;">$0.00</td></tr>
+                    <tr><td data-t="smPlanOTCost">Planned OT Hour Cost</td><td id="sm-ot-cost" style="font-weight: bold; color: #c53030;">$0.00</td></tr>
+                    <tr style="background: var(--blue-ll);"><td data-t="smPlanTotalCost"><strong>Planned Total Cost</strong></td><td id="sm-total-cost" style="font-weight: bold; color: var(--ink); font-size: 1.1em;">$0.00</td></tr>
+                </table>
+            </div>
+            <div class="staff-sub-header" data-t="smIndHeader">Planned Indirect Tasks</div>
+            <div class="staff-sub-table">
+                <table>
+                    <thead><tr><th data-t="thTask">Task</th><th data-t="thVol">Vol</th><th data-t="thUOM">UOM</th><th data-t="thTime">Time</th><th data-t="thHrs">Hrs</th><th data-t="thFTE">FTE</th></tr></thead>
+                    <tbody id="sm-indirect-body"></tbody>
+                    <tfoot>
+                        <tr class="total-row-bold">
+                            <td colspan="4" style="text-align:right" data-t="totalInd">Total Indirect:</td>
+                            <td id="sm-total-indirect-hrs">0</td>
+                            <td id="sm-total-indirect-fte">0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+          </div>
+        </div>
+        <div class="staff-sub-header" data-t="smNotesHeader">Notes / Exceptions</div>
+        <textarea id="sm-notes" class="staff-input fill-highlight" style="height: 80px; padding: 10px;" placeholder="Add notes here..."></textarea>
+
+        <div class="print-footer">
+            <div>Generated via Novus 1730 Ops Hub on <span id="print-timestamp"></span></div>
+            <div>Verified by:<span class="signature-line" style="border-bottom:1px solid #000; width:200px; display:inline-block; margin-left:10px;"></span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // GLOBAL DATA
+    let plannedByDay = {}; 
+    let physicalAgg = {};
+    let productBins = {};
+    let productMetadata = {};
+    let globalExpiringData = [];
+    let rawPhysicalData = [];
+    let batchingData = {}; 
+    let hiddenProducts = new Set();
+    let plannedMaterialsSet = new Set();
+    let dayToDateMap = {}; 
+    let expiryWindowDays = 10;
+    let currentLang = 'en';
+    let currentDayFilter = 'All';
+    let currentExpiringFilter = 'All';
+    let currentStaffDay = 'Monday';
+    const DAYS_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    // STAFF MODEL DATA
+    const SM_MAPPING = {
+        "Fresh and Organic Tomatoes": ["3309009", "3309173"],
+        "Aseptic Tomatoes": ["3309008"],
+        "Yellow and Red Onions, Basil": ["3307710", "3309019", "3307518"],
+        "Cilantro, Peppers, Herbs": ["3307525", "3307509", "3307506", "3305704", "3309017", "3309016", "3309139"]
+    };
+    const SM_CONSTANTS = {
+        "Fresh and Organic Tomatoes": 0.011, "Aseptic Tomatoes": 0.004, "Yellow and Red Onions, Basil": 0.12,
+        "Cilantro, Peppers, Herbs": 0.11, "Batches to Prep": 60, "Batches to Mix": 45, "Layer Line Batches": 115
+    };
+    let staffState = {}; 
+    DAYS_ORDER.forEach(day => {
+        staffState[day] = {
+            availFTE: "", 
+            batches: { "Batches to Prep": "", "Batches to Mix": "", "Layer Line Batches": "" },
+            indirect: [
+                { task: "Breaks", vol: "", uom: "Pers", time: 30 },
+                { task: "Forklifts/Spices", vol: "", uom: "Pers", time: 480 },
+                { task: "Tomato Sorter", vol: "", uom: "Pers", time: 480 },
+                { task: "Paperwork", vol: "", uom: "Hr", time: 90 },
+                { task: "Daily Set Up", vol: "", uom: "Pers", time: 25 },
+                { task: "Daily Clean Up", vol: "", uom: "Pers", time: 20 }
+            ]
+        };
+    });
+
+    // TRANSLATIONS
+    const translations = {
+        en: {
+            logoText: "Novus Foods Inventory Control", navMeeting: "Meeting Dashboard", navDDS: "DDS Dashboard", navAction: "Needs Action", navSAP: "SAP Audit", navInventory: "Inventory Control", resetHub: "Reset Hub", labelPlanned: "Planned Usage Workbook", labelPhysical: "Physical Stock Workbook", btnRun: "Run Analysis", tabInvDash: "Inventory Dashboard", tabBatchRep: "Batching Report (3xx Items)", tabStaffMod: "Batching Staff Model", showHidden: "Show All Hidden Items", lossLabel: "Estimated Financial Impact (Expired Materials)", lossFresh: "Fresh (330) @ $1.50/lb", lossThaw: "Thawed (239) @ $1.25/lb", statItems: "Tracked Items (2xx, 3xx, 4xx)", statShort: "Shortages Found", statExpMat: "Expiring Materials", statAlreadyExp: "Already Expired", btnDlDisc: "Download Discrepancy Report", btnDlCerritos: "Cerritos Cycle Count Report", btnDlExp: "Download Expiring Items (Bin Specific)", dayFull: "Full Week", dayMon: "Mon", dayTue: "Tue", dayWed: "Wed", dayThu: "Thu", dayFri: "Fri", daySat: "Sat", daySun: "Sun", dayMonday: "Monday", dayTuesday: "Tuesday", dayWednesday: "Wednesday", dayThursday: "Thursday", dayFriday: "Friday", daySaturday: "Saturday", daySunday: "Sunday", invTitle: "Inventory Discrepancy Report (2xx, 3xx, 4xx Only)", optAll: "Show All Items", optAction: "Shortage & Low Stock Only", optSTOs: "STOs in Schedule (4xx)", thProd: "Product", thDesc: "Description", thBin: "Bin(s)", thPlan: "Planned Usage", thWith: "Withdrawn", thOH: "On-Hand", thStat: "Status", thAct: "Actions", thBatch: "Batch", thQty: "Qty", thCost: "Cost", thRec: "Receipt Date", thExp: "Expiry", thDaysUntil: "Days Until Expiry", thInSched: "In Schedule?", expAll: "All Expiring", expTitle: "Expiring Materials", next: "Next", days: "Days", searchPlaceholder: "Search Product, Desc, Batch, or Bin...", optExpOnly: "Already Expired Only", optShortShelf: "Short Shelf Life (≤3 Days)", btnDlBatch: "Download Batching Matrix (Excel)", batchReqTitle: "Batching Requirements (3xx Series Only)", searchDescPlaceholder: "Search Product or Description...", thTotal: "Total", staffHeader: "Batching Staff Model", smDate: "Date:", smSuper: "Supervisor:", smDatePlaceholder: "Select date range...", smSuperPlaceholder: "Enter name...", btnDlPDF: "📄 Download as PDF", btnDlImg: "📸 Download as Image", btnEmail: "📧 Email Report", smSumHeader: "Planned Summary Table", thCat: "Category", thPlanLbs: "Planned (lbs)", thActLbs: "Actual (lbs)", thVar: "Var", smDirHeader: "Planned Direct Tasks", thTask: "Tarea", thVol: "Volume", thReqT: "Req. Time (min)", thHrs: "Hrs.", thFTE: "FTE", totalDirHrs: "Total Direct Hours:", smStaffHeader: "Staff Information", smTotalLbsPlan: "Total Pounds Planned to Cut", smTotalLbsAct: "Actual Pounds Cut", smAvailFTE: "Available FTE", smAvailReg: "Available Regular Hours", smOTAllowed: "OT Hours Allowed", smReqHrs: "Required Hours", smPlanRegCost: "Planned Regular Hour Cost", smPlanOTCost: "Planned OT Hour Cost", smPlanTotalCost: "Planned Total Cost", smIndHeader: "Planned Indirect Tasks", thUOM: "UOM", thTime: "Time", totalInd: "Total Indirect:", smNotesHeader: "Notes / Exceptions", smNotesPlaceholder: "Add notes here...",
+            badgeShortage: "SHORTAGE", badgeOk: "OK", badgeLow: "LOW STOCK"
+        },
+        es: {
+            logoText: "Control de Inventario Novus Foods", navMeeting: "Panel de Reunión", navDDS: "Panel DDS", navAction: "Acción Requerida", navSAP: "Auditoría SAP", navInventory: "Control de Inventario", resetHub: "Reiniciar Hub", labelPlanned: "Libro de Uso Planificado", labelPhysical: "Libro de Stock Físico", btnRun: "Ejecutar Análisis", tabInvDash: "Panel de Inventario", tabBatchRep: "Reporte de Lotes (3xx)", tabStaffMod: "Modelo de Personal", showHidden: "Mostrar Artículos Ocultos", lossLabel: "Impacto Financiero Estimado (Materiales Caducados)", lossFresh: "Fresco (330) @ $1.50/lb", lossThaw: "Descongelado (239) @ $1.25/lb", statItems: "Artículos Rastreados (2xx, 3xx, 4xx)", statShort: "Faltantes Encontrados", statExpMat: "Materiales por Vencer", statAlreadyExp: "Ya Vencido", btnDlDisc: "Descargar Reporte de Discrepancias", btnDlCerritos: "Reporte de Conteo Cerritos (4xx)", btnDlExp: "Descargar Artículos por Vencer", dayFull: "Semana Completa", dayMon: "Lun", dayTue: "Mar", dayWed: "Mié", dayThu: "Jue", dayFri: "Vie", daySat: "Sáb", daySun: "Dom", dayMonday: "Lunes", dayTuesday: "Martes", dayWednesday: "Miércoles", dayThursday: "Jueves", dayFriday: "Viernes", daySaturday: "Sábado", daySunday: "Domingo", invTitle: "Reporte de Discrepancias (2xx, 3xx, 4xx)", optAll: "Mostrar Todo", optAction: "Solo Faltantes y Stock Bajo", optSTOs: "STOs en Programa (4xx)", thProd: "Producto", thDesc: "Description", thBin: "Ubicación", thPlan: "Uso Planificado", thWith: "Surtido", thOH: "En Mano", thStat: "Estado", thAct: "Acciones", thBatch: "Lote", thQty: "Cant", thCost: "Costo", thRec: "Fecha Recibo", thExp: "Vencimiento", thDaysUntil: "Días para Vencimiento", thInSched: "¿En Programa?", expAll: "Todos los Vencimientos", expTitle: "Materiales por Vencer", next: "Próximos", days: "Días", searchPlaceholder: "Buscar Producto, Desc, Lote o Ubicación...", optExpOnly: "Solo Ya Vencidos", optShortShelf: "Vida Útil Corta (≤3 Días)", btnDlBatch: "Descargar Matriz de Lotes (Excel)", batchReqTitle: "Requerimientos de Lotes (Serie 3xx)", searchDescPlaceholder: "Buscar Producto o Descripción...", thTotal: "Total", staffHeader: "Modelo de Personal de Lotes", smDate: "Fecha:", smSuper: "Supervisor:", smDatePlaceholder: "Seleccionar rango...", smSuperPlaceholder: "Nombre del supervisor...", btnDlPDF: "📄 Descargar PDF", btnDlImg: "📸 Descargar Imagen", btnEmail: "📧 Enviar Correo", smSumHeader: "Tabla de Resumen Planificado", thCat: "Categoría", thPlanLbs: "Planificado (lb)", thActLbs: "Real (lb)", thVar: "Var", smDirHeader: "Tareas Directas Planificadas", thTask: "Tarea", thReqT: "Tiempo Req (min)", thHrs: "Hrs.", thFTE: "FTE", totalDirHrs: "Horas Directas Totales:", smStaffHeader: "Información del Personal", smTotalLbsPlan: "Total Libras Planificadas", smTotalLbsAct: "Libras Reales Cortadas", smAvailFTE: "FTE Disponible", smAvailReg: "Horas Reg Disponibles", smOTAllowed: "Horas OT Permitidas", smReqHrs: "Horas Requeridas", smPlanRegCost: "Costo Horas Reg Planificado", smPlanOTCost: "Costo Horas OT Planificado", smPlanTotalCost: "Costo Total Planificado", smIndHeader: "Tareas Indirectas Planificadas", thUOM: "UOM", thTime: "Tiempo", totalInd: "Total Indirecto:", smNotesHeader: "Notas / Excepciones", smNotesPlaceholder: "Añadir notas aquí...",
+            badgeShortage: "FALTANTE", badgeOk: "OK", badgeLow: "STOCK BAJO"
+        }
+    };
+
+    function t(key) { return translations[currentLang][key] || key; }
+    function toggleLanguage() { currentLang = currentLang === 'en' ? 'es' : 'en'; translateUI(); }
+    function translateUI() {
+        document.querySelectorAll('[data-t]').forEach(el => { el.innerHTML = t(el.getAttribute('data-t')); });
+        document.querySelectorAll('[data-t-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-t-placeholder')); });
+        if (rawPhysicalData.length > 0) { renderInventoryTable(); renderExpiringTable(); renderBatchingReport(); updateStaffModel(); }
+    }
+
+    // UTILITIES
+    const domCache = {};
+    function getCachedElement(id) { if (!domCache[id]) domCache[id] = document.getElementById(id); return domCache[id]; }
+    function resetApplication() { if (confirm('Are you sure you want to reset?')) location.reload(); }
+    function parseNum(v) { if (v === "" || v === undefined || v === null || v === "DNR") return 0; if (typeof v === 'number') return v; return parseFloat(String(v).replace(/[^0-9.-]/g, '')) || 0; }
+    function parseExcelDate(value) { if (!value) return null; if (value instanceof Date && !isNaN(value)) return value; if (typeof value === 'number') { const excelEpoch = new Date(1899, 11, 30); return new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000); } const parsed = new Date(value); return isNaN(parsed) ? null : parsed; }
+    function getRowValue(row, aliases) { for (let alias of aliases) { if (row[alias] !== undefined) return row[alias]; } return undefined; }
+    function readExcel(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = (e) => { const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array', cellDates: true }); resolve(XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]])); }; reader.readAsArrayBuffer(file); }); }
+
+    function switchView(view, btn) {
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['dashboard', 'batching', 'staffmodel'].forEach(v => getCachedElement('view-' + v).classList.add('hidden'));
+      getCachedElement('view-' + view).classList.remove('hidden');
+    }
+
+    function setDayFilter(day, btn) {
+      currentDayFilter = day;
+      document.querySelectorAll('#day-tabs .tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderInventoryTable();
+    }
+
+    function setExpiringFilter(type, btn) {
+      currentExpiringFilter = type;
+      document.querySelectorAll('#expiring-tabs .tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderExpiringTable();
+    }
+
+    function setStaffDay(day, btn) {
+        currentStaffDay = day;
+        document.querySelectorAll('.staff-day-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateStaffModel();
+    }
+
+    function hideProduct(prod) { 
+        hiddenProducts.add(String(prod)); 
+        const btn = getCachedElement('btn-reset-hidden');
+        if (hiddenProducts.size > 0) { btn.classList.remove('hidden'); getCachedElement('hidden-count').innerText = hiddenProducts.size; }
+        renderInventoryTable(); renderBatchingReport(); renderExpiringTable(); updateFinancials(); 
+    }
+
+    function resetHidden() { 
+        hiddenProducts.clear(); 
+        getCachedElement('btn-reset-hidden').classList.add('hidden');
+        renderInventoryTable(); renderBatchingReport(); renderExpiringTable(); updateFinancials(); 
+    }
+
+    function updateExpirySlider(val) { expiryWindowDays = parseInt(val); getCachedElement('expiry-days-label').innerText = val; if (rawPhysicalData.length > 0) { extractExpiringData(); renderExpiringTable(); updateFinancials(); } }
+
+    function extractExpiringData() {
+        globalExpiringData = []; const today = new Date(); today.setHours(0,0,0,0); const cutoffDate = new Date(); cutoffDate.setDate(today.getDate() + expiryWindowDays);
+        rawPhysicalData.forEach(row => {
+            const prodRaw = String(getRowValue(row, ['Product', 'Material', 'Material Number']) || "");
+            const qty = parseNum(getRowValue(row, ['Quantity', 'Unrestricted', 'Total Stock']));
+            const expiryVal = getRowValue(row, ['Shelf Life Expiration Date', 'Shelf Life', 'SLED/BBD', 'SLED', 'Expiration Date']);
+            if (expiryVal) {
+                const expiryDate = parseExcelDate(expiryVal);
+                if (expiryDate && expiryDate <= cutoffDate) {
+                    const cost = qty * (prodRaw.startsWith('330') ? 1.50 : prodRaw.startsWith('239') ? 1.25 : 1.00);
+                    const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                    globalExpiringData.push({ "Product": prodRaw, "Description": getRowValue(row, ['Product Short Description', 'Material Description', 'Description']) || "N/A", "Batch": getRowValue(row, ['Batch', 'Batch Number']) || "N/A", "Storage Bin": String(getRowValue(row, ['Storage Bin', 'Bin']) || "Unassigned"), "Quantity": qty, "Est. Cost": cost, "Expiry Date": expiryDate.toLocaleDateString(), "_expiryDateObj": expiryDate, "DaysUntil": diffDays, "Status": diffDays <= 0 ? "Expired" : (diffDays <= 3 ? "Critical" : "OK"), "InSchedule": plannedMaterialsSet.has(prodRaw) });
+                }
+            }
+        });
+    }
+
+    async function processInventory() {
+        const plannedFile = getCachedElement('input-planned').files[0]; const physicalFile = getCachedElement('input-physical').files[0];
+        if (!plannedFile || !physicalFile) return alert("Upload both workbooks.");
+        try {
+            const [plannedData, physicalData] = await Promise.all([readExcel(plannedFile), readExcel(physicalFile)]);
+            rawPhysicalData = physicalData; plannedByDay = { "Monday": {}, "Tuesday": {}, "Wednesday": {}, "Thursday": {}, "Friday": {}, "Saturday": {}, "Sunday": {} };
+            batchingData = {}; productMetadata = {}; physicalAgg = {}; productBins = {}; globalExpiringData = []; plannedMaterialsSet.clear(); dayToDateMap = {};
+            plannedData.forEach(row => {
+                const prodRaw = String(getRowValue(row, ['Material', 'Product', 'Material Number']) || ""); if (!prodRaw) return; plannedMaterialsSet.add(prodRaw);
+                
+                // FIXED: Prioritize "Start date (sched)" for SAP categorizing
+                const reqDateVal = getRowValue(row, ['Start date (sched)', 'Requirement date', 'Requirement Date', 'Req Date', 'Date']);
+                let dayName = "N/A";
+                if (reqDateVal) { const dateObj = parseExcelDate(reqDateVal); if (dateObj) { dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' }); if (!dayToDateMap[dayName]) dayToDateMap[dayName] = dateObj.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }); } }
+                
+                // FIXED: Prioritize "Order quantity (GMEIN)" for Planned and "Confirmed Yield Quantity (GMEIN)" for Withdrawn
+                const qty = parseNum(getRowValue(row, ['Order quantity (GMEIN)', 'Requirement Quantity (EINHEIT)', 'Requirement Quantity', 'Quantity']));
+                const withdrawn = parseNum(getRowValue(row, ['Confirmed Yield Quantity (GMEIN)', 'Quantity withdrawn (EINHEIT)', 'Quantity withdrawn', 'Withdrawn']));
+                
+                if (plannedByDay[dayName]) {
+                    if (!plannedByDay[dayName][prodRaw]) { plannedByDay[dayName][prodRaw] = { req: 0, withdrawn: 0 }; productMetadata[prodRaw] = getRowValue(row, ['Material Description', 'Product Description', 'Description']) || "N/A"; }
+                    plannedByDay[dayName][prodRaw].req += qty; plannedByDay[dayName][prodRaw].withdrawn += withdrawn;
+                }
+                if (prodRaw.startsWith('3') && DAYS_ORDER.includes(dayName)) {
+                    if (!batchingData[prodRaw]) { batchingData[prodRaw] = { desc: productMetadata[prodRaw] }; DAYS_ORDER.forEach(d => batchingData[prodRaw][d] = 0); }
+                    batchingData[prodRaw][dayName] += qty;
+                }
+            });
+            physicalData.forEach(row => {
+                const prodRaw = String(getRowValue(row, ['Product', 'Material', 'Material Number']) || ""); const qty = parseNum(getRowValue(row, ['Quantity', 'Unrestricted', 'Total Stock'])); const bin = String(getRowValue(row, ['Storage Bin', 'Bin']) || "Unassigned");
+                if (prodRaw) { physicalAgg[prodRaw] = (physicalAgg[prodRaw] || 0) + qty; if (!productBins[prodRaw]) productBins[prodRaw] = new Set(); productBins[prodRaw].add(bin); if (!productMetadata[prodRaw]) productMetadata[prodRaw] = getRowValue(row, ['Product Short Description', 'Material Description', 'Description']) || "N/A"; }
+            });
+            extractExpiringData(); renderInventoryTable(); renderBatchingReport(); renderExpiringTable(); updateFinancials(); updateStaffModel();
+            getCachedElement('results-container').classList.remove('hidden');
+        } catch (err) { alert("Error processing files."); }
+    }
+
+    // DASHBOARD LOGIC (RESTORED)
+    function renderInventoryTable() {
+        const filterValue = getCachedElement('inventory-filter').value; const invBody = document.querySelector('#table-inventory tbody');
+        const allTrackedProds = new Set([...Object.keys(productMetadata), ...Object.keys(physicalAgg)]); const currentPlanned = {};
+        const daysToSum = currentDayFilter === 'All' ? Object.keys(plannedByDay) : [currentDayFilter];
+        daysToSum.forEach(day => { Object.keys(plannedByDay[day] || {}).forEach(prod => { if (!currentPlanned[prod]) currentPlanned[prod] = { req: 0, withdrawn: 0 }; currentPlanned[prod].req += plannedByDay[day][prod].req; currentPlanned[prod].withdrawn += plannedByDay[day][prod].withdrawn; }); });
+        let shortages = 0;
+        const rows = Array.from(allTrackedProds).map(prod => {
+            if (hiddenProducts.has(prod)) return null; const p = currentPlanned[prod] || { req: 0, withdrawn: 0 };
+            
+            // Keep STO Fix: If STO filter is active, only show items starting with 4
+            if (filterValue === 'sto' && !prod.startsWith('4')) return null;
+
+            const onHand = physicalAgg[prod] || 0; 
+            const netNeeded = p.req - p.withdrawn;
+            const diff = onHand - netNeeded;
+
+            let statusClass = "badge-green"; 
+            let statusText = t("badgeOk");
+
+            if (diff < 0) { 
+                statusClass = "badge-red"; 
+                statusText = t("badgeShortage"); 
+                shortages++; 
+            } else if (diff >= 0 && p.req > 0 && onHand < (netNeeded * 1.1)) {
+                statusClass = "badge-yellow";
+                statusText = t("badgeLow");
+            }
+
+            return { prod, desc: productMetadata[prod] || "N/A", bins: productBins[prod] ? Array.from(productBins[prod]).join(', ') : 'N/A', planned: p.req, withdrawn: p.withdrawn, onhand: onHand, statusClass, statusText };
+        }).filter(item => {
+            if (!item) return false;
+            // NEW: If a specific day tab is selected, hide items that have 0 planned usage for that day
+            if (currentDayFilter !== 'All' && item.planned === 0) return false;
+            // Dropdown filter logic
+            if (filterValue === 'action') return item.statusText !== t("badgeOk");
+            return true;
+        });
+
+        invBody.innerHTML = rows.map(row => `<tr><td><b>${row.prod}</b></td><td>${row.desc}</td><td><small>${row.bins}</small></td><td>${row.planned.toLocaleString()}</td><td>${row.withdrawn.toLocaleString()}</td><td>${row.onhand.toLocaleString()}</td><td><span class="badge ${row.statusClass}">${row.statusText}</span></td><td><button class="hide-btn" style="background:transparent; border:1px solid #ddd; padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="hideProduct('${row.prod}')">Hide</button></td></tr>`).join('');
+        getCachedElement('stat-shortage').innerText = shortages;
+    }
+
+    function renderExpiringTable() {
+        const expBody = document.querySelector('#table-expiring tbody'); const statusFilter = getCachedElement('expiring-status-filter').value; const searchTerm = getCachedElement('expiring-search').value.toLowerCase();
+        const filtered = globalExpiringData.filter(item => { if (hiddenProducts.has(item.Product)) return false; if (currentExpiringFilter !== 'All' && !item.Product.startsWith(currentExpiringFilter)) return false; if (statusFilter === 'expired' && item.Status !== 'Expired') return false; if (statusFilter === 'short-shelf-life' && item.Status !== 'Critical') return false; if (searchTerm && !`${item.Product} ${item.Description} ${item.Batch} ${item["Storage Bin"]}`.toLowerCase().includes(searchTerm)) return false; return true; });
+        expBody.innerHTML = filtered.map(row => { const statusClass = row.Status === 'Expired' ? 'badge-red' : (row.Status === 'Critical' ? 'badge-yellow' : 'badge-green'); return `<tr><td><b>${row.Product}</b></td><td>${row.Description}</td><td>${row.Batch}</td><td>${row["Storage Bin"]}</td><td>${row.Quantity.toLocaleString()}</td><td>$${row["Est. Cost"].toFixed(2)}</td><td>N/A</td><td>${row["Expiry Date"]}</td><td>${row.DaysUntil}</td><td><span class="badge ${row.InSchedule?'badge-green':'badge-red'}">${row.InSchedule?'YES':'NO'}</span></td><td><span class="badge ${statusClass}">${row.Status}</span></td><td><button class="hide-btn" style="background:transparent; border:1px solid #ddd; padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="hideProduct('${row.Product}')">Hide</button></td></tr>`; }).join('');
+    }
+
+    function renderBatchingReport() {
+        const searchTerm = getCachedElement('batching-search').value.toLowerCase(); const tbody = document.querySelector('#table-batching tbody');
+        let sortedProds = Object.keys(batchingData).filter(p => !hiddenProducts.has(p)).sort(); if (searchTerm) sortedProds = sortedProds.filter(p => p.toLowerCase().includes(searchTerm) || batchingData[p].desc.toLowerCase().includes(searchTerm));
+        tbody.innerHTML = sortedProds.map(prod => { const data = batchingData[prod]; let rowTotal = 0; const cells = DAYS_ORDER.map(day => { rowTotal += data[day]; return `<td>${data[day] > 0 ? data[day].toLocaleString() : '—'}</td>`; }).join(''); return `<tr><td><b>${prod}</b></td><td>${data.desc}</td>${cells}<td><b>${rowTotal.toLocaleString()}</b></td><td><button class="hide-btn" style="background:transparent; border:1px solid #ddd; padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="hideProduct('${prod}')">Hide</button></td></tr>`; }).join('');
+    }
+
+    function updateFinancials() {
+        const today = new Date(); today.setHours(0,0,0,0); const nonOneExpiring = globalExpiringData.filter(i => !i.Product.startsWith('1') && !hiddenProducts.has(i.Product)); const expired = nonOneExpiring.filter(i => i._expiryDateObj <= today);
+        let total = 0, lbs = 0, fresh = 0, thaw = 0; expired.forEach(i => { lbs += i.Quantity; if (i.Product.startsWith('330')) { fresh += i["Est. Cost"]; total += i["Est. Cost"]; } else if (i.Product.startsWith('239')) { thaw += i["Est. Cost"]; } });
+        getCachedElement('total-loss').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits:2})}`; getCachedElement('loss-fresh').innerText = `$${fresh.toLocaleString(undefined, {minimumFractionDigits:2})}`; getCachedElement('loss-thaw').innerText = `$${thaw.toLocaleString(undefined, {minimumFractionDigits:2})}`; getCachedElement('stat-expired').innerText = `${lbs.toLocaleString()} lbs`; getCachedElement('stat-expiring').innerText = nonOneExpiring.length; getCachedElement('stat-items').innerText = Object.keys(productMetadata).filter(p => !hiddenProducts.has(p)).length;
+    }
+
+    // STAFF MODEL LOGIC
+    function saveStaffState() {
+        const day = currentStaffDay; staffState[day].availFTE = getCachedElement('sm-input-fte').value;
+        ["Batches to Prep", "Batches to Mix", "Layer Line Batches"].forEach(cat => { const input = document.getElementById(`sum-input-${cat.replace(/\s+/g, '')}`); if (input) staffState[day].batches[cat] = input.value; });
+        document.querySelectorAll('#sm-indirect-body tr').forEach((row, idx) => { const volInput = row.querySelector('.sm-ind-vol'); if(volInput) staffState[day].indirect[idx].vol = volInput.value; });
+        updateStaffModel(true);
+    }
+
+    function updateStaffModel(totalsOnly = false) {
+        const day = currentStaffDay; const state = staffState[day];
+        let volMap = { "Fresh and Organic Tomatoes": 0, "Aseptic Tomatoes": 0, "Yellow and Red Onions, Basil": 0, "Cilantro, Peppers, Herbs": 0 };
+        Object.keys(plannedByDay[day] || {}).forEach(prod => { for (const [cat, ids] of Object.entries(SM_MAPPING)) { if (ids.includes(prod)) volMap[cat] += plannedByDay[day][prod].req; } });
+        const totalPoundsPlanned = volMap["Fresh and Organic Tomatoes"] + volMap["Aseptic Tomatoes"] + volMap["Yellow and Red Onions, Basil"] + volMap["Cilantro, Peppers, Herbs"];
+        getCachedElement('sm-total-lbs-planned').innerText = totalPoundsPlanned.toLocaleString();
+        const categories = [...Object.keys(SM_MAPPING), "Batches to Prep", "Batches to Mix", "Layer Line Batches"];
+        if (!totalsOnly) {
+            getCachedElement('sm-input-fte').value = state.availFTE; const sumBody = getCachedElement('sm-summary-body'); const dirBody = getCachedElement('sm-direct-body');
+            sumBody.innerHTML = ''; dirBody.innerHTML = '';
+            categories.forEach(cat => {
+                const isManual = state.batches.hasOwnProperty(cat); const volNum = parseNum(isManual ? state.batches[cat] : volMap[cat]); const hrs = (volNum * SM_CONSTANTS[cat]) / 60; const safeId = cat.replace(/\s+/g, '');
+                sumBody.innerHTML += `<tr><td>${cat}</td><td>${isManual ? `<input type="number" id="sum-input-${safeId}" class="staff-input fill-highlight" value="${state.batches[cat]}" oninput="saveStaffState()">` : volNum.toLocaleString()}</td><td><input type="number" class="staff-input fill-highlight actual-input" data-category="${cat}" data-planned="${volNum}" oninput="updateActualPounds(); updateVariance(this);"></td><td class="variance-cell" data-category="${cat}">0</td></tr>`;
+                dirBody.innerHTML += `<tr><td>${cat}</td><td id="direct-vol-${safeId}">${volNum.toLocaleString()}</td><td>${SM_CONSTANTS[cat]}</td><td id="direct-hrs-${safeId}">${hrs.toFixed(3)}</td><td id="direct-fte-${safeId}">${(hrs/8).toFixed(3)}</td></tr>`;
+            });
+            getCachedElement('sm-indirect-body').innerHTML = state.indirect.map(item => `<tr><td>${item.task}</td><td><input type="number" class="sm-ind-vol staff-input fill-highlight" value="${item.vol}" oninput="saveStaffState()"></td><td>${item.uom}</td><td>${item.time}</td><td class="ind-hrs">0</td><td class="ind-fte">0</td></tr>`).join('');
+            updateActualPounds();
+        }
+        let totalDirectHrs = 0;
+        categories.forEach(cat => {
+            const volNum = parseNum(state.batches.hasOwnProperty(cat) ? state.batches[cat] : volMap[cat]); const hrs = (volNum * SM_CONSTANTS[cat]) / 60; totalDirectHrs += hrs;
+            if (totalsOnly) { const safeId = cat.replace(/\s+/g, ''); if (getCachedElement(`direct-vol-${safeId}`)) { getCachedElement(`direct-vol-${safeId}`).innerText = volNum.toLocaleString(); getCachedElement(`direct-hrs-${safeId}`).innerText = hrs.toFixed(3); getCachedElement(`direct-fte-${safeId}`).innerText = (hrs/8).toFixed(3); } }
+        });
+        let totalIndirectHrs = 0;
+        document.querySelectorAll('#sm-indirect-body tr').forEach((tr, idx) => { const hrs = (parseNum(state.indirect[idx].vol) * state.indirect[idx].time) / 60; tr.querySelector('.ind-hrs').innerText = hrs.toFixed(2); tr.querySelector('.ind-fte').innerText = (hrs/8).toFixed(2); totalIndirectHrs += hrs; });
+        getCachedElement('sm-total-direct-hrs').innerText = totalDirectHrs.toFixed(2); getCachedElement('sm-total-direct-fte').innerText = (totalDirectHrs / 8).toFixed(2); getCachedElement('sm-total-indirect-hrs').innerText = totalIndirectHrs.toFixed(2); getCachedElement('sm-total-indirect-fte').innerText = (totalIndirectHrs / 8).toFixed(2);
+        const totalReqHrs = totalDirectHrs + totalIndirectHrs; const availRegHrs = parseNum(state.availFTE) * 8; getCachedElement('sm-total-req-hrs').innerText = totalReqHrs.toFixed(2); getCachedElement('sm-reg-hrs').innerText = availRegHrs.toFixed(2);
+        const otHrs = Math.max(0, totalReqHrs - availRegHrs); getCachedElement('sm-ot-hrs').innerText = otHrs.toFixed(2); getCachedElement('sm-reg-cost').innerText = '$' + (availRegHrs * 25.4).toLocaleString(undefined, {minimumFractionDigits: 2}); getCachedElement('sm-ot-cost').innerText = '$' + (otHrs * 38.1).toLocaleString(undefined, {minimumFractionDigits: 2}); getCachedElement('sm-total-cost').innerText = '$' + ((availRegHrs * 25.4) + (otHrs * 38.1)).toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.querySelectorAll('.actual-input').forEach(input => updateVariance(input));
+    }
+
+    function updateActualPounds() { let totalActual = 0; document.querySelectorAll('.actual-input').forEach(input => { if (["Fresh and Organic Tomatoes", "Aseptic Tomatoes", "Yellow and Red Onions, Basil", "Cilantro, Peppers, Herbs"].includes(input.getAttribute('data-category'))) { totalActual += parseNum(input.value); } }); getCachedElement('sm-total-lbs-actual').innerText = totalActual.toLocaleString(); }
+    function updateVariance(inputElement) { const category = inputElement.getAttribute('data-category'); const plannedInput = document.getElementById(`sum-input-${category.replace(/\s+/g, '')}`); const planned = plannedInput ? parseNum(plannedInput.value) : parseNum(inputElement.getAttribute('data-planned')); const variance = parseNum(inputElement.value) - planned; const cell = document.querySelector(`.variance-cell[data-category="${category}"]`); if (cell) { cell.innerText = variance.toLocaleString(); cell.style.color = variance > 0 ? 'var(--green)' : (variance < 0 ? 'var(--red)' : 'inherit'); } }
+
+
+    // ============================================================
+    // ELEVATED PDF REPORT GENERATOR — LIGHT THEME v4
+    // ============================================================
+    async function downloadStaffModelPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'letter');
+      const day = currentStaffDay;
+      const state = staffState[day];
+      const PW = 215.9;
+      const PH = 279.4;
+      const M  = 16;
+      const IW = PW - M * 2;
+      const FOOTER_H = 16;
+      const SAFE_BOTTOM = PH - FOOTER_H - 8;
+
+      // ── LIGHT PROFESSIONAL PALETTE ───────────────────────────
+      const C = {
+        pageBg:    '#ffffff',
+        headerBg:  '#1e3a5f',
+        headerSub: '#4a7ab5',
+        accentLine:'#3b82f6',
+        sectionText: '#1e3a5f',
+        sectionBar:  '#3b82f6',
+        tHeadBg:   '#f1f5f9',
+        tHeadText: '#334155',
+        tAltBg:    '#f8fafc',
+        tBorderColor: '#e2e8f0',
+        tTotalBg:  '#eff6ff',
+        tTotalText:'#1d4ed8',
+        tTotalBorder:'#bfdbfe',
+        rowText:   '#1e293b',
+        mutedText: '#94a3b8',
+        cardBg:    '#ffffff',
+        cardBorder:'#e2e8f0',
+        tileBg:    '#f8fafc',
+        tileBorder:'#e2e8f0',
+        costTotalBg: '#1e3a5f',
+        blue:   '#2563eb',
+        green:  '#059669',
+        red:    '#dc2626',
+        amber:  '#d97706',
+        purple: '#7c3aed',
+        footerBg:   '#f1f5f9',
+        footerText: '#64748b',
+        footerBorder:'#cbd5e1',
+        white:  '#ffffff',
+      };
+
+      const dayAccent = {
+        Monday:'#2563eb', Tuesday:'#7c3aed', Wednesday:'#0891b2',
+        Thursday:'#b45309', Friday:'#9d174d', Saturday:'#059669', Sunday:'#dc2626'
+      };
+      const accent = dayAccent[day] || C.blue;
+
+      const hex2rgb = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+      const fill  = h => { const [r,g,b] = hex2rgb(h); doc.setFillColor(r,g,b); };
+      const draw  = h => { const [r,g,b] = hex2rgb(h); doc.setDrawColor(r,g,b); };
+      const textC = h => { const [r,g,b] = hex2rgb(h); doc.setTextColor(r,g,b); };
+
+      let pageNum = 1;
+
+      const drawFooter = () => {
+        const FY = PH - FOOTER_H;
+        fill(C.footerBg); doc.rect(0, FY, PW, FOOTER_H, 'F');
+        draw(C.footerBorder); doc.setLineWidth(0.4);
+        doc.line(0, FY, PW, FY);
+        fill(accent); doc.rect(0, FY, 2.5, FOOTER_H, 'F');
+        doc.setFontSize(6.5); doc.setFont('helvetica','bold'); textC(C.footerText);
+        doc.text('NOVUS FOODS  ·  BUENA PARK, CA  ·  CONFIDENTIAL — INTERNAL USE ONLY', M, FY+6);
+        doc.setFont('helvetica','normal');
+        doc.text('Generated: ' + new Date().toLocaleString(), M, FY+12);
+        draw(C.footerBorder); doc.setLineWidth(0.3);
+        doc.line(PW-M-55, FY+11, PW-M, FY+11);
+        doc.setFontSize(5.5); textC(C.mutedText);
+        doc.text('VERIFIED BY', PW-M-55, FY+14.5);
+        doc.setFontSize(7); textC(C.footerText);
+        doc.text(`Page ${pageNum}`, PW/2, FY+10, { align:'center' });
+      };
+
+      const addPage = (currentY, neededH) => {
+        if (currentY + neededH > SAFE_BOTTOM) {
+          drawFooter();
+          doc.addPage();
+          pageNum++;
+          fill(C.footerBg); doc.rect(0, 0, PW, 10, 'F');
+          draw(C.footerBorder); doc.setLineWidth(0.3); doc.line(0, 10, PW, 10);
+          fill(accent); doc.rect(0, 0, PW, 1.5, 'F');
+          doc.setFontSize(7); doc.setFont('helvetica','normal'); textC(C.footerText);
+          doc.text(`NOVUS FOODS  ·  ${day.toUpperCase()} STAFF MODEL  (continued)`, M, 7);
+          drawFooter();
+          return 16;
+        }
+        return currentY;
+      };
+
+      fill(C.headerBg); doc.rect(0, 0, PW, 40, 'F');
+      fill(accent); doc.rect(0, 40, PW, 2.5, 'F');
+      doc.setFontSize(21); doc.setFont('helvetica','bold'); textC(C.white);
+      doc.text('NOVUS FOODS', M, 17);
+      doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+      const [ar,ag,ab] = hex2rgb(C.headerSub);
+      doc.setTextColor(ar,ag,ab);
+      doc.text('Buena Park, CA  ·  Batching Division  ·  Operations Hub', M, 26);
+      fill(accent); doc.roundedRect(PW - M - 48, 7, 48, 10, 2, 2, 'F');
+      doc.setFontSize(7); doc.setFont('helvetica','bold'); textC(C.white);
+      doc.text('BATCHING REPORT', PW - M - 24, 13.5, { align:'center' });
+
+      const supervisor = document.getElementById('sm-input-supervisor').value || '—';
+      const reportDate  = document.getElementById('sm-input-date').value || new Date().toLocaleDateString();
+      doc.setFontSize(6.5); doc.setFont('helvetica','normal');
+      doc.setTextColor(ar,ag,ab);
+      doc.text('DATE', M, 34);
+      doc.text('SUPERVISOR', M+44, 34);
+      doc.text('GENERATED', M+104, 34);
+      doc.setFont('helvetica','bold'); textC(C.white);
+      doc.text(reportDate, M+12, 34);
+      doc.text(supervisor, M+66, 34);
+      doc.text(new Date().toLocaleString(), M+122, 34);
+
+      let y = 50;
+      fill(accent); doc.roundedRect(M, y, IW, 11, 2, 2, 'F');
+      doc.setFontSize(9.5); doc.setFont('helvetica','bold'); textC(C.white);
+      doc.text(day.toUpperCase() + '  —  STAFF LABOR MODEL', PW/2, y+7.5, { align:'center' });
+      y += 18;
+
+      const totalLbsPlanned = parseNum(getCachedElement('sm-total-lbs-planned').innerText.replace(/,/g,''));
+      const totalLbsActual  = parseNum(getCachedElement('sm-total-lbs-actual').innerText.replace(/,/g,''));
+      const availFTE   = parseNum(getCachedElement('sm-input-fte').value);
+      const reqHrs     = parseNum(getCachedElement('sm-total-req-hrs').innerText);
+      const otHrs      = parseNum(getCachedElement('sm-ot-hrs').innerText);
+      const totalCost  = getCachedElement('sm-total-cost').innerText;
+
+      const kpis = [
+        { label:'LBS PLANNED',  value:totalLbsPlanned.toLocaleString(), col:C.blue },
+        { label:'LBS ACTUAL',   value:totalLbsActual.toLocaleString(),  col:C.green },
+        { label:'FTE ON FLOOR', value:availFTE||'—',                    col:C.purple },
+        { label:'REQ. HOURS',   value:reqHrs.toFixed(1),                col:C.headerBg },
+        { label:'OT HOURS',     value:otHrs.toFixed(1),                 col:otHrs>0?C.red:C.green },
+        { label:'TOTAL COST',   value:totalCost,                        col:C.amber },
+      ];
+      const cardW = IW / kpis.length - 2;
+      const cardH = 24;
+      y = addPage(y, cardH + 6);
+      kpis.forEach((k, i) => {
+        const cx = M + i * (cardW + 2.4);
+        fill(C.cardBg); draw(C.cardBorder); doc.setLineWidth(0.3);
+        doc.roundedRect(cx, y, cardW, cardH, 1.5, 1.5, 'FD');
+        fill(k.col); doc.rect(cx, y, cardW, 2, 'F');
+        doc.setFontSize(5.5); doc.setFont('helvetica','bold'); textC(C.mutedText);
+        doc.text(k.label, cx + cardW/2, y + 9, { align:'center' });
+        const fs = String(k.value).length > 9 ? 9 : 11;
+        doc.setFontSize(fs); doc.setFont('helvetica','bold'); textC(k.col);
+        doc.text(String(k.value), cx + cardW/2, y + cardH - 5, { align:'center' });
+      });
+      y += cardH + 14;
+
+      const secLabel = (title, yp) => {
+        fill(C.sectionBar); doc.rect(M, yp, 3, 7, 'F');
+        doc.setFontSize(8.5); doc.setFont('helvetica','bold'); textC(C.sectionText);
+        doc.text(title.toUpperCase(), M+7, yp+5.5);
+        draw(C.tBorderColor); doc.setLineWidth(0.2);
+        doc.line(M+7, yp+8, M+IW, yp+8);
+        return yp + 14;
+      };
+
+      const tHead = (cols, yp) => {
+        fill(C.tHeadBg); doc.rect(M, yp, IW, 8, 'F');
+        draw(C.tBorderColor); doc.setLineWidth(0.3);
+        doc.rect(M, yp, IW, 8, 'D');
+        doc.setFontSize(6.5); doc.setFont('helvetica','bold'); textC(C.tHeadText);
+        cols.forEach(c => doc.text(c.label, c.x, yp+5.5, { align:c.align||'left' }));
+        return yp + 8;
+      };
+
+      const ROW_H = 8.5;
+      const tRow = (cells, yp, isAlt) => {
+        if (isAlt) { fill(C.tAltBg); doc.rect(M, yp, IW, ROW_H, 'F'); }
+        draw(C.tBorderColor); doc.setLineWidth(0.1);
+        doc.line(M, yp+ROW_H, M+IW, yp+ROW_H);
+        doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+        cells.forEach(c => {
+          if (c.bold)  doc.setFont('helvetica','bold');
+          if (c.color) textC(c.color); else textC(C.rowText);
+          doc.text(String(c.text||''), c.x, yp+6, { align:c.align||'left' });
+          doc.setFont('helvetica','normal'); textC(C.rowText);
+        });
+        return yp + ROW_H;
+      };
+
+      const tTotal = (cells, yp) => {
+        fill(C.tTotalBg); doc.rect(M, yp, IW, 9, 'F');
+        draw(C.tTotalBorder); doc.setLineWidth(0.4); doc.line(M, yp, M+IW, yp);
+        doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+        cells.forEach(c => { textC(c.col||C.tTotalText); doc.text(String(c.text), c.x, yp+6.5, { align:c.align||'left' }); });
+        return yp + 10;
+      };
+
+      let volMap = {"Fresh and Organic Tomatoes":0,"Aseptic Tomatoes":0,"Yellow and Red Onions, Basil":0,"Cilantro, Peppers, Herbs":0};
+      Object.keys(plannedByDay[day]||{}).forEach(prod => {
+        for (const [cat,ids] of Object.entries(SM_MAPPING)) { if (ids.includes(prod)) volMap[cat] += plannedByDay[day][prod].req; }
+      });
+      const allCats = [...Object.keys(SM_MAPPING), "Batches to Prep", "Batches to Mix", "Layer Line Batches"];
+
+      y = addPage(y, 100);
+      y = secLabel('Production Summary', y);
+      const s1 = { cat:M+2, planned:M+118, actual:M+150, variance:M+IW-2 };
+      y = tHead([{label:'CATEGORY', x:s1.cat},{label:'PLANNED', x:s1.planned, align:'right'},{label:'ACTUAL', x:s1.actual, align:'right'},{label:'VARIANCE', x:s1.variance, align:'right'}], y);
+      allCats.forEach((cat, idx) => {
+        const planned = parseNum(state.batches.hasOwnProperty(cat) ? state.batches[cat] : volMap[cat]);
+        y = tRow([{text:cat, x:s1.cat},{text:planned.toLocaleString(), x:s1.planned, align:'right'},{text:'—', x:s1.actual, align:'right', color:C.mutedText},{text:'—', x:s1.variance, align:'right', color:C.mutedText}], y, idx%2!==0);
+      });
+      y = tTotal([{text:'TOTAL PLANNED LBS', x:s1.cat},{text:totalLbsPlanned.toLocaleString(), x:s1.planned, align:'right'}], y);
+      y += 14;
+
+      y = addPage(y, 100);
+      y = secLabel('Direct Labor Tasks', y);
+      const s2 = { task:M+2, vol:M+100, rate:M+132, hrs:M+158, fte:M+IW-2 };
+      y = tHead([{label:'TASK', x:s2.task},{label:'VOLUME', x:s2.vol, align:'right'},{label:'MIN/UNIT', x:s2.rate, align:'right'},{label:'HOURS', x:s2.hrs, align:'right'},{label:'FTE', x:s2.fte, align:'right'}], y);
+      let totalDH = 0;
+      allCats.forEach((cat, idx) => {
+        const vol = parseNum(state.batches.hasOwnProperty(cat) ? state.batches[cat] : volMap[cat]);
+        const hrs = (vol * SM_CONSTANTS[cat]) / 60; totalDH += hrs;
+        y = tRow([{text:cat, x:s2.task},{text:vol.toLocaleString(), x:s2.vol, align:'right'},{text:SM_CONSTANTS[cat], x:s2.rate, align:'right', color:C.mutedText},{text:hrs.toFixed(2), x:s2.hrs, align:'right', bold:true},{text:(hrs/8).toFixed(3), x:s2.fte, align:'right'}], y, idx%2!==0);
+      });
+      y = tTotal([{text:'TOTAL DIRECT LABOR', x:s2.task},{text:totalDH.toFixed(2), x:s2.hrs, align:'right'},{text:(totalDH/8).toFixed(3), x:s2.fte, align:'right'}], y);
+      y += 14;
+
+      y = addPage(y, 100);
+      y = secLabel('Indirect Labor Tasks', y);
+      const s3 = { task:M+2, vol:M+90, uom:M+116, time:M+140, hrs:M+162, fte:M+IW-2 };
+      y = tHead([{label:'TASK', x:s3.task},{label:'VOL', x:s3.vol, align:'right'},{label:'UOM', x:s3.uom},{label:'TIME', x:s3.time, align:'right'},{label:'HOURS', x:s3.hrs, align:'right'},{label:'FTE', x:s3.fte, align:'right'}], y);
+      let totalIH = 0;
+      state.indirect.forEach((item, idx) => {
+        const hrs = (parseNum(item.vol) * item.time) / 60; totalIH += hrs;
+        y = tRow([{text:item.task, x:s3.task},{text:item.vol||'—', x:s3.vol, align:'right'},{text:item.uom, x:s3.uom},{text:item.time, x:s3.time, align:'right', color:C.mutedText},{text:hrs.toFixed(2), x:s3.hrs, align:'right', bold:true},{text:(hrs/8).toFixed(2), x:s3.fte, align:'right'}], y, idx%2!==0);
+      });
+      y = tTotal([{text:'TOTAL INDIRECT LABOR', x:s3.task},{text:totalIH.toFixed(2), x:s3.hrs, align:'right'},{text:(totalIH/8).toFixed(2), x:s3.fte, align:'right'}], y);
+
+      drawFooter();
+      doc.save(`Novus_StaffModel_${day}_${new Date().toISOString().slice(0,10)}.pdf`);
+    }
+
+    async function downloadStaffModelImage() { 
+        const element = getCachedElement('view-staffmodel');
+        element.classList.add('printing-mode', 'print-container');
+        document.getElementById('print-timestamp').innerText = new Date().toLocaleString();
+        try {
+            const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff" });
+            const link = document.createElement('a'); link.download = `Novus_StaffModel_${currentStaffDay}.png`; link.href = canvas.toDataURL(); link.click(); 
+        } finally { element.classList.remove('printing-mode', 'print-container'); }
+    }
+
+    function emailStaffModel() { window.location.href = `mailto:?subject=Staff Model - ${currentStaffDay}&body=Required Hrs: ${getCachedElement('sm-total-req-hrs').innerText}`; }
+    function downloadActionItems() {
+        const wb = XLSX.utils.book_new(); const data = [['Novus Foods - Discrepancy Report'], [`Generated: ${new Date().toLocaleString()}`], [], ['Product', 'Description', 'Bin(s)', 'Planned Usage', 'Withdrawn', 'On-Hand', 'Difference', 'Status']];
+        Object.keys(productMetadata).forEach(prod => { if (hiddenProducts.has(prod)) return; let req = 0, withdrawn = 0; Object.keys(plannedByDay).forEach(day => { if(plannedByDay[day][prod]) { req += plannedByDay[day][prod].req; withdrawn += plannedByDay[day][prod].withdrawn; } }); const onHand = physicalAgg[prod] || 0; const diff = onHand - (req - withdrawn); data.push([prod, productMetadata[prod], productBins[prod] ? Array.from(productBins[prod]).join(', ') : 'N/A', req, withdrawn, onHand, diff, diff < 0 ? 'SHORTAGE' : 'OK']); });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Discrepancy Report'); XLSX.writeFile(wb, `Inventory_Discrepancy.xlsx`);
+    }
+    function downloadCerritosReport() {
+        try {
+            const wb = XLSX.utils.book_new(); let hasData = false;
+            DAYS_ORDER.forEach(day => {
+                const dailyItems = Object.keys(plannedByDay[day] || {}).filter(prod => { const req = plannedByDay[day][prod].req; const onHand = physicalAgg[prod] || 0; return prod.startsWith('4') && req > 0 && !hiddenProducts.has(prod) && onHand < req; });
+                if (dailyItems.length > 0) { hasData = true; const data = [[`Cerritos Cycle Count Report - ${day}`], ['Bin', 'Product', 'Description', 'On-Hand BP', 'Amount Needed', 'Usage Day(s)', 'On-Hand Cerritos', 'Actual Cerritos', 'Variance', 'Notes']]; dailyItems.forEach(prod => { data.push([productBins[prod] ? Array.from(productBins[prod]).join(', ') : 'N/A', prod, productMetadata[prod] || 'N/A', physicalAgg[prod] || 0, plannedByDay[day][prod].req, day, '', '', '', '']); }); const ws = XLSX.utils.aoa_to_sheet(data); XLSX.utils.book_append_sheet(wb, ws, day); }
+            });
+            if (!hasData) return alert("No STO shortages found."); XLSX.writeFile(wb, `Cerritos_Report.xlsx`);
+        } catch (e) { alert("Error generating workbook."); }
+    }
+    function downloadExpiringItems() {
+        const wb = XLSX.utils.book_new(); ['1', '2', '3'].forEach(prefix => { const sheetData = [['Product', 'Description', 'Batch', 'Bin', 'Qty', 'Cost', 'Expiry', 'Status']]; globalExpiringData.filter(i => i.Product.startsWith(prefix) && !hiddenProducts.has(i.Product)).forEach(item => { sheetData.push([item.Product, item.Description, item.Batch, item["Storage Bin"], item.Quantity, item["Est. Cost"], item["Expiry Date"], item.Status]); }); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sheetData), `${prefix}-Series`); });
+        XLSX.writeFile(wb, `Expiring_Materials.xlsx`);
+    }
+    function downloadBatchingReport() {
+        const wb = XLSX.utils.book_new(); const data = [['Product', 'Description', ...DAYS_ORDER, 'Total']];
+        Object.keys(batchingData).forEach(prod => { const item = batchingData[prod]; let total = 0; const row = [prod, item.desc]; DAYS_ORDER.forEach(d => { row.push(item[d]); total += item[d]; }); row.push(total); data.push(row); });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Matrix'); XLSX.writeFile(wb, `Batching_Matrix.xlsx`);
+    }
+  </script>
+</body>
+</html>
