@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>DDS Dashboard – Novus Foods Ops Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"></noscript>
+  <script src="novus-core.js" defer></script>
+  <script async src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" onload="window.__libs.sortable=true;_checkLibsReady()"></script>
+  <script>
+    window.__libs={chartjs:false,xlsx:false,sortable:false};
+    function _checkLibsReady(){if(window.__libs.chartjs&&window.__libs.xlsx&&window.__libsCallback)window.__libsCallback();}
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/chart.js" onload="window.__libs.chartjs=true;_checkLibsReady()"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onload="window.__libs.xlsx=true;_checkLibsReady()"></script>
+  <style>
+    :root {
+      --bg:#f4f6fb;--surface:#ffffff;--surface2:#f8fafc;--border:#e2e8f0;--border2:#cbd5e1;
+      --ink:#0f172a;--ink2:#334155;--ink3:#64748b;--ink4:#94a3b8;
+      --blue:#2563eb;--blue-l:#3b82f6;--blue-ll:#dbeafe;--blue-glow:rgba(37,99,235,.12);
+      --teal:#0d9488;--teal-ll:#ccfbf1;--green:#059669;--green-l:#10b981;
+      --red:#dc2626;--red-l:#ef4444;--amber:#d97706;--amber-ll:#fef3c7;
+      --radius:14px;--radius-sm:8px;--radius-xs:5px;--nav-h:58px;
+      --ease:cubic-bezier(.4,0,.2,1);--ease-out:cubic-bezier(0,0,.2,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',system-ui,sans-serif;font-size:13.5px;line-height:1.55;background:var(--bg);color:var(--ink);overflow-x:hidden;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");}
+    @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+    .skeleton{border-radius:var(--radius-xs);background:linear-gradient(90deg,#e8edf4 25%,#f4f7fb 50%,#e8edf4 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;}
+    .page{max-width:1760px;margin:0 auto;padding:0 20px 60px;}
+    .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);margin-bottom:24px;will-change:transform;transform:translateZ(0);}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--blue-l));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .logo-icon svg{width:16px;height:16px;fill:white;}
+    .logo-text{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;}
+    .logo-text span{color:var(--blue);}
+    .nav-tabs{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;overflow-x:auto;scrollbar-width:none;}
+    .nav-tabs::-webkit-scrollbar{display:none;}
+    .nav-tab{color:var(--ink3);text-decoration:none;font-weight:500;font-size:.82rem;padding:6px 14px;border-radius:7px;transition:background .15s,color .15s;white-space:nowrap;}
+    .nav-tab:hover{background:var(--surface);color:var(--ink2);}
+    .nav-tab.active{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:transform .12s var(--ease-spring),filter .12s,box-shadow .12s;letter-spacing:-.01em;}
+    .btn:active{transform:scale(.96);}
+    .btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--ink2);}
+    .btn-ghost:hover{background:var(--bg);}
+    .btn-danger{background:var(--red-l);color:white;padding:5px 11px;font-size:.75rem;}
+    .date-header{text-align:center;font-size:.9rem;font-weight:600;font-family:'DM Mono',monospace;color:var(--ink3);margin-bottom:20px;}
+    .dash-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-bottom:16px;}
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s,border-color .2s;animation:fadeUp .28s var(--ease-out) both;}
+    .panel:hover{box-shadow:0 4px 18px rgba(0,0,0,.07);border-color:var(--border2);}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    .panel-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));padding:11px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;cursor:grab;}
+    .panel-header:active{cursor:grabbing;}
+    .panel-title{color:white;font-weight:700;font-size:.9rem;}
+    .panel-date{font-size:.68rem;font-family:'DM Mono',monospace;color:var(--ink4);text-align:center;padding:6px 16px 0;flex-shrink:0;}
+    .panel-date.stale{color:var(--red-l);font-weight:700;animation:pulse 2s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+    .panel-body{padding:14px 16px 16px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+    .metric-row{display:flex;gap:10px;}
+    .metric-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 10px;flex:1;text-align:center;transition:border-color .15s,box-shadow .15s;}
+    .metric-box:hover{border-color:var(--blue-l);box-shadow:0 0 0 3px var(--blue-glow);}
+    .metric-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:5px;}
+    .metric-value{font-size:1.6rem;font-weight:700;letter-spacing:-.03em;color:var(--ink);line-height:1.1;}
+    .section-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--blue-l);margin-bottom:4px;}
+    .drivers-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:.82rem;font-family:'DM Mono',monospace;color:var(--ink2);white-space:pre-wrap;line-height:1.6;min-height:40px;}
+    .drivers-box.alert{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25);color:var(--red);}
+    .data-table{width:100%;border-collapse:collapse;font-size:.8rem;}
+    .data-table th{background:var(--blue-ll);color:var(--blue);font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;padding:7px 8px;text-align:center;border-bottom:2px solid var(--blue-l);}
+    .data-table td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--border);color:var(--ink2);}
+    .data-table tr:last-child td{border-bottom:none;}
+    .data-table tr:hover td{background:var(--surface2);}
+    .td-green{background:rgba(16,185,129,.12)!important;color:var(--green)!important;font-weight:600;}
+    .td-amber{background:rgba(245,158,11,.12)!important;color:var(--amber)!important;font-weight:600;}
+    .td-red{background:rgba(239,68,68,.12)!important;color:var(--red-l)!important;font-weight:600;}
+    .chart-wrap{position:relative;width:100%;border-radius:var(--radius-sm);overflow:hidden;background:var(--surface2);border:1px solid var(--border);padding:10px;}
+    .chart-wrap canvas{display:block;}
+    .plan-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+    @media(max-width:1100px){.plan-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:660px){.plan-grid{grid-template-columns:repeat(2,1fr)}}
+    .plan-card{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
+    .plan-card-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;padding:8px 12px;font-weight:700;font-size:.78rem;text-transform:uppercase;text-align:center;}
+    .plan-card-body{padding:10px 12px;min-height:80px;outline:none;white-space:pre-wrap;color:var(--ink2);font-size:.82rem;background:var(--surface2);font-family:'DM Sans',sans-serif;}
+    .plan-card-body:focus{background:var(--surface);}
+    #data-status{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--ink3);}
+    #data-status.ok{color:var(--green);}
+    #data-status.error{color:var(--red);}
+    .resizer{position:absolute;right:0;bottom:0;width:22px;height:22px;cursor:nwse-resize;clip-path:polygon(100% 0,100% 100%,0 100%);background:linear-gradient(135deg,var(--border2),var(--blue));opacity:0;transition:opacity .2s;border-radius:0 0 var(--radius) 0;}
+    .panel:hover .resizer{opacity:.5;}
+    ::-webkit-scrollbar{width:7px;height:7px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+    /* ── UPLOAD MODAL ── */
+    .upload-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease both;}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .upload-modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:36px 40px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.18);animation:slideUp .25s var(--ease-spring) both;}
+    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .upload-modal h2{font-size:1.15rem;font-weight:800;color:var(--ink);margin-bottom:6px;letter-spacing:-.02em;}
+    .upload-modal p{font-size:.82rem;color:var(--ink3);margin-bottom:24px;line-height:1.6;}
+    .upload-drop-zone{border:2px dashed var(--border2);border-radius:var(--radius-sm);padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:20px;background:var(--surface2);}
+    .upload-drop-zone:hover,.upload-drop-zone.drag-over{border-color:var(--blue-l);background:var(--blue-ll);}
+    .upload-drop-zone input[type="file"]{display:none;}
+    .upload-drop-zone .drop-icon{font-size:2rem;margin-bottom:10px;}
+    .upload-drop-zone .drop-label{font-size:.85rem;font-weight:600;color:var(--ink2);}
+    .upload-drop-zone .drop-sub{font-size:.75rem;color:var(--ink3);margin-top:4px;}
+    .upload-drop-zone .drop-chosen{font-size:.8rem;color:var(--green);font-weight:700;margin-top:8px;}
+    .upload-modal .btn-upload{width:100%;padding:11px;background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.3);transition:filter .12s,transform .1s;}
+    .upload-modal .btn-upload:hover{filter:brightness(1.07);transform:translateY(-1px);}
+    .upload-modal .btn-upload:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  </style>
+</head>
+<body>
+<div class="top-nav">
+  <div class="logo">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm0 11h7v7H3zm11-11h7v7h-7zm0 11h7v7h-7z"/></svg></div>
+    <span class="logo-text">Novus <span>Foods</span> Ops</span>
+  </div>
+  <nav class="nav-tabs">
+    <a class="nav-tab" href="staff-meeting-dashboard.html">Meeting Dashboard</a>
+    <a class="nav-tab" href="dds-dashboard.html">DDS Dashboard</a>
+    <a class="nav-tab" href="needs-action.html">Needs Action</a>
+    <a class="nav-tab" href="sap-audit.html">SAP Audit</a>
+    <a class="nav-tab" href="inventory-control.html">Inventory Control</a>
+  </nav>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span id="data-status">Loading data…</span>
+    <button class="btn btn-ghost" onclick="location.reload()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>
+      Refresh
+    </button>
+    <button class="btn btn-ghost" onclick="sessionStorage.removeItem('novus_xlsx_b64');location.reload();" title="Upload a different data file" style="font-size:.75rem;">📂 Change File</button>
+    <button class="btn btn-danger" onclick="NovusCore.navigateTo('index.html')">Logout</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="date-header" id="current-date-display">Loading…</div>
+  <div class="dash-grid" id="main-sortable">
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-safety">
+      <div class="panel-header"><span class="panel-title">Safety</span></div>
+      <div class="panel-date" id="date-safety">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Days Without Incident</div><div class="metric-value" id="days-incident">—</div></div>
+          <div class="metric-box"><div class="metric-label">Near Misses</div><div class="metric-value" id="near-misses">—</div></div>
+        </div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+    <div class="panel" style="grid-column:span 8;position:relative;" id="panel-quality">
+      <div class="panel-header"><span class="panel-title">Quality</span></div>
+      <div class="panel-date" id="date-quality">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Holds</div><div class="metric-value" id="holds">—</div></div>
+          <div class="metric-box"><div class="metric-label">Holds/COA</div><div class="metric-value" id="holds-coa">—</div></div>
+          <div class="metric-box"><div class="metric-label">PEM %</div><div class="metric-value" id="pem">—</div></div>
+          <div class="metric-box"><div class="metric-label">Complaints</div><div class="metric-value" id="complaints">—</div></div>
+        </div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+    <div class="panel" style="grid-column:span 8;position:relative;" id="panel-production">
+      <div class="panel-header"><span class="panel-title">Production</span></div>
+      <div class="panel-date" id="date-production">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red">—</div></div>
+          <div class="metric-box"><div class="metric-label">Code Yellow</div><div class="metric-value" id="code-yellow">—</div></div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="prod-table">
+            <thead><tr><th>Line</th><th>Startup</th><th>CIL</th><th>OEE</th><th>Attainment</th><th>Downtime</th></tr></thead>
+            <tbody id="prod-tbody"></tbody>
+          </table>
+        </div>
+        <div><div class="section-label">Top Downtime Drivers</div><div class="drivers-box alert" id="top-drivers">Scanning data…</div></div>
+        <div class="chart-wrap" style="height:200px;"><canvas id="production-chart"></canvas></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-costs">
+      <div class="panel-header"><span class="panel-title">Costs</span></div>
+      <div class="panel-date" id="date-costs">—</div>
+      <div class="panel-body">
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>Direct</th><th>Indirect</th></tr></thead>
+          <tbody>
+            <tr><td>Cost / Lb</td><td id="cost-direct">—</td><td id="cost-indirect">—</td></tr>
+            <tr><td>Lb / hr</td><td id="pound-hr-direct">—</td><td id="pound-hr-indirect">—</td></tr>
+            <tr><td>Proj. Conversion</td><td colspan="2" id="conversion-costs">—</td></tr>
+            <tr><td>Lbs Produced</td><td colspan="2" id="pounds-prod">—</td></tr>
+          </tbody>
+        </table>
+        <div><div class="section-label">OT Trend by Dept — Last 30 Days</div><div class="chart-wrap" style="height:190px;"><canvas id="costs-ot-chart"></canvas></div></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-hr">
+      <div class="panel-header"><span class="panel-title">HR | Training</span></div>
+      <div class="panel-date" id="date-hr">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Trainings Complete</div><div class="metric-value" id="trainings">—</div></div>
+          <div class="metric-box"><div class="metric-label">Headcount Total</div><div class="metric-value" id="headcount">—</div></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Safety Audits</div><div class="metric-value" id="safety-audits">—</div></div>
+          <div class="metric-box"><div class="metric-label">Meal Penalties</div><div class="metric-value" id="meal-penalties">—</div></div>
+        </div>
+        <div class="chart-wrap" style="height:160px;"><canvas id="hr-chart"></canvas></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-sap">
+      <div class="panel-header"><span class="panel-title">SAP</span></div>
+      <div class="panel-date" id="date-sap">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Open Process Orders</div><div class="metric-value" id="proc-orders">—</div></div>
+          <div class="metric-box"><div class="metric-label">Warehouse Tasks</div><div class="metric-value" id="warehouse-tasks">—</div></div>
+        </div>
+        <div class="chart-wrap" style="height:130px;"><canvas id="sap-open-orders-chart"></canvas></div>
+        <div class="chart-wrap" style="height:130px;"><canvas id="sap-teco-chart"></canvas></div>
+        <div class="chart-wrap" style="height:130px;"><canvas id="sap-cogi-chart"></canvas></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-warehouse">
+      <div class="panel-header"><span class="panel-title">Warehouse</span></div>
+      <div class="panel-date" id="date-warehouse">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Overall Fill Rate %</div><div class="metric-value" id="wh-bp-fill">—</div></div>
+          <div class="metric-box"><div class="metric-label">Walmart Fill Rate %</div><div class="metric-value" id="wh-ce-fill">—</div></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Cases Scheduled</div><div class="metric-value" id="wh-bp-scheduled">—</div></div>
+          <div class="metric-box"><div class="metric-label">Cases Shipped</div><div class="metric-value" id="wh-bp-shipped">—</div></div>
+        </div>
+        <div class="chart-wrap" style="height:130px;"><canvas id="wh-bp-chart"></canvas></div>
+        <div class="chart-wrap" style="height:130px;"><canvas id="wh-ce-chart"></canvas></div>
+        <div class="chart-wrap" style="height:130px;"><canvas id="wh-bp-manhour-chart"></canvas></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-inventory">
+      <div class="panel-header"><span class="panel-title">Inventory Control</span></div>
+      <div class="panel-date" id="date-inventory">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Buena Park Completion</div><div class="metric-value" id="inv-bp-completion">—</div></div>
+          <div class="metric-box"><div class="metric-label">Cerritos Completion</div><div class="metric-value" id="inv-cerritos-completion">—</div></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Critical Items</div><div class="metric-value" id="inv-critical">—</div></div>
+          <div class="metric-box"><div class="metric-label">Bin Accuracy</div><div class="metric-value" id="inv-accuracy">—</div></div>
+        </div>
+        <div><div class="section-label">Inventory Notes</div><div class="drivers-box" id="inv-notes">Scanning notes…</div></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:24px;">
+    <div class="panel-header" style="cursor:default;">
+      <span class="panel-title">Daily Plan</span>
+      <button class="btn btn-danger" onclick="clearPlanData()">Reset to Excel</button>
+    </div>
+    <div class="panel-body">
+      <div class="plan-grid">
+        <div class="plan-card"><div class="plan-card-header">Production</div><div class="plan-card-body" id="plan-production" contenteditable="true" oninput="savePlan('plan-production')">—</div></div>
+        <div class="plan-card"><div class="plan-card-header">Maintenance</div><div class="plan-card-body" id="plan-maintenance" contenteditable="true" oninput="savePlan('plan-maintenance')">—</div></div>
+        <div class="plan-card"><div class="plan-card-header">Quality</div><div class="plan-card-body" id="plan-quality" contenteditable="true" oninput="savePlan('plan-quality')">—</div></div>
+        <div class="plan-card"><div class="plan-card-header">Warehouse</div><div class="plan-card-body" id="plan-warehouse" contenteditable="true" oninput="savePlan('plan-warehouse')">—</div></div>
+        <div class="plan-card"><div class="plan-card-header">Inventory</div><div class="plan-card-body" id="plan-inventory-control" contenteditable="true" oninput="savePlan('plan-inventory-control')">—</div></div>
+        <div class="plan-card"><div class="plan-card-header">SAP</div><div class="plan-card-body" id="plan-sap" contenteditable="true" oninput="savePlan('plan-sap')">—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA_FILE='all_department_data_2026.xlsx'; // legacy name kept
+const UPLOAD_CACHE_KEY='novus_xlsx_b64';
+
+function showUploadModal(onSuccess){const overlay=document.createElement("div");overlay.className="upload-overlay";overlay.id="upload-overlay";overlay.innerHTML=`<div class="upload-modal"><h2>📂 Upload Data File</h2><p>This dashboard reads from <strong>all_department_data_2026.xlsx</strong>.<br>Upload your workbook to load the dashboard. It stays cached for this session.</p><div class="upload-drop-zone" id="drop-zone" onclick="document.getElementById('file-upload-input').click()"><input type="file" id="file-upload-input" accept=".xlsx,.xls"/><div class="drop-icon">📊</div><div class="drop-label">Click to browse or drag & drop</div><div class="drop-sub">Accepts .xlsx or .xls</div><div class="drop-chosen" id="drop-chosen" style="display:none;"></div></div><button class="btn-upload" id="btn-upload-confirm" disabled>Load Dashboard</button></div>`;document.body.appendChild(overlay);let chosenFile=null;const input=overlay.querySelector("#file-upload-input"),dropZone=overlay.querySelector("#drop-zone"),chosenEl=overlay.querySelector("#drop-chosen"),confirmBtn=overlay.querySelector("#btn-upload-confirm");function setFile(f){if(!f)return;chosenFile=f;chosenEl.textContent="✓ "+f.name+" ("+(f.size/1024).toFixed(0)+" KB)";chosenEl.style.display="block";confirmBtn.disabled=false;}input.addEventListener("change",()=>setFile(input.files[0]));dropZone.addEventListener("dragover",e=>{e.preventDefault();dropZone.classList.add("drag-over");});dropZone.addEventListener("dragleave",()=>dropZone.classList.remove("drag-over"));dropZone.addEventListener("drop",e=>{e.preventDefault();dropZone.classList.remove("drag-over");setFile(e.dataTransfer.files[0]);});confirmBtn.addEventListener("click",()=>{if(!chosenFile)return;confirmBtn.disabled=true;confirmBtn.textContent="Reading…";const reader=new FileReader();reader.onload=e=>{const b64=btoa(String.fromCharCode(...new Uint8Array(e.target.result)));try{sessionStorage.setItem(UPLOAD_CACHE_KEY,b64);}catch(_){}overlay.remove();onSuccess(e.target.result);};reader.readAsArrayBuffer(chosenFile);});}
+
+function getUploadedBuffer(){return new Promise((resolve,reject)=>{const cached=sessionStorage.getItem(UPLOAD_CACHE_KEY);if(cached){try{const bin=atob(cached);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);resolve(buf.buffer);return;}catch(_){sessionStorage.removeItem(UPLOAD_CACHE_KEY);}}showUploadModal(resolve);});}
+let workbook,GLOBAL_MAX_DATE=null;
+const TODAY_OBJ=new Date();
+
+function toDateString(d){if(!d||isNaN(d.getTime()))return null;return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;}
+function parseDate(val){if(!val)return null;const num=Number(val);if(!isNaN(num)&&val!==''&&val!==null){return new Date((num-25569)*86400*1000);}const d=new Date(val);if(!isNaN(d.getTime()))return new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));return null;}
+function getLatestDateForSheet(data,requiredField=null){let maxTime=0;const futureLimit=new Date();futureLimit.setDate(futureLimit.getDate()+7);data.forEach(row=>{const d=parseDate(row.Date);if(d&&!isNaN(d.getTime())){let hasData=true;if(requiredField){const v=valByKey(row,requiredField);if(v===null||v==='')hasData=false;}if(hasData&&d.getTime()>maxTime&&d<futureLimit)maxTime=d.getTime();}});if(maxTime===0)return null;return{str:toDateString(new Date(maxTime)),obj:new Date(maxTime)};}
+function updateSectionDate(elementId,dateResult){const el=document.getElementById(elementId);if(!dateResult){el.textContent='No Data Found';el.classList.add('stale');return null;}if(!GLOBAL_MAX_DATE||dateResult.str>GLOBAL_MAX_DATE)GLOBAL_MAX_DATE=dateResult.str;const ud=new Date(dateResult.obj.getUTCFullYear(),dateResult.obj.getUTCMonth(),dateResult.obj.getUTCDate());el.textContent=`Data: ${ud.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;return dateResult.str;}
+function checkStaleness(elementId,dateStr){if(!GLOBAL_MAX_DATE||!dateStr)return;const el=document.getElementById(elementId);if(dateStr<GLOBAL_MAX_DATE){const maxDate=new Date(GLOBAL_MAX_DATE),secDate=new Date(dateStr);const isMonday=maxDate.getUTCDay()===1,isFriday=secDate.getUTCDay()===5;const diffDays=Math.ceil(Math.abs(maxDate-secDate)/(1000*60*60*24));if(isMonday&&isFriday&&diffDays<=3){el.classList.remove('stale');return;}el.classList.add('stale');el.textContent+=' (Needs Update)';}else{el.classList.remove('stale');}}
+function valByKey(row,field){if(!row)return null;const key=Object.keys(row).find(k=>k.trim().toLowerCase()===field.toLowerCase()||k.trim().toLowerCase().replace(/\s/g,'')===field.toLowerCase().replace(/\s/g,''));const val=row[key||field];if(val===''||val==null||String(val).includes('#')||val==='DNR')return null;return val;}
+function getTargetValue(data,field,targetDateStr){if(!targetDateStr)return null;const rows=data.filter(r=>toDateString(parseDate(r.Date))===targetDateStr);if(!rows.length)return null;const sumFields=['Total Overtime','Pounds Produced','Target Pounds','Number of Complaints','Holds','Near Miss Reports','Safety Audits','Meal Penalties','Open Process Orders','Warehouse Tasks'];const isSumField=sumFields.some(sf=>field.includes(sf)||sf.includes(field));if(field==='Total Overtime'){let s=0;rows.forEach(row=>{const mv=valByKey(row,'Total Overtime');if(mv)s+=Number(mv);else for(let k in row){if(k.trim().toUpperCase().startsWith('OT -')){const v=parseFloat(row[k]);if(!isNaN(v))s+=v;}}});return s>0?s.toFixed(2):null;}if(rows.length>1&&isSumField){let t=0,c=0;rows.forEach(r=>{const v=Number(valByKey(r,field));if(!isNaN(v)){t+=v;c++;}});return c>0?t:null;}return valByKey(rows[rows.length-1],field);}
+function fmtPercent(val,dec=0){if(val===''||val==null||val==='DNR')return'—';let n=Number(val);if(isNaN(n))return'—';return(n<=2?n*100:n).toFixed(dec)+'%';}
+function yesNo(val){if(val==null||val==='')return'—';const s=String(val).toUpperCase();return['YES','Y','TRUE','1'].includes(s)?'Yes':(['NO','N','FALSE','0'].includes(s)?'No':String(val));}
+function getProductionMetrics(prodData,targetDateStr,lineName){const rows=prodData.filter(r=>toDateString(parseDate(r.Date))===targetDateStr&&String(valByKey(r,'Line')||'').trim().toUpperCase()===lineName);if(!rows.length)return{oee:null,attainment:null,downtime:null,startup:'—',cil:'—'};let oeeSum=0,attSum=0,dtSum=0,oeeC=0,attC=0,startup='Yes',cil='Yes';rows.forEach(r=>{const o=valByKey(r,'OEE');if(o!==null){const v=Number(o);if(!isNaN(v)){oeeSum+=v;oeeC++;}}const a=valByKey(r,'Attainment');if(a!==null){const v=Number(a);if(!isNaN(v)){attSum+=v;attC++;}}const d=Number(valByKey(r,'Downtime'));if(!isNaN(d))dtSum+=d;if(yesNo(valByKey(r,'Start Up'))==='No')startup='No';if(yesNo(valByKey(r,'CIL'))==='No')cil='No';});return{oee:oeeC?(oeeSum/oeeC):null,attainment:attC?(attSum/attC):null,downtime:dtSum,startup,cil};}
+function getAggregatedProductionData(prod,maxPoints=30,limitDate){const m=new Map();prod.forEach(row=>{const d=parseDate(row.Date);if(!d)return;const ds=toDateString(d);if(limitDate&&ds>limitDate)return;if(!m.has(ds))m.set(ds,{oee:[],attainment:[],downtime:[],raw:d});const e=m.get(ds);const oeeV=Number(valByKey(row,'OEE'));if(!isNaN(oeeV))e.oee.push(oeeV<=2?oeeV*100:oeeV);const attV=Number(valByKey(row,'Attainment'));if(!isNaN(attV))e.attainment.push(attV<=2?attV*100:attV);const dtV=Number(valByKey(row,'Downtime'));if(!isNaN(dtV))e.downtime.push(dtV);});const keys=Array.from(m.keys()).sort().slice(-maxPoints);const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;return{labels:keys.map(k=>{const r=m.get(k).raw;return new Date(r.getUTCFullYear(),r.getUTCMonth(),r.getUTCDate()).toLocaleDateString();}),oeeData:keys.map(k=>avg(m.get(k).oee)),attainmentData:keys.map(k=>avg(m.get(k).attainment)),downtimeData:keys.map(k=>m.get(k).downtime.reduce((a,b)=>a+b,0))};}
+function calcRegression(y){const n=y.length;if(n<2)return y;let sx=0,sy=0,sxy=0,sx2=0;for(let i=0;i<n;i++){sx+=i;sy+=y[i];sxy+=i*y[i];sx2+=i*i;}const sl=(n*sxy-sx*sy)/(n*sx2-sx*sx),ic=(sy-sl*sx)/n;return Array.from({length:n},(_,i)=>sl*i+ic);}
+function getHistoricalData(data,field,maxPoints=30,limitDate){const m=new Map();data.forEach(row=>{const d=parseDate(row.Date);if(!d)return;const ds=toDateString(d);if(limitDate&&ds>limitDate)return;if(!m.has(ds))m.set(ds,{val:Number(valByKey(row,field))||0,raw:d});});const keys=Array.from(m.keys()).sort().slice(-maxPoints);return{labels:keys.map(k=>{const r=m.get(k).raw;return new Date(r.getUTCFullYear(),r.getUTCMonth(),r.getUTCDate()).toLocaleDateString();}),values:keys.map(k=>m.get(k).val)};}
+
+const CHART_DEFAULTS={font:{family:"'DM Sans', sans-serif",size:10},monoFont:{family:"'DM Mono', monospace",size:10},gridColor:'rgba(0,0,0,.04)',tickColor:'#94a3b8'};
+function mkChart(canvasId,type,labels,datasets,extraOpts={}){const canvas=document.getElementById(canvasId);if(!canvas)return;const existing=Chart.getChart(canvas);if(existing)existing.destroy();new Chart(canvas.getContext('2d'),{type,data:{labels,datasets:datasets.map(ds=>({tension:0.35,pointRadius:0,borderWidth:2,...ds}))},options:{responsive:true,maintainAspectRatio:false,animation:{duration:300,easing:'easeOutQuart'},plugins:{legend:{display:datasets.length>1,position:'bottom',labels:{font:CHART_DEFAULTS.font,color:CHART_DEFAULTS.tickColor,boxWidth:10,padding:8}},tooltip:{backgroundColor:'rgba(15,23,42,.88)',titleFont:{family:"'DM Sans'",size:11,weight:'600'},bodyFont:{family:"'DM Mono'",size:11},padding:10,cornerRadius:8}},scales:{x:{grid:{color:CHART_DEFAULTS.gridColor},ticks:{font:CHART_DEFAULTS.monoFont,color:CHART_DEFAULTS.tickColor,maxTicksLimit:8,maxRotation:40}},y:{beginAtZero:true,grid:{color:CHART_DEFAULTS.gridColor},ticks:{font:CHART_DEFAULTS.monoFont,color:CHART_DEFAULTS.tickColor}},...extraOpts}}});}
+function createDoughnutChart(canvasId,value,label){const canvas=document.getElementById(canvasId);if(!canvas)return;let n=parseFloat(value)||0;if(n>0&&n<=2)n*=100;const color=n>=90?'#059669':(n>=70?'#d97706':'#dc2626');const shortLabel=label.includes('Overall')?'Overall':(label.includes('Walmart')?'Walmart':label);const existing=Chart.getChart(canvas);if(existing)existing.destroy();new Chart(canvas.getContext('2d'),{type:'doughnut',data:{datasets:[{data:[n,100-n],backgroundColor:[color,'#e2e8f0'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'76%',animation:{duration:300},plugins:{legend:{display:false}}},plugins:[{id:'textCenter',beforeDraw:chart=>{const{width,height,ctx}=chart;ctx.restore();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`600 10px 'DM Sans'`;ctx.fillStyle='#64748b';ctx.fillText(shortLabel,width/2,height/2-12);ctx.font=`bold 18px 'DM Sans'`;ctx.fillStyle=color;ctx.fillText(`${n.toFixed(1)}%`,width/2,height/2+8);ctx.save();}}]});}
+
+function getSheetData(name){const s=workbook.Sheets[name];return s?XLSX.utils.sheet_to_json(s,{defval:'',raw:true,blankrows:false}):[];}
+
+function renderDashboard(){
+  if(!workbook)return;
+  const hr=getSheetData('HR | Training'),qa=getSheetData('QA'),prod=getSheetData('Production'),finance=getSheetData('Finance'),sap=getSheetData('SAP'),warehouse=getSheetData('Warehouse'),inventory=getSheetData('Inventory Control'),maintenance=getSheetData('Maintenance');
+  GLOBAL_MAX_DATE=null;
+  const dSafety=updateSectionDate('date-safety',getLatestDateForSheet(hr));
+  const dQA=updateSectionDate('date-quality',getLatestDateForSheet(qa));
+  const dProd=updateSectionDate('date-production',getLatestDateForSheet(prod,'OEE'));
+  const dCosts=updateSectionDate('date-costs',getLatestDateForSheet(finance));
+  const dHR=updateSectionDate('date-hr',getLatestDateForSheet(hr));
+  const dSAP=updateSectionDate('date-sap',getLatestDateForSheet(sap));
+  const dWarehouse=updateSectionDate('date-warehouse',getLatestDateForSheet(warehouse));
+  const dInventory=updateSectionDate('date-inventory',getLatestDateForSheet(inventory));
+  document.getElementById('current-date-display').textContent=`Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
+  [['date-safety',dSafety],['date-quality',dQA],['date-production',dProd],['date-costs',dCosts],['date-hr',dHR],['date-sap',dSAP],['date-warehouse',dWarehouse],['date-inventory',dInventory]].forEach(([id,d])=>checkStaleness(id,d));
+  document.getElementById('days-incident').textContent=getTargetValue(hr,'Days Without Incident',dHR)??'—';
+  document.getElementById('near-misses').textContent=getTargetValue(hr,'Near Miss Reports',dHR)??'—';
+  document.getElementById('safety-audits').textContent=getTargetValue(hr,'Safety Audits',dHR)??'—';
+  document.getElementById('meal-penalties').textContent=getTargetValue(hr,'Number of Meal Penalties',dHR)??'—';
+  const trainingsVal=getTargetValue(hr,'Trainings Complete',dHR)??0;
+  document.getElementById('trainings').textContent=fmtPercent(trainingsVal);
+  const hcd=Number(getTargetValue(hr,'Head Count - Direct',dHR)||0),hci=Number(getTargetValue(hr,'Head Count - Indirect',dHR)||0);
+  document.getElementById('headcount').textContent=(hcd+hci)>0?(hcd+hci):'—';
+  document.getElementById('holds').textContent=getTargetValue(qa,'Holds',dQA)??'—';
+  document.getElementById('holds-coa').textContent=getTargetValue(qa,'Holds/COA',dQA)??'—';
+  document.getElementById('pem').textContent=fmtPercent(getTargetValue(qa,'PEM %',dQA),1);
+  document.getElementById('complaints').textContent=getTargetValue(qa,'Number of Complaints',dQA)??'—';
+  document.getElementById('cost-direct').textContent=getTargetValue(finance,'$/Pound - Direct',dCosts)??'—';
+  document.getElementById('cost-indirect').textContent=getTargetValue(finance,'$/Pound - Indirect',dCosts)??'—';
+  document.getElementById('pound-hr-direct').textContent=getTargetValue(finance,'Pounds/hour - Direct',dCosts)??'—';
+  document.getElementById('pound-hr-indirect').textContent=getTargetValue(finance,'Pounds/hour - Indirect',dCosts)??'—';
+  document.getElementById('conversion-costs').textContent=getTargetValue(finance,'Conversion Cost',dCosts)??'—';
+  document.getElementById('pounds-prod').textContent=getTargetValue(finance,'Pounds Produced',dCosts)??'—';
+  const tbody=document.getElementById('prod-tbody');tbody.innerHTML='';
+  ['2A','PL1','PL2','MP4','PXM6','2E'].forEach(line=>{
+    const s=getProductionMetrics(prod,dProd,line);
+    let oeeClass='';
+    if(s.oee!==null){const n=Number(s.oee)<=2?Number(s.oee):Number(s.oee)/100;oeeClass=n<=0.60?'td-red':(n<0.65?'td-amber':'td-green');}
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-weight:700">${line}</td><td>${s.startup}</td><td>${s.cil}</td><td class="${oeeClass}">${fmtPercent(s.oee)}</td><td>${fmtPercent(s.attainment,1)}</td><td>${s.downtime!==null?s.downtime:'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('code-red').textContent=getTargetValue(maintenance,'Code Red',getLatestDateForSheet(maintenance)?.str)??'—';
+  document.getElementById('code-yellow').textContent=getTargetValue(maintenance,'Code Yellow',getLatestDateForSheet(maintenance)?.str)??'—';
+  const driverCounts={};
+  prod.filter(r=>toDateString(parseDate(r.Date))===dProd).forEach(r=>{['Mechanical Downtime Drivers','Material Downtime Drivers'].forEach(col=>{const v=r[col];if(v&&v!=='DNR'&&v!=='None'&&v!=='')String(v).split(/[;,]/).forEach(d=>{const c=d.trim();if(c.length>2)driverCounts[c]=(driverCounts[c]||0)+1;});});});
+  document.getElementById('top-drivers').textContent=Object.entries(driverCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,c])=>`• ${n} (${c})`).join('\n')||`No drivers reported for ${dProd}.`;
+  const pd=getAggregatedProductionData(prod,30,dProd);
+  if(pd.labels.length){mkChart('production-chart','line',pd.labels,[{label:'OEE',data:pd.oeeData,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true},{label:'Attainment',data:pd.attainmentData,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',fill:true},{label:'Downtime',data:pd.downtimeData,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.5)',type:'bar',fill:true,yAxisID:'y1'}],{y:{max:100},y1:{position:'right',grid:{drawOnChartArea:false}}});}
+  const dateMapCosts=new Map();
+  finance.forEach(r=>{const d=parseDate(r.Date);if(!d)return;const ds=toDateString(d);if(dCosts&&ds>dCosts)return;if(!dateMapCosts.has(ds))dateMapCosts.set(ds,{raw:d,qa:0,prod:0,wh:0,maint:0,total:0});const e=dateMapCosts.get(ds);e.qa=parseFloat(valByKey(r,'OT - QA'))||0;e.prod=parseFloat(valByKey(r,'OT-Production'))||0;e.wh=parseFloat(valByKey(r,'OT - Warehouse'))||0;e.maint=parseFloat(valByKey(r,'OT - Maintenance'))||0;e.total=e.qa+e.prod+e.wh+e.maint;});
+  const costKeys=Array.from(dateMapCosts.keys()).sort().slice(-30);
+  if(costKeys.length){mkChart('costs-ot-chart','line',costKeys.map(k=>new Date(dateMapCosts.get(k).raw).toLocaleDateString()),[{label:'QA',data:costKeys.map(k=>dateMapCosts.get(k).qa),borderColor:'#64748b'},{label:'Prod',data:costKeys.map(k=>dateMapCosts.get(k).prod),borderColor:'#ef4444'},{label:'WH',data:costKeys.map(k=>dateMapCosts.get(k).wh),borderColor:'#d97706'},{label:'Maint',data:costKeys.map(k=>dateMapCosts.get(k).maint),borderColor:'#3b82f6'},{label:'Trend',data:calcRegression(costKeys.map(k=>dateMapCosts.get(k).total)),borderColor:'#10b981',borderDash:[8,4]}]);}
+  createDoughnutChart('hr-chart',trainingsVal,'Complete');
+  [{id:'sap-open-orders-chart',field:'Open Process Orders',color:'#d97706'},{id:'sap-teco-chart',field:'TECO',color:'#3b82f6'},{id:'sap-cogi-chart',field:'COGI',color:'#ef4444'}].forEach(c=>{const d=getHistoricalData(sap,c.field,30,dSAP);if(d.labels.length)mkChart(c.id,'line',d.labels,[{label:c.field,data:d.values,borderColor:c.color,fill:false}]);});
+  const whBP=warehouse.find(r=>toDateString(parseDate(r.Date))===dWarehouse&&String(valByKey(r,'City')||'').toLowerCase().trim()==='buena park');
+  const whCE=warehouse.find(r=>toDateString(parseDate(r.Date))===dWarehouse&&String(valByKey(r,'City')||'').toLowerCase().trim()==='cerritos');
+  document.getElementById('wh-bp-fill').textContent=fmtPercent(whBP?valByKey(whBP,'Fill Rate %'):null,1);
+  document.getElementById('wh-ce-fill').textContent=fmtPercent(whCE?valByKey(whCE,'Fill Rate %'):null,1);
+  document.getElementById('wh-bp-scheduled').textContent=whBP?valByKey(whBP,'Number of cases scheduled to ship'):'—';
+  document.getElementById('wh-bp-shipped').textContent=whBP?valByKey(whBP,'Number of cases shipped'):'—';
+  createDoughnutChart('wh-bp-chart',parseFloat(whBP?valByKey(whBP,'Fill Rate %'):0),'Overall Fill Rate %');
+  createDoughnutChart('wh-ce-chart',parseFloat(whCE?valByKey(whCE,'Fill Rate %'):0),'Walmart Fill Rate %');
+  const whMH=getHistoricalData(warehouse,'Man Hours',30,dWarehouse);
+  if(whMH.labels.length)mkChart('wh-bp-manhour-chart','line',whMH.labels,[{label:'Man Hours',data:whMH.values,borderColor:'#8b5cf6',fill:false}]);
+  const invBP=inventory.find(r=>toDateString(parseDate(r.Date))===dInventory&&String(valByKey(r,'City')||'').toLowerCase().trim()==='buena park');
+  const invCE=inventory.find(r=>toDateString(parseDate(r.Date))===dInventory&&String(valByKey(r,'City')||'').toLowerCase().trim()==='cerritos');
+  document.getElementById('inv-bp-completion').textContent=fmtPercent(invBP?valByKey(invBP,'Completion %'):null,1);
+  document.getElementById('inv-cerritos-completion').textContent=fmtPercent(invCE?valByKey(invCE,'Completion %'):null,1);
+  const critVal=invBP?valByKey(invBP,'Critical Items'):null,accVal=invBP?valByKey(invBP,'Bin Accuracy'):null;
+  document.getElementById('inv-critical').textContent=critVal??'0';
+  const accEl=document.getElementById('inv-accuracy');
+  accEl.textContent=fmtPercent(accVal,2);
+  if(accVal!==null){const n=parseFloat(accVal)>2?parseFloat(accVal)/100:parseFloat(accVal);accEl.style.color=n<0.999?'var(--red-l)':'var(--green-l)';}
+  document.getElementById('inv-notes').textContent=(invBP?valByKey(invBP,'Notes'):null)||'No inventory notes for this date.';
+}
+
+function initDraggable(){if(window.Sortable){new Sortable(document.getElementById('main-sortable'),{animation:250,handle:'.panel-header',ghostClass:'sortable-ghost'});}}
+function initResizable(){document.querySelectorAll('.panel[style*="grid-column"]').forEach(panel=>{const resizer=panel.querySelector('.resizer');if(!resizer)return;resizer.addEventListener('mousedown',e=>{e.preventDefault();const startX=e.pageX,startY=e.pageY,startW=panel.offsetWidth,startH=panel.offsetHeight;const grid=document.querySelector('.dash-grid'),rect=grid.getBoundingClientRect(),colW=rect.width/12;function onMove(e){panel.style.width=`${startW+(e.pageX-startX)}px`;panel.style.height=`${startH+(e.pageY-startY)}px`;}function onUp(e){window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);const newCols=Math.max(2,Math.min(12,Math.round((startW+(e.pageX-startX))/colW)));panel.style.gridColumn=`span ${newCols}`;panel.style.width='';panel.style.height='';window.dispatchEvent(new Event('resize'));}window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);});});}
+function savePlan(id){localStorage.setItem('dds_'+id,document.getElementById(id).innerText);}
+function loadSavedPlans(){['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap'].forEach(id=>{const s=localStorage.getItem('dds_'+id);if(s)document.getElementById(id).innerText=s;});}
+function clearPlanData(){if(confirm('Revert plans to Excel data?')){localStorage.clear();location.reload();}}
+
+window.__libsCallback=async()=>{
+  loadSavedPlans();
+  const st=document.getElementById('data-status');
+  try {
+    // Use smart cache from novus-core.js
+    const buf = await getUploadedBuffer();
+    workbook=XLSX.read(buf,{type:'array',cellDates:false,raw:true});
+    renderDashboard(); initDraggable(); initResizable();
+    st.className='ok'; st.textContent='✓ Data loaded';
+  } catch(err) {
+    console.error(err); st.className='error'; st.textContent=`⚠ ${err.message}`;
+    document.getElementById('current-date-display').textContent='Data load failed or file open elsewhere.';
+  }
+};
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>{if(window.__libs.chartjs&&window.__libs.xlsx)window.__libsCallback();});
+}
+</script>
+</body>
+</html>
