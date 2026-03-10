@@ -84,31 +84,12 @@
     .plan-card-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;padding:8px 12px;font-weight:700;font-size:.78rem;text-transform:uppercase;text-align:center;}
     .plan-card-body{padding:10px 12px;min-height:80px;outline:none;white-space:pre-wrap;color:var(--ink2);font-size:.82rem;background:var(--surface2);font-family:'DM Sans',sans-serif;}
     .plan-card-body:focus{background:var(--surface);}
-    #data-status{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--ink3);}
-    #data-status.ok{color:var(--green);}
-    #data-status.error{color:var(--red);}
+    #data-status{font-size:.72rem;}
     .resizer{position:absolute;right:0;bottom:0;width:22px;height:22px;cursor:nwse-resize;clip-path:polygon(100% 0,100% 100%,0 100%);background:linear-gradient(135deg,var(--border2),var(--blue));opacity:0;transition:opacity .2s;border-radius:0 0 var(--radius) 0;}
     .panel:hover .resizer{opacity:.5;}
     ::-webkit-scrollbar{width:7px;height:7px;}
     ::-webkit-scrollbar-track{background:transparent;}
     ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
-    /* ── UPLOAD MODAL ── */
-    .upload-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease both;}
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    .upload-modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:36px 40px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.18);animation:slideUp .25s var(--ease-spring) both;}
-    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-    .upload-modal h2{font-size:1.15rem;font-weight:800;color:var(--ink);margin-bottom:6px;letter-spacing:-.02em;}
-    .upload-modal p{font-size:.82rem;color:var(--ink3);margin-bottom:24px;line-height:1.6;}
-    .upload-drop-zone{border:2px dashed var(--border2);border-radius:var(--radius-sm);padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:20px;background:var(--surface2);}
-    .upload-drop-zone:hover,.upload-drop-zone.drag-over{border-color:var(--blue-l);background:var(--blue-ll);}
-    .upload-drop-zone input[type="file"]{display:none;}
-    .upload-drop-zone .drop-icon{font-size:2rem;margin-bottom:10px;}
-    .upload-drop-zone .drop-label{font-size:.85rem;font-weight:600;color:var(--ink2);}
-    .upload-drop-zone .drop-sub{font-size:.75rem;color:var(--ink3);margin-top:4px;}
-    .upload-drop-zone .drop-chosen{font-size:.8rem;color:var(--green);font-weight:700;margin-top:8px;}
-    .upload-modal .btn-upload{width:100%;padding:11px;background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.3);transition:filter .12s,transform .1s;}
-    .upload-modal .btn-upload:hover{filter:brightness(1.07);transform:translateY(-1px);}
-    .upload-modal .btn-upload:disabled{opacity:.5;cursor:not-allowed;transform:none;}
   </style>
 </head>
 <body>
@@ -119,18 +100,20 @@
   </div>
   <nav class="nav-tabs">
     <a class="nav-tab" href="staff-meeting-dashboard.html">Meeting Dashboard</a>
-    <a class="nav-tab" href="dds-dashboard.html">DDS Dashboard</a>
+    <a class="nav-tab active" href="dds-dashboard.html">DDS Dashboard</a>
     <a class="nav-tab" href="needs-action.html">Needs Action</a>
     <a class="nav-tab" href="sap-audit.html">SAP Audit</a>
     <a class="nav-tab" href="inventory-control.html">Inventory Control</a>
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
-    <span id="data-status">Loading data…</span>
+    <span id="data-status"></span>
     <button class="btn btn-ghost" onclick="location.reload()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>
       Refresh
     </button>
-    <button class="btn btn-ghost" onclick="sessionStorage.removeItem('novus_xlsx_b64');location.reload();" title="Upload a different data file" style="font-size:.75rem;">📂 Change File</button>
+    <!-- Clears session cache so next refresh re-fetches from SharePoint -->
+    <button class="btn btn-ghost" onclick="NovusCore.forceRefresh();" title="Force re-fetch latest file from SharePoint" style="font-size:.75rem;">🔄 Reload Data</button>
+    <button class="btn btn-ghost" onclick="NovusCore.resetDataSource();location.reload();" title="Change SharePoint URL" style="font-size:.75rem;">🔗 Data Source</button>
     <button class="btn btn-danger" onclick="NovusCore.navigateTo('index.html')">Logout</button>
   </div>
 </div>
@@ -283,13 +266,7 @@
 </div>
 
 <script>
-const DATA_FILE='all_department_data_2026.xlsx'; // legacy name kept
-const UPLOAD_CACHE_KEY='novus_xlsx_b64';
-
-function showUploadModal(onSuccess){const overlay=document.createElement("div");overlay.className="upload-overlay";overlay.id="upload-overlay";overlay.innerHTML=`<div class="upload-modal"><h2>📂 Upload Data File</h2><p>This dashboard reads from <strong>all_department_data_2026.xlsx</strong>.<br>Upload your workbook to load the dashboard. It stays cached for this session.</p><div class="upload-drop-zone" id="drop-zone" onclick="document.getElementById('file-upload-input').click()"><input type="file" id="file-upload-input" accept=".xlsx,.xls"/><div class="drop-icon">📊</div><div class="drop-label">Click to browse or drag & drop</div><div class="drop-sub">Accepts .xlsx or .xls</div><div class="drop-chosen" id="drop-chosen" style="display:none;"></div></div><button class="btn-upload" id="btn-upload-confirm" disabled>Load Dashboard</button></div>`;document.body.appendChild(overlay);let chosenFile=null;const input=overlay.querySelector("#file-upload-input"),dropZone=overlay.querySelector("#drop-zone"),chosenEl=overlay.querySelector("#drop-chosen"),confirmBtn=overlay.querySelector("#btn-upload-confirm");function setFile(f){if(!f)return;chosenFile=f;chosenEl.textContent="✓ "+f.name+" ("+(f.size/1024).toFixed(0)+" KB)";chosenEl.style.display="block";confirmBtn.disabled=false;}input.addEventListener("change",()=>setFile(input.files[0]));dropZone.addEventListener("dragover",e=>{e.preventDefault();dropZone.classList.add("drag-over");});dropZone.addEventListener("dragleave",()=>dropZone.classList.remove("drag-over"));dropZone.addEventListener("drop",e=>{e.preventDefault();dropZone.classList.remove("drag-over");setFile(e.dataTransfer.files[0]);});confirmBtn.addEventListener("click",()=>{if(!chosenFile)return;confirmBtn.disabled=true;confirmBtn.textContent="Reading…";const reader=new FileReader();reader.onload=e=>{const b64=btoa(String.fromCharCode(...new Uint8Array(e.target.result)));try{sessionStorage.setItem(UPLOAD_CACHE_KEY,b64);}catch(_){}overlay.remove();onSuccess(e.target.result);};reader.readAsArrayBuffer(chosenFile);});}
-
-function getUploadedBuffer(){return new Promise((resolve,reject)=>{const cached=sessionStorage.getItem(UPLOAD_CACHE_KEY);if(cached){try{const bin=atob(cached);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);resolve(buf.buffer);return;}catch(_){sessionStorage.removeItem(UPLOAD_CACHE_KEY);}}showUploadModal(resolve);});}
-let workbook,GLOBAL_MAX_DATE=null;
+let workbook, GLOBAL_MAX_DATE=null;
 const TODAY_OBJ=new Date();
 
 function toDateString(d){if(!d||isNaN(d.getTime()))return null;return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;}
@@ -392,22 +369,31 @@ function initDraggable(){if(window.Sortable){new Sortable(document.getElementByI
 function initResizable(){document.querySelectorAll('.panel[style*="grid-column"]').forEach(panel=>{const resizer=panel.querySelector('.resizer');if(!resizer)return;resizer.addEventListener('mousedown',e=>{e.preventDefault();const startX=e.pageX,startY=e.pageY,startW=panel.offsetWidth,startH=panel.offsetHeight;const grid=document.querySelector('.dash-grid'),rect=grid.getBoundingClientRect(),colW=rect.width/12;function onMove(e){panel.style.width=`${startW+(e.pageX-startX)}px`;panel.style.height=`${startH+(e.pageY-startY)}px`;}function onUp(e){window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);const newCols=Math.max(2,Math.min(12,Math.round((startW+(e.pageX-startX))/colW)));panel.style.gridColumn=`span ${newCols}`;panel.style.width='';panel.style.height='';window.dispatchEvent(new Event('resize'));}window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);});});}
 function savePlan(id){localStorage.setItem('dds_'+id,document.getElementById(id).innerText);}
 function loadSavedPlans(){['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap'].forEach(id=>{const s=localStorage.getItem('dds_'+id);if(s)document.getElementById(id).innerText=s;});}
-function clearPlanData(){if(confirm('Revert plans to Excel data?')){localStorage.clear();location.reload();}}
+function clearPlanData(){if(confirm('Revert plans to Excel data?')){['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap'].forEach(id=>localStorage.removeItem('dds_'+id));location.reload();}}
 
-window.__libsCallback=async()=>{
+window.__libsCallback = async () => {
   loadSavedPlans();
-  const st=document.getElementById('data-status');
+  const st = document.getElementById('data-status');
+  NovusCore.setStatus(st, 'loading', 'Fetching latest data…');
   try {
-    // Use smart cache from novus-core.js
-    const buf = await getUploadedBuffer();
-    workbook=XLSX.read(buf,{type:'array',cellDates:false,raw:true});
-    renderDashboard(); initDraggable(); initResizable();
-    st.className='ok'; st.textContent='✓ Data loaded';
+    const buf = await NovusCore.getDataBuffer();
+    workbook = XLSX.read(buf, {type:'array', cellDates:false, raw:true});
+    renderDashboard();
+    initDraggable();
+    initResizable();
+    NovusCore.setStatus(st, 'ok', '✓ Live data loaded');
+    NovusCore.startAutoRefresh(newBuf => {
+      workbook = XLSX.read(newBuf, {type:'array', cellDates:false, raw:true});
+      renderDashboard();
+      NovusCore.setStatus(st, 'ok', '✓ Auto-refreshed');
+    });
   } catch(err) {
-    console.error(err); st.className='error'; st.textContent=`⚠ ${err.message}`;
-    document.getElementById('current-date-display').textContent='Data load failed or file open elsewhere.';
+    console.error(err);
+    NovusCore.setStatus(st, 'error', `⚠ ${err.message}`);
+    document.getElementById('current-date-display').textContent = 'Data load failed.';
   }
 };
+
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',()=>{if(window.__libs.chartjs&&window.__libs.xlsx)window.__libsCallback();});
 }
