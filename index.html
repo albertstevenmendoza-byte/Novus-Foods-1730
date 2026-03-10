@@ -1,488 +1,138 @@
-/* ═══════════════════════════════════════════════════════════════
-   novus-core.js  —  Novus Foods 1730 Ops Hub
-   Shared utilities: auth, data loading, toast, navigation
-   v4.0 — SharePoint URL-based auto-fetch (no upload modal)
-═══════════════════════════════════════════════════════════════ */
-
-/* ── STORAGE KEYS ─────────────────────────────────────────── */
-const NOVUS_SP_URL_KEY   = 'https://lakeviewfarms1600-my.sharepoint.com/:x:/g/personal/amendoza_novusfoods_com/IQBnBa_TBRLGSKNIuPokwIY5AbZ17FdLp9cfw2v2FM89szA?e=YGvJa6';   // localStorage  — persists forever
-const NOVUS_CACHE_KEY    = 'novus_xlsx_b64';          // sessionStorage — cleared on tab close
-const NOVUS_CACHE_TS_KEY = 'novus_xlsx_ts';           // sessionStorage — timestamp of cached bytes
-const NOVUS_CACHE_MAX_MS = 15 * 60 * 1000;           // 15 min: re-fetch even within same session
-
-/* ── PUBLIC API ───────────────────────────────────────────── */
-window.NovusCore = window.NovusCore || {};
-
-/* ─────────────────────────────────────────────────────────────
-   getDataBuffer()
-   Returns an ArrayBuffer of the workbook, using this strategy:
-
-   1. If sessionStorage has fresh bytes (< 15 min old) → use them
-   2. If localStorage has a SharePoint URL → fetch it silently
-      • On success → cache bytes + serve
-      • On CORS/network failure → show fallback upload modal
-   3. If no URL saved → show the "Setup SharePoint URL" modal
-      (user pastes URL once; saved to localStorage permanently)
-───────────────────────────────────────────────────────────── */
-NovusCore.getDataBuffer = function () {
-  return new Promise((resolve, reject) => {
-
-    /* 1 ── Try session cache first ─────────────────────────── */
-    const cachedB64 = sessionStorage.getItem(NOVUS_CACHE_KEY);
-    const cachedTs  = parseInt(sessionStorage.getItem(NOVUS_CACHE_TS_KEY) || '0', 10);
-    const cacheAge  = Date.now() - cachedTs;
-
-    if (cachedB64 && cacheAge < NOVUS_CACHE_MAX_MS) {
-      try {
-        const buf = _b64ToBuffer(cachedB64);
-        resolve(buf);
-        return;
-      } catch (_) {
-        _clearSessionCache();
-      }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Novus 1730 Ops Hub – Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap"></noscript>
+  <script src="novus-core.js" defer></script>
+  <style>
+    :root {
+      --bg: #f4f6fb; --surface: #fff; --border: #e2e8f0; --border2: #cbd5e1;
+      --ink: #0f172a; --ink2: #334155; --ink3: #64748b;
+      --blue: #2563eb; --blue-l: #3b82f6; --blue-ll: #dbeafe; --blue-glow: rgba(37,99,235,.12);
+      --green: #059669; --red: #dc2626;
+      --radius: 14px; --radius-sm: 8px;
+      --ease: cubic-bezier(.4,0,.2,1); --ease-spring: cubic-bezier(.34,1.56,.64,1);
     }
-
-    /* 2 ── Try SharePoint URL ──────────────────────────────── */
-    const spUrl = localStorage.getItem(NOVUS_SP_URL_KEY);
-    if (spUrl) {
-      _fetchFromSharePoint(spUrl)
-        .then(buf => { _cacheBuffer(buf); resolve(buf); })
-        .catch(() => {
-          /* CORS or network failure → offer upload as fallback */
-          _showFallbackModal(
-            'Could not auto-fetch from SharePoint (network or CORS error).',
-            resolve, reject
-          );
-        });
-      return;
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
     }
-
-    /* 3 ── First-time setup: ask for SharePoint URL ─────────── */
-    _showSetupModal(resolve, reject);
-  });
-};
-
-/* ─────────────────────────────────────────────────────────────
-   resetDataSource()   — clears URL + cache, triggers re-setup
-───────────────────────────────────────────────────────────── */
-NovusCore.resetDataSource = function () {
-  localStorage.removeItem(NOVUS_SP_URL_KEY);
-  _clearSessionCache();
-};
-
-/* ─────────────────────────────────────────────────────────────
-   clearSessionCache()  — force re-fetch on next load (keeps URL)
-───────────────────────────────────────────────────────────── */
-NovusCore.clearSessionCache = function () {
-  _clearSessionCache();
-};
-
-/* ─────────────────────────────────────────────────────────────
-   getSavedUrl() / setSavedUrl()
-───────────────────────────────────────────────────────────── */
-NovusCore.getSavedUrl  = () => localStorage.getItem(NOVUS_SP_URL_KEY) || '';
-NovusCore.setSavedUrl  = url => {
-  localStorage.setItem(NOVUS_SP_URL_KEY, url.trim());
-  _clearSessionCache();
-};
-
-/* ─────────────────────────────────────────────────────────────
-   navigateTo(href)   — simple navigation helper
-───────────────────────────────────────────────────────────── */
-NovusCore.navigateTo = function (href) { window.location.href = href; };
-
-/* ─────────────────────────────────────────────────────────────
-   Toast  — lightweight notification system
-───────────────────────────────────────────────────────────── */
-NovusCore.Toast = {
-  _show (msg, color, icon) {
-    const t = document.createElement('div');
-    t.style.cssText = [
-      'position:fixed', 'bottom:24px', 'right:24px', 'z-index:9999',
-      `background:${color}`, 'color:#fff',
-      'padding:12px 20px', 'border-radius:10px',
-      'font-family:DM Sans,sans-serif', 'font-size:.85rem', 'font-weight:600',
-      'box-shadow:0 4px 20px rgba(0,0,0,.18)',
-      'display:flex', 'align-items:center', 'gap:8px',
-      'animation:_toastIn .25s ease both',
-      'max-width:340px',
-    ].join(';');
-    if (!document.getElementById('_novus_toast_style')) {
-      const s = document.createElement('style');
-      s.id = '_novus_toast_style';
-      s.textContent = `@keyframes _toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`;
-      document.head.appendChild(s);
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 36px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      animation: cardIn .3s var(--ease-spring) both;
     }
-    t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
-    document.body.appendChild(t);
-    setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 320); }, 3200);
-  },
-  success (m) { this._show(m, '#059669', '✓'); },
-  warning (m) { this._show(m, '#d97706', '⚠'); },
-  error   (m) { this._show(m, '#dc2626', '✕'); },
-  info    (m) { this._show(m, '#2563eb', 'ℹ'); },
-};
-
-/* ─────────────────────────────────────────────────────────────
-   BtnLoader  — disables a button and shows spinner while loading
-───────────────────────────────────────────────────────────── */
-NovusCore.BtnLoader = {
-  start (btn) { btn._origHTML = btn.innerHTML; btn.disabled = true; btn.innerHTML = '⏳ ' + btn.innerHTML; },
-  stop  (btn) { btn.disabled = false; btn.innerHTML = btn._origHTML || btn.innerHTML; },
-};
-
-/* ═══════════════════════════════════════════════════════════
-   PRIVATE HELPERS
-═══════════════════════════════════════════════════════════ */
-
-function _clearSessionCache () {
-  sessionStorage.removeItem(NOVUS_CACHE_KEY);
-  sessionStorage.removeItem(NOVUS_CACHE_TS_KEY);
-}
-
-function _cacheBuffer (buf) {
-  try {
-    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-    sessionStorage.setItem(NOVUS_CACHE_KEY, b64);
-    sessionStorage.setItem(NOVUS_CACHE_TS_KEY, String(Date.now()));
-  } catch (_) { /* quota exceeded — skip caching silently */ }
-}
-
-function _b64ToBuffer (b64) {
-  const bin = atob(b64);
-  const buf = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-  return buf.buffer;
-}
-
-/* Fetch workbook bytes from a SharePoint (or any HTTPS) URL.
-   SharePoint "download" links work with fetch() when the file
-   has "Anyone with link can view" sharing enabled.             */
-async function _fetchFromSharePoint (url) {
-  /* Convert SharePoint share URLs to direct-download URLs if needed */
-  const directUrl = _normalizeSharePointUrl(url);
-
-  const resp = await fetch(directUrl, {
-    method: 'GET',
-    headers: { 'Accept': 'application/octet-stream, */*' },
-    cache: 'no-store',   // always get fresh copy
-  });
-
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  return resp.arrayBuffer();
-}
-
-/* SharePoint share links look like:
-     https://company.sharepoint.com/:x:/s/site/ENCODEDHASH
-   The direct download form adds ?download=1               */
-function _normalizeSharePointUrl (url) {
-  const u = url.trim();
-  /* Already has a file extension path — just ensure download param */
-  if (/\.(xlsx|xls|xlsm)(\?|$)/i.test(u)) {
-    return u.includes('?') ? u + '&download=1' : u + '?download=1';
-  }
-  /* SharePoint sharing URL — append download=1 */
-  if (u.includes('sharepoint.com') || u.includes('/_layouts/') || u.includes('/sites/')) {
-    return u.includes('?') ? u + '&download=1' : u + '?download=1';
-  }
-  return u;
-}
-
-/* ─────────────────────────────────────────────────────────────
-   SETUP MODAL  — shown once on first visit (no URL saved yet)
-───────────────────────────────────────────────────────────── */
-function _showSetupModal (resolve, reject) {
-  const overlay = _makeOverlay();
-  overlay.innerHTML = `
-    <div class="nc-modal" id="nc-setup-modal">
-      <div class="nc-modal-logo">📊</div>
-      <h2>Connect to SharePoint</h2>
-      <p>Paste your SharePoint <strong>"Anyone with link" share URL</strong> or direct download link below.<br>
-         This is saved to your browser and used automatically on every future visit — <em>no re-uploading needed</em>.</p>
-
-      <div class="nc-field">
-        <label>SharePoint File URL</label>
-        <input type="url" id="nc-sp-url-input"
-               placeholder="https://company.sharepoint.com/sites/…/all_department_data_2026.xlsx"
-               autocomplete="off" spellcheck="false" />
-        <div class="nc-url-hint" id="nc-url-hint"></div>
+    @keyframes cardIn { from{opacity:0;transform:translateY(16px) scale(.97)} to{opacity:1;transform:none} }
+    .login-header { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; }
+    .login-logo {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-l));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; flex-shrink: 0;
+    }
+    .login-title { font-size: 1.2rem; font-weight: 800; color: var(--ink); letter-spacing: -.02em; }
+    .login-subtitle { font-size: .82rem; color: var(--ink3); margin-top: 2px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink3); margin-bottom: 7px; }
+    .form-group input {
+      width: 100%; padding: 10px 13px;
+      border: 1px solid var(--border2); border-radius: var(--radius-sm);
+      font-family: inherit; font-size: .9rem; color: var(--ink);
+      background: #f8fafc; outline: none;
+      transition: border-color .15s var(--ease), box-shadow .15s var(--ease), background .15s;
+    }
+    .form-group input:focus { border-color: var(--blue-l); box-shadow: 0 0 0 3px var(--blue-glow); background: var(--surface); }
+    .btn-submit {
+      width: 100%; padding: 11px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-l));
+      color: white; border: none; border-radius: var(--radius-sm);
+      font-family: inherit; font-size: .9rem; font-weight: 700;
+      cursor: pointer; margin-top: 8px;
+      transition: filter .12s, transform .1s var(--ease-spring), box-shadow .12s;
+      box-shadow: 0 2px 8px rgba(37,99,235,.3);
+      position: relative; overflow: hidden;
+    }
+    .btn-submit:hover { filter: brightness(1.07); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(37,99,235,.38); }
+    .btn-submit:active { transform: scale(.97); }
+    .login-footer-text { font-size: .75rem; color: var(--ink3); text-align: center; margin-top: 24px; line-height: 1.6; }
+    #login-error { display:none; background: rgba(220,38,38,.08); border: 1px solid rgba(220,38,38,.2); color: var(--red); border-radius: var(--radius-sm); padding: 10px 14px; font-size: .82rem; font-weight: 600; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">🍅</div>
+      <div>
+        <div class="login-title">Novus Foods 1730</div>
+        <div class="login-subtitle">Ops Hub &bull; Staff Access Only</div>
       </div>
+    </div>
 
-      <button class="nc-btn-primary" id="nc-btn-load-url" disabled>
-        Connect &amp; Load Dashboard
-      </button>
+    <div id="login-error">Invalid credentials. Please try again.</div>
 
-      <div class="nc-divider"><span>or</span></div>
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input id="username" type="text" autocomplete="username" required />
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required />
+    </div>
+    <button class="btn-submit" id="btn-signin">Sign In</button>
 
-      <div class="nc-upload-zone" id="nc-drop-zone" onclick="document.getElementById('nc-file-input').click()">
-        <input type="file" id="nc-file-input" accept=".xlsx,.xls" />
-        <div class="nc-drop-icon">📁</div>
-        <div class="nc-drop-label">Upload file manually instead</div>
-        <div class="nc-drop-sub">One-time upload — will be cached this session only</div>
-        <div class="nc-drop-chosen" id="nc-drop-chosen" style="display:none;"></div>
-      </div>
+    <p class="login-footer-text">Plant 1730 internal tool.<br>Only configured usernames &amp; passwords for Plant 1730 are allowed.</p>
+  </div>
 
-      <p class="nc-tip">
-        💡 <strong>How to get your SharePoint URL:</strong>
-        Open the file in SharePoint → click <em>Share</em> →
-        set to <em>"Anyone with the link can view"</em> → copy link.
-      </p>
-    </div>`;
-
-  _injectModalStyles();
-  document.body.appendChild(overlay);
-
-  const urlInput  = overlay.querySelector('#nc-sp-url-input');
-  const loadBtn   = overlay.querySelector('#nc-btn-load-url');
-  const hint      = overlay.querySelector('#nc-url-hint');
-  const fileInput = overlay.querySelector('#nc-file-input');
-  const dropZone  = overlay.querySelector('#nc-drop-zone');
-  const chosenEl  = overlay.querySelector('#nc-drop-chosen');
-  let chosenFile  = null;
-
-  /* URL input validation */
-  urlInput.addEventListener('input', () => {
-    const v = urlInput.value.trim();
-    const ok = v.startsWith('http') && (v.includes('sharepoint') || v.includes('.xlsx') || v.includes('.xls'));
-    loadBtn.disabled = !ok;
-    hint.textContent = ok ? '✓ URL looks valid' : (v ? '⚠ Enter a full HTTPS SharePoint or .xlsx URL' : '');
-    hint.style.color = ok ? '#059669' : '#d97706';
-  });
-
-  /* Load from URL */
-  loadBtn.addEventListener('click', () => {
-    const url = urlInput.value.trim();
-    loadBtn.disabled = true;
-    loadBtn.textContent = '⏳ Fetching file…';
-    hint.textContent = 'Connecting to SharePoint…';
-    hint.style.color = '#2563eb';
-
-    _fetchFromSharePoint(url)
-      .then(buf => {
-        localStorage.setItem(NOVUS_SP_URL_KEY, url);
-        _cacheBuffer(buf);
-        overlay.remove();
-        NovusCore.Toast.success('SharePoint connected ✓ Auto-loading on every visit.');
-        resolve(buf);
-      })
-      .catch(err => {
-        hint.textContent = `✕ Could not fetch: ${err.message}. Check the URL or try uploading manually.`;
-        hint.style.color = '#dc2626';
-        loadBtn.disabled = false;
-        loadBtn.textContent = 'Connect & Load Dashboard';
-      });
-  });
-
-  /* Manual file upload fallback */
-  function setFile (f) {
-    if (!f) return;
-    chosenFile = f;
-    chosenEl.textContent = '✓ ' + f.name + ' (' + (f.size / 1024).toFixed(0) + ' KB)';
-    chosenEl.style.display = 'block';
-    dropZone.style.borderColor = '#059669';
-    /* Auto-load when file is chosen */
-    const reader = new FileReader();
-    reader.onload = e => {
-      _cacheBuffer(e.target.result);
-      overlay.remove();
-      NovusCore.Toast.info('File loaded for this session. Set a SharePoint URL for permanent access.');
-      resolve(e.target.result);
+  <script>
+    const ALLOWED_USERS = {
+      "amendoza":      { password: "1730data",   plant: "1730", role: "admin"  },
+      "mcaballero":    { password: "novus26",    plant: "1730", role: "admin"  },
+      "manager1730":   { password: "viewer1730", plant: "1730", role: "viewer" },
+      "hdiaz":         { password: "novus26",    plant: "1730", role: "admin"  },
+      "supervisor1730":{ password: "viewer1730", plant: "1730", role: "viewer" },
+      "hwang":         { password: "novus26",    plant: "1730", role: "admin"  }
     };
-    reader.readAsArrayBuffer(f);
-  }
-  fileInput.addEventListener('change', () => setFile(fileInput.files[0]));
-  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('nc-drag-over'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('nc-drag-over'));
-  dropZone.addEventListener('drop',      e => { e.preventDefault(); dropZone.classList.remove('nc-drag-over'); setFile(e.dataTransfer.files[0]); });
-}
 
-/* ─────────────────────────────────────────────────────────────
-   FALLBACK MODAL  — shown when URL fetch fails
-───────────────────────────────────────────────────────────── */
-function _showFallbackModal (reason, resolve, reject) {
-  const overlay = _makeOverlay();
-  overlay.innerHTML = `
-    <div class="nc-modal">
-      <div class="nc-modal-logo">⚠️</div>
-      <h2>Auto-fetch Failed</h2>
-      <p style="color:#dc2626;font-size:.82rem;margin-bottom:16px;">${reason}</p>
-      <p>Upload the file manually for this session, or update the SharePoint URL.</p>
+    document.getElementById('btn-signin').addEventListener('click', handleLogin);
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
 
-      <div class="nc-upload-zone" id="nc-fb-drop" onclick="document.getElementById('nc-fb-file').click()">
-        <input type="file" id="nc-fb-file" accept=".xlsx,.xls" />
-        <div class="nc-drop-icon">📁</div>
-        <div class="nc-drop-label">Upload file manually</div>
-        <div class="nc-drop-sub">Cached for this session</div>
-        <div class="nc-drop-chosen" id="nc-fb-chosen" style="display:none;"></div>
-      </div>
+    function handleLogin() {
+      const btn      = document.getElementById('btn-signin');
+      const errEl    = document.getElementById('login-error');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
 
-      <div class="nc-divider"><span>or</span></div>
+      errEl.style.display = 'none';
+      if (!username || !password) { errEl.textContent = 'Please enter both username and password.'; errEl.style.display = 'block'; return; }
 
-      <button class="nc-btn-ghost" onclick="NovusCore.resetDataSource();location.reload();">
-        🔗 Update SharePoint URL
-      </button>
-    </div>`;
+      const user = ALLOWED_USERS[username];
+      if (!user || user.password !== password || user.plant !== '1730') {
+        errEl.textContent = 'Invalid Plant 1730 credentials.';
+        errEl.style.display = 'block';
+        document.getElementById('password').value = '';
+        return;
+      }
 
-  _injectModalStyles();
-  document.body.appendChild(overlay);
-
-  const fileInput = overlay.querySelector('#nc-fb-file');
-  const dropZone  = overlay.querySelector('#nc-fb-drop');
-  const chosenEl  = overlay.querySelector('#nc-fb-chosen');
-
-  function setFile (f) {
-    if (!f) return;
-    chosenEl.textContent = '✓ ' + f.name;
-    chosenEl.style.display = 'block';
-    const reader = new FileReader();
-    reader.onload = e => { _cacheBuffer(e.target.result); overlay.remove(); resolve(e.target.result); };
-    reader.readAsArrayBuffer(f);
-  }
-  fileInput.addEventListener('change', () => setFile(fileInput.files[0]));
-  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('nc-drag-over'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('nc-drag-over'));
-  dropZone.addEventListener('drop',      e => { e.preventDefault(); dropZone.classList.remove('nc-drag-over'); setFile(e.dataTransfer.files[0]); });
-}
-
-/* ─────────────────────────────────────────────────────────────
-   MODAL INFRASTRUCTURE
-───────────────────────────────────────────────────────────── */
-function _makeOverlay () {
-  const el = document.createElement('div');
-  el.className = 'nc-overlay';
-  return el;
-}
-
-let _stylesInjected = false;
-function _injectModalStyles () {
-  if (_stylesInjected) return;
-  _stylesInjected = true;
-  const s = document.createElement('style');
-  s.id = 'nc-modal-styles';
-  s.textContent = `
-    .nc-overlay {
-      position:fixed; inset:0; background:rgba(15,23,42,.6); backdrop-filter:blur(6px);
-      z-index:10000; display:flex; align-items:center; justify-content:center;
-      padding:20px; animation:ncFadeIn .2s ease both;
+      btn.classList.add('is-loading');
+      try { localStorage.setItem('novus1730_user', JSON.stringify({ username, plant: user.plant, role: user.role, loginTime: new Date().toISOString() })); } catch (_) {}
+      setTimeout(() => { window.location.href = 'staff-meeting-dashboard.html'; }, 300);
     }
-    @keyframes ncFadeIn { from{opacity:0} to{opacity:1} }
-    @keyframes ncSlideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
-
-    .nc-modal {
-      background:#ffffff; border:1px solid #e2e8f0; border-radius:16px;
-      padding:40px 36px; width:100%; max-width:520px;
-      box-shadow:0 24px 64px rgba(0,0,0,.2);
-      animation:ncSlideUp .28s cubic-bezier(.34,1.56,.64,1) both;
-      font-family:'DM Sans',system-ui,sans-serif;
-    }
-    .nc-modal-logo { font-size:2.2rem; margin-bottom:14px; }
-    .nc-modal h2 {
-      font-size:1.2rem; font-weight:800; color:#0f172a;
-      margin-bottom:10px; letter-spacing:-.02em;
-    }
-    .nc-modal p { font-size:.84rem; color:#64748b; line-height:1.65; margin-bottom:18px; }
-
-    .nc-field { margin-bottom:18px; }
-    .nc-field label {
-      display:block; font-size:.7rem; font-weight:700; text-transform:uppercase;
-      letter-spacing:.06em; color:#64748b; margin-bottom:7px;
-    }
-    .nc-field input[type="url"] {
-      width:100%; padding:10px 13px; border:1.5px solid #cbd5e1; border-radius:8px;
-      font-family:inherit; font-size:.84rem; color:#0f172a; background:#f8fafc; outline:none;
-      transition:border-color .15s, box-shadow .15s;
-    }
-    .nc-field input[type="url"]:focus {
-      border-color:#3b82f6; background:#fff;
-      box-shadow:0 0 0 3px rgba(37,99,235,.12);
-    }
-    .nc-url-hint { font-size:.75rem; margin-top:5px; min-height:16px; font-weight:600; }
-
-    .nc-btn-primary {
-      width:100%; padding:12px; background:linear-gradient(135deg,#2563eb,#3b82f6);
-      color:white; border:none; border-radius:8px; font-family:inherit;
-      font-size:.9rem; font-weight:700; cursor:pointer;
-      box-shadow:0 2px 10px rgba(37,99,235,.3);
-      transition:filter .12s, transform .1s;
-    }
-    .nc-btn-primary:hover:not(:disabled) { filter:brightness(1.07); transform:translateY(-1px); }
-    .nc-btn-primary:disabled { opacity:.45; cursor:not-allowed; transform:none; }
-
-    .nc-btn-ghost {
-      width:100%; padding:10px; background:transparent; color:#334155;
-      border:1.5px solid #cbd5e1; border-radius:8px; font-family:inherit;
-      font-size:.85rem; font-weight:600; cursor:pointer;
-      transition:background .12s, border-color .12s;
-    }
-    .nc-btn-ghost:hover { background:#f1f5f9; border-color:#94a3b8; }
-
-    .nc-divider {
-      display:flex; align-items:center; gap:12px;
-      margin:20px 0; color:#94a3b8; font-size:.75rem;
-    }
-    .nc-divider::before,.nc-divider::after { content:''; flex:1; border-top:1px solid #e2e8f0; }
-
-    .nc-upload-zone {
-      border:2px dashed #cbd5e1; border-radius:10px; padding:28px 20px;
-      text-align:center; cursor:pointer; background:#f8fafc; margin-bottom:14px;
-      transition:border-color .15s, background .15s;
-    }
-    .nc-upload-zone:hover, .nc-upload-zone.nc-drag-over {
-      border-color:#3b82f6; background:#dbeafe;
-    }
-    .nc-upload-zone input[type="file"] { display:none; }
-    .nc-drop-icon  { font-size:1.6rem; margin-bottom:8px; }
-    .nc-drop-label { font-size:.85rem; font-weight:600; color:#334155; }
-    .nc-drop-sub   { font-size:.74rem; color:#94a3b8; margin-top:3px; }
-    .nc-drop-chosen{ font-size:.8rem; color:#059669; font-weight:700; margin-top:8px; }
-
-    .nc-tip {
-      background:#f1f5f9; border:1px solid #e2e8f0; border-radius:8px;
-      padding:12px 14px; font-size:.76rem !important; color:#475569 !important;
-      line-height:1.6 !important; margin-top:18px; margin-bottom:0 !important;
-    }
-
-    /* Status bar shown in nav */
-    .nc-status-bar {
-      display:inline-flex; align-items:center; gap:6px;
-      font-size:.72rem; font-family:'DM Mono',monospace;
-    }
-    .nc-status-dot {
-      width:7px; height:7px; border-radius:50%;
-      animation:ncPulse 2s ease-in-out infinite;
-    }
-    @keyframes ncPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .nc-status-dot.ok     { background:#059669; animation:none; }
-    .nc-status-dot.error  { background:#dc2626; }
-    .nc-status-dot.loading{ background:#d97706; }
-  `;
-  document.head.appendChild(s);
-}
-
-/* ─────────────────────────────────────────────────────────────
-   STATUS INDICATOR HELPER
-   Call NovusCore.setStatus(el, state, text) where state is
-   'loading' | 'ok' | 'error'
-───────────────────────────────────────────────────────────── */
-NovusCore.setStatus = function (el, state, text) {
-  if (!el) return;
-  _injectModalStyles();
-  el.className = 'nc-status-bar';
-  el.innerHTML = `<span class="nc-status-dot ${state}"></span><span>${text}</span>`;
-};
-
-/* ─────────────────────────────────────────────────────────────
-   CHANGE SOURCE BUTTON HELPER
-   Returns an HTML string for a "Change Source" button in the nav.
-   Clicking it clears the saved URL and reloads.
-───────────────────────────────────────────────────────────── */
-NovusCore.changeSourceBtn = function (label = '🔗 Data Source') {
-  return `<button
-    onclick="NovusCore.resetDataSource();location.reload();"
-    title="Change SharePoint URL or upload a different file"
-    style="
-      background:transparent; border:1px solid #cbd5e1; color:#334155;
-      padding:5px 11px; border-radius:7px; font-family:inherit;
-      font-size:.75rem; font-weight:600; cursor:pointer;
-    ">${label}</button>`;
-};
+  </script>
+</body>
+</html>
