@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Needs Action – Novus Foods Ops Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:'DM Sans',system-ui,sans-serif;font-size:13.5px;line-height:1.55;background:var(--bg);color:var(--ink);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");}
     .page{max-width:1600px;margin:0 auto;padding:0 20px 60px;}
-    .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);margin-bottom:24px;will-change:transform;transform:translateZ(0);}
+    .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);margin-bottom:24px;}
     .logo{display:flex;align-items:center;gap:10px;}
     .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--blue-l));border-radius:8px;display:flex;align-items:center;justify-content:center;}
     .logo-icon svg{width:16px;height:16px;fill:white;}
@@ -26,7 +26,7 @@
     .nav-tab{color:var(--ink3);text-decoration:none;font-weight:500;font-size:.82rem;padding:6px 14px;border-radius:7px;transition:all .15s;}
     .nav-tab:hover{background:var(--surface);color:var(--ink2);}
     .nav-tab.active{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:transform .1s,filter .1s;position:relative;overflow:hidden;}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:transform .1s,filter .1s;}
     .btn:active{transform:scale(.97);}
     .btn-brand{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;box-shadow:0 2px 8px rgba(37,99,235,.25);}
     .btn-brand:hover{filter:brightness(1.07);}
@@ -60,21 +60,6 @@
     ::-webkit-scrollbar{width:7px;height:7px;}
     ::-webkit-scrollbar-track{background:transparent;}
     ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
-    .upload-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease both;}
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    .upload-modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:36px 40px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.18);animation:slideUp .25s ease both;}
-    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-    .upload-modal h2{font-size:1.15rem;font-weight:800;color:var(--ink);margin-bottom:6px;}
-    .upload-modal p{font-size:.82rem;color:var(--ink3);margin-bottom:24px;line-height:1.6;}
-    .upload-drop-zone{border:2px dashed var(--border2);border-radius:var(--radius-sm);padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;margin-bottom:20px;background:var(--surface2);}
-    .upload-drop-zone:hover,.upload-drop-zone.drag-over{border-color:var(--blue-l);background:var(--blue-ll);}
-    .upload-drop-zone input[type="file"]{display:none;}
-    .upload-drop-zone .drop-icon{font-size:2rem;margin-bottom:10px;}
-    .upload-drop-zone .drop-label{font-size:.85rem;font-weight:600;color:var(--ink2);}
-    .upload-drop-zone .drop-sub{font-size:.75rem;color:var(--ink3);margin-top:4px;}
-    .upload-drop-zone .drop-chosen{font-size:.8rem;color:var(--green);font-weight:700;margin-top:8px;}
-    .upload-modal .btn-upload{width:100%;padding:11px;background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.3);}
-    .upload-modal .btn-upload:disabled{opacity:.5;cursor:not-allowed;}
   </style>
 </head>
 <body>
@@ -86,12 +71,13 @@
   <nav class="nav-tabs">
     <a class="nav-tab" href="staff-meeting-dashboard.html">Meeting Dashboard</a>
     <a class="nav-tab" href="dds-dashboard.html">DDS Dashboard</a>
-    <a class="nav-tab" href="needs-action.html">Needs Action</a>
+    <a class="nav-tab active" href="needs-action.html">Needs Action</a>
     <a class="nav-tab" href="sap-audit.html">SAP Audit</a>
     <a class="nav-tab" href="inventory-control.html">Inventory Control</a>
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
-    <button class="btn btn-ghost" onclick="sessionStorage.removeItem('novus_xlsx_b64');location.reload();" style="font-size:.75rem;">📂 Change File</button>
+    <button class="btn btn-ghost" onclick="NovusCore.forceRefresh();" style="font-size:.75rem;">🔄 Reload Data</button>
+    <button class="btn btn-ghost" onclick="NovusCore.resetDataSource();location.reload();" style="font-size:.75rem;">🔗 Data Source</button>
     <button class="btn btn-danger" onclick="NovusCore.navigateTo('index.html')">Logout</button>
   </div>
 </div>
@@ -156,7 +142,7 @@
             </tr>
           </thead>
           <tbody id="na-table-body">
-            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">Initializing tracker...</td></tr>
+            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -165,80 +151,89 @@
 </div>
 
 <script>
-const NEEDS_DATA_FILE="all_department_data_2026.xlsx"; // legacy name kept
-const NEEDS_SHEET_NAME="Needs Action";
-const UPLOAD_CACHE_KEY="novus_xlsx_b64";
-let fullWorkbook=null,needsRows=[],filteredRows=[];
+const NEEDS_SHEET_NAME = 'Needs Action';
+let fullWorkbook = null, needsRows = [], filteredRows = [];
 
-function showUploadModal(onSuccess){const overlay=document.createElement("div");overlay.className="upload-overlay";overlay.innerHTML=`<div class="upload-modal"><h2>📂 Upload Data File</h2><p>This page reads the <strong>Needs Action</strong> sheet from <strong>all_department_data_2026.xlsx</strong>.<br>Upload your workbook to continue. Cached for this session.</p><div class="upload-drop-zone" id="drop-zone" onclick="document.getElementById('na-file-input').click()"><input type="file" id="na-file-input" accept=".xlsx,.xls"/><div class="drop-icon">📊</div><div class="drop-label">Click to browse or drag & drop</div><div class="drop-sub">Accepts .xlsx or .xls</div><div class="drop-chosen" id="drop-chosen" style="display:none;"></div></div><button class="btn-upload" id="btn-upload-confirm" disabled>Load Tracker</button></div>`;document.body.appendChild(overlay);let chosenFile=null;const input=overlay.querySelector("#na-file-input"),dropZone=overlay.querySelector("#drop-zone"),chosenEl=overlay.querySelector("#drop-chosen"),confirmBtn=overlay.querySelector("#btn-upload-confirm");function setFile(f){if(!f)return;chosenFile=f;chosenEl.textContent="✓ "+f.name+" ("+(f.size/1024).toFixed(0)+" KB)";chosenEl.style.display="block";confirmBtn.disabled=false;}input.addEventListener("change",()=>setFile(input.files[0]));dropZone.addEventListener("dragover",e=>{e.preventDefault();dropZone.classList.add("drag-over");});dropZone.addEventListener("dragleave",()=>dropZone.classList.remove("drag-over"));dropZone.addEventListener("drop",e=>{e.preventDefault();dropZone.classList.remove("drag-over");setFile(e.dataTransfer.files[0]);});confirmBtn.addEventListener("click",()=>{if(!chosenFile)return;confirmBtn.disabled=true;confirmBtn.textContent="Reading…";const reader=new FileReader();reader.onload=e=>{const b64=btoa(String.fromCharCode(...new Uint8Array(e.target.result)));try{sessionStorage.setItem(UPLOAD_CACHE_KEY,b64);}catch(_){}overlay.remove();onSuccess(e.target.result);};reader.readAsArrayBuffer(chosenFile);});}
+const deptSelect   = document.getElementById('na-dept');
+const statusSelect = document.getElementById('na-status');
+const totalCountEl = document.getElementById('na-total-count');
+const openCountEl  = document.getElementById('na-open-count');
+const completedCountEl = document.getElementById('na-completed-count');
+const tableBody    = document.getElementById('na-table-body');
+const saveMsg      = document.getElementById('save-msg');
 
-function getUploadedBuffer(){return new Promise((resolve,reject)=>{const cached=sessionStorage.getItem(UPLOAD_CACHE_KEY);if(cached){try{const bin=atob(cached);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);resolve(buf.buffer);return;}catch(_){sessionStorage.removeItem(UPLOAD_CACHE_KEY);}}showUploadModal(resolve);});}
-const deptSelect=document.getElementById("na-dept"),statusSelect=document.getElementById("na-status");
-const totalCountEl=document.getElementById("na-total-count"),openCountEl=document.getElementById("na-open-count"),completedCountEl=document.getElementById("na-completed-count"),tableBody=document.getElementById("na-table-body"),saveMsg=document.getElementById("save-msg");
-
-function safeString(v){return(v===null||v===undefined)?"":String(v);}
-function pad2(n){return String(n).padStart(2,"0");}
-function parseExcelDate(value){if(!value&&value!==0)return null;if(value instanceof Date)return isNaN(value)?null:value;if(typeof value==="number"){const base=new Date(Date.UTC(1899,11,30));return new Date(base.getTime()+value*86400000);}const d=new Date(value);return isNaN(d)?null:d;}
-function formatDateShort(d){if(!d||!(d instanceof Date)||isNaN(d))return"";return`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;}
-function rowStatus(row){const dcRaw=row["Date Completed"];return(dcRaw!==null&&dcRaw!==undefined&&String(dcRaw).trim()!=="")?"completed":"open";}
+function safeString(v){return(v===null||v===undefined)?'':String(v);}
+function pad2(n){return String(n).padStart(2,'0');}
+function parseExcelDate(value){if(!value&&value!==0)return null;if(value instanceof Date)return isNaN(value)?null:value;if(typeof value==='number'){const base=new Date(Date.UTC(1899,11,30));return new Date(base.getTime()+value*86400000);}const d=new Date(value);return isNaN(d)?null:d;}
+function formatDateShort(d){if(!d||!(d instanceof Date)||isNaN(d))return'';return`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;}
+function rowStatus(row){const dcRaw=row['Date Completed'];return(dcRaw!==null&&dcRaw!==undefined&&String(dcRaw).trim()!=='')?'completed':'open';}
 
 async function loadNeedsActionSheet(){
   try {
-    const buf=await getUploadedBuffer();
-    fullWorkbook=XLSX.read(buf,{type:"array"});
-    const ws=fullWorkbook.Sheets[NEEDS_SHEET_NAME];
-    if(!ws){tableBody.innerHTML=`<tr><td colspan="6" style="text-align:center;">Sheet "${NEEDS_SHEET_NAME}" not found.</td></tr>`;return;}
-    let rows=XLSX.utils.sheet_to_json(ws,{defval:null,cellDates:true,raw:false});
-    needsRows=rows.map((r,idx)=>({_id:idx,...r}));
-    initFilters(); applyFilters();
+    const buf = await NovusCore.getDataBuffer();
+    fullWorkbook = XLSX.read(buf, {type:'array'});
+    const ws = fullWorkbook.Sheets[NEEDS_SHEET_NAME];
+    if(!ws){
+      tableBody.innerHTML=`<tr><td colspan="6" style="text-align:center;">Sheet "${NEEDS_SHEET_NAME}" not found.</td></tr>`;
+      return;
+    }
+    let rows = XLSX.utils.sheet_to_json(ws, {defval:null, cellDates:true, raw:false});
+    needsRows = rows.map((r,idx) => ({_id:idx,...r}));
+    initFilters();
+    applyFilters();
+    NovusCore.Toast.success('Data loaded ✓');
+    NovusCore.startAutoRefresh(newBuf => {
+      loadNeedsActionSheet(newBuf);
+    });
   } catch(err) {
     console.error(err);
-    tableBody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:red;padding:40px;">Error loading Excel file.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;padding:40px;">Error loading data: ${err.message}</td></tr>`;
   }
 }
 
 function initFilters(){
-  const deptSet=new Set();
-  needsRows.forEach(r=>{if(r["Department"])deptSet.add(String(r["Department"]).trim());});
-  const depts=Array.from(deptSet).sort();
-  while(deptSelect.options.length>1)deptSelect.remove(1);
-  depts.forEach(dep=>{const o=document.createElement("option");o.value=dep;o.textContent=dep;deptSelect.appendChild(o);});
+  const deptSet = new Set();
+  needsRows.forEach(r => { if(r['Department']) deptSet.add(String(r['Department']).trim()); });
+  const depts = Array.from(deptSet).sort();
+  while(deptSelect.options.length > 1) deptSelect.remove(1);
+  depts.forEach(dep => { const o = document.createElement('option'); o.value=dep; o.textContent=dep; deptSelect.appendChild(o); });
 }
 
-function markRowCompleted(rowId,completionDateStr){
-  const row=needsRows.find(r=>r._id===rowId);if(!row)return;
-  let finalDateStr=completionDateStr&&completionDateStr.trim()?completionDateStr.trim():formatDateShort(new Date());
-  if(!confirm(`Mark completed on ${finalDateStr}?`))return;
-  row["Date Completed"]=finalDateStr;
-  const btn=document.getElementById("btn-save-excel");
-  btn.style.background="var(--amber)";
-  btn.innerHTML="💾 Unsaved Changes (Click to Export)";
+function markRowCompleted(rowId, completionDateStr){
+  const row = needsRows.find(r => r._id === rowId);
+  if(!row) return;
+  let finalDateStr = completionDateStr && completionDateStr.trim() ? completionDateStr.trim() : formatDateShort(new Date());
+  if(!confirm(`Mark completed on ${finalDateStr}?`)) return;
+  row['Date Completed'] = finalDateStr;
+  const btn = document.getElementById('btn-save-excel');
+  btn.style.background = 'var(--amber)';
+  btn.innerHTML = '💾 Unsaved Changes (Click to Export)';
   applyFilters();
 }
 
 function exportUpdatedExcel(){
-  if(!fullWorkbook)return;
-  const cleanData=needsRows.map(r=>{const{_id,...rest}=r;return rest;});
-  const newSheet=XLSX.utils.json_to_sheet(cleanData);
-  fullWorkbook.Sheets[NEEDS_SHEET_NAME]=newSheet;
-  XLSX.writeFile(fullWorkbook,"all_department_data_2026.xlsx");
-  const btn=document.getElementById("btn-save-excel");
-  btn.style.background="";
-  btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Changes to Excel`;
-  saveMsg.style.display="block";
-  setTimeout(()=>{saveMsg.style.display="none";},3000);
-  NovusCore.Toast.success("Excel file downloaded ✓");
-  // Force fresh upload next time since file changed
-  sessionStorage.removeItem(UPLOAD_CACHE_KEY);
+  if(!fullWorkbook) return;
+  const cleanData = needsRows.map(r => { const{_id,...rest}=r; return rest; });
+  const newSheet = XLSX.utils.json_to_sheet(cleanData);
+  fullWorkbook.Sheets[NEEDS_SHEET_NAME] = newSheet;
+  XLSX.writeFile(fullWorkbook, 'all_department_data_2026.xlsx');
+  const btn = document.getElementById('btn-save-excel');
+  btn.style.background = '';
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Changes to Excel`;
+  saveMsg.style.display = 'block';
+  setTimeout(() => { saveMsg.style.display = 'none'; }, 3000);
+  NovusCore.Toast.success('Excel file downloaded ✓');
+  // Clear cache so next load picks up fresh file (user should re-upload to SharePoint)
+  NovusCore.forceRefresh();
 }
 
 function applyFilters(){
-  const selDept=deptSelect.value,selStatus=statusSelect.value;
-  filteredRows=needsRows.filter(row=>{
-    if(selDept&&safeString(row["Department"]).trim()!==selDept)return false;
-    const st=rowStatus(row);
-    if(selStatus==="open"&&st!=="open")return false;
-    if(selStatus==="completed"&&st!=="completed")return false;
+  const selDept = deptSelect.value, selStatus = statusSelect.value;
+  filteredRows = needsRows.filter(row => {
+    if(selDept && safeString(row['Department']).trim() !== selDept) return false;
+    const st = rowStatus(row);
+    if(selStatus === 'open' && st !== 'open') return false;
+    if(selStatus === 'completed' && st !== 'completed') return false;
     return true;
   });
   renderSummaryAndTable();
@@ -246,34 +241,41 @@ function applyFilters(){
 
 function renderSummaryAndTable(){
   let open=0,comp=0;
-  filteredRows.forEach(r=>{const st=rowStatus(r);if(st==="open")open++;else comp++;});
-  totalCountEl.textContent=filteredRows.length;
-  openCountEl.textContent=open;
-  completedCountEl.textContent=comp;
+  filteredRows.forEach(r => { const st=rowStatus(r); if(st==='open')open++; else comp++; });
+  totalCountEl.textContent = filteredRows.length;
+  openCountEl.textContent  = open;
+  completedCountEl.textContent = comp;
   renderTable();
 }
 
 function renderTable(){
-  tableBody.innerHTML="";
-  if(!filteredRows.length){tableBody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">No items match current filters.</td></tr>`;return;}
-  filteredRows.forEach(row=>{
-    const tr=document.createElement("tr");
-    const status=rowStatus(row);
-    tr.innerHTML=`<td class="date-mono">${formatDateShort(parseExcelDate(row["Date"]))}</td><td class="na-text-cell">${safeString(row["Needs Action"])}</td><td class="date-mono">${formatDateShort(parseExcelDate(row["Date Completed"]))}</td><td style="font-weight:600;color:var(--blue);">${safeString(row["Department"])}</td><td><span style="font-weight:700;color:${status==='open'?'var(--red)':'var(--green)'};">${status==='open'?'Open':'Completed'}</span></td><td id="action-${row._id}"></td>`;
-    const actionCell=tr.querySelector(`#action-${row._id}`);
-    if(status==="open"){
-      const input=document.createElement("input");input.type="date";input.className="date-input-sm";input.value=formatDateShort(new Date());
-      const btn=document.createElement("button");btn.className="btn btn-complete";btn.textContent="Complete";
-      btn.onclick=()=>markRowCompleted(row._id,input.value);
-      actionCell.appendChild(input);actionCell.appendChild(btn);
-    } else {actionCell.innerHTML=`<span style="color:var(--ink4)">—</span>`;}
+  tableBody.innerHTML = '';
+  if(!filteredRows.length){
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">No items match current filters.</td></tr>`;
+    return;
+  }
+  filteredRows.forEach(row => {
+    const tr = document.createElement('tr');
+    const status = rowStatus(row);
+    tr.innerHTML = `<td class="date-mono">${formatDateShort(parseExcelDate(row['Date']))}</td><td class="na-text-cell">${safeString(row['Needs Action'])}</td><td class="date-mono">${formatDateShort(parseExcelDate(row['Date Completed']))}</td><td style="font-weight:600;color:var(--blue);">${safeString(row['Department'])}</td><td><span style="font-weight:700;color:${status==='open'?'var(--red)':'var(--green)'};">${status==='open'?'Open':'Completed'}</span></td><td id="action-${row._id}"></td>`;
+    const actionCell = tr.querySelector(`#action-${row._id}`);
+    if(status === 'open'){
+      const input = document.createElement('input');
+      input.type = 'date'; input.className = 'date-input-sm'; input.value = formatDateShort(new Date());
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-complete'; btn.textContent = 'Complete';
+      btn.onclick = () => markRowCompleted(row._id, input.value);
+      actionCell.appendChild(input); actionCell.appendChild(btn);
+    } else {
+      actionCell.innerHTML = `<span style="color:var(--ink4)">—</span>`;
+    }
     tableBody.appendChild(tr);
   });
 }
 
-deptSelect.onchange=applyFilters;
-statusSelect.onchange=applyFilters;
-window.onload=loadNeedsActionSheet;
+deptSelect.onchange   = applyFilters;
+statusSelect.onchange = applyFilters;
+window.onload = loadNeedsActionSheet;
 </script>
 </body>
 </html>
