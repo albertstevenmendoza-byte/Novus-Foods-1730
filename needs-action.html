@@ -84,7 +84,7 @@
     <a class="nav-tab" href="Inventory-control.html">Inventory Control</a>
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
-    <label class="btn btn-brand" style="cursor:pointer;">
+    <label id="upload-label" class="btn btn-brand" style="cursor:pointer;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       Upload Data
       <input type="file" id="main-file-upload" accept=".xlsx,.xls" style="display:none;" onchange="handleFileUpload(event)">
@@ -213,33 +213,37 @@ function getOwnerValue(row) {
   return safeString(row["Owner"] || row["Department"]);
 }
 
-function mergeExcelWithLocal(excelRows) {
+function _mergeWithLocal(excelRows) {
   const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
   const merged = [...excelRows];
-  localData.forEach(localItem => {
-    const existingIdx = merged.findIndex(r =>
-      safeString(r["Needs Action"]) === safeString(localItem["Needs Action"]) &&
-      formatDateShort(r["Date"]) === formatDateShort(localItem["Date"])
-    );
-    if (existingIdx > -1) { merged[existingIdx] = localItem; }
-    else { merged.push(localItem); }
+  localData.forEach(item => {
+    const idx = merged.findIndex(r =>
+      safeString(r["Needs Action"]) === safeString(item["Needs Action"]) &&
+      formatDateShort(r["Date"])    === formatDateShort(item["Date"]));
+    if (idx > -1) merged[idx] = item; else merged.push(item);
   });
   return merged;
+}
+
+function applyBuffer(buf) {
+  fullWorkbook = XLSX.read(buf, {type:"array", cellDates:true});
+  const ws = fullWorkbook.Sheets[NEEDS_SHEET_NAME];
+  const excelRows = ws ? XLSX.utils.sheet_to_json(ws, {defval:null}) : [];
+  needsRows = _mergeWithLocal(excelRows).map((r,idx) => ({_id:idx,...r}));
+  document.getElementById('new-date').value = formatDateShort(new Date());
+  const lbl = document.getElementById('upload-label');
+  if (lbl) { lbl.style.cssText += ";background:var(--green,#059669);border-color:var(--green,#059669);color:#fff;"; lbl.title = NovusCore.WorkbookCache.fileName(); }
+  initFilters();
+  applyFilters();
 }
 
 async function handleFileUpload(evt) {
   const file = evt.target.files[0];
   if (!file) return;
-  tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">Reading file…</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink3);">Reading file…</td></tr>';
   try {
-    const buf = await NovusCore.readFile(file);
-    fullWorkbook = XLSX.read(buf, {type:"array", cellDates: true});
-    const ws = fullWorkbook.Sheets[NEEDS_SHEET_NAME];
-    const excelRows = ws ? XLSX.utils.sheet_to_json(ws, {defval:null}) : [];
-    needsRows = mergeExcelWithLocal(excelRows).map((r,idx) => ({_id:idx,...r}));
-    document.getElementById('new-date').value = formatDateShort(new Date());
-    initFilters();
-    applyFilters();
+    const buf = await NovusCore.WorkbookCache.save(file);
+    applyBuffer(buf);
     NovusCore.Toast.success("Workbook loaded ✓");
   } catch(err) {
     console.error(err);
@@ -249,15 +253,20 @@ async function handleFileUpload(evt) {
 }
 
 function loadNeedsActionSheet() {
-  // Load any locally-saved items (added/completed while no workbook was loaded)
+  const cached = NovusCore.WorkbookCache.load();
+  if (cached) {
+    // Workbook already uploaded this session – restore automatically
+    applyBuffer(cached);
+    return;
+  }
+  // No upload yet – show any locally-saved items and prompt
   const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
-  needsRows = localData.map((r, idx) => ({_id: idx, ...r}));
+  needsRows = localData.map((r,idx) => ({_id:idx,...r}));
   document.getElementById('new-date').value = formatDateShort(new Date());
   initFilters();
   applyFilters();
-  if (needsRows.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">⬆ Upload your department data workbook to load items from Excel, or add new items below.</td></tr>';
-  }
+  if (!needsRows.length)
+    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink3);">⬆ Upload your department data workbook to load items, or add new items below.</td></tr>';
 }
 
 function initFilters(){
