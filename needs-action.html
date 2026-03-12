@@ -255,11 +255,9 @@ async function handleFileUpload(evt) {
 function loadNeedsActionSheet() {
   const cached = NovusCore.WorkbookCache.load();
   if (cached) {
-    // Workbook already uploaded this session – restore automatically
     applyBuffer(cached);
     return;
   }
-  // No upload yet – show any locally-saved items and prompt
   const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
   needsRows = localData.map((r,idx) => ({_id:idx,...r}));
   document.getElementById('new-date').value = formatDateShort(new Date());
