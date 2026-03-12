@@ -109,7 +109,7 @@
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
     <span id="data-status">Upload workbook to load</span>
-    <label class="btn btn-ghost" style="cursor:pointer;">
+    <label id="upload-label" class="btn btn-ghost" style="cursor:pointer;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       Upload Data
       <input type="file" id="main-file-upload" accept=".xlsx,.xls" style="display:none;" onchange="handleFileUpload(event)">
@@ -462,28 +462,39 @@ function savePlan(id){localStorage.setItem('dds_'+id,document.getElementById(id)
 function loadSavedPlans(){['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap'].forEach(id=>{const s=localStorage.getItem('dds_'+id);if(s)document.getElementById(id).innerText=s;});}
 function clearPlanData(){if(confirm('Revert plans to Excel data?')){localStorage.clear();location.reload();}}
 
+function applyBuffer(buf){
+  const st=document.getElementById('data-status');
+  workbook=XLSX.read(buf,{type:'array',cellDates:false,raw:true});
+  renderDashboard();initDraggable();initResizable();
+  st.className='ok';st.textContent='✓ '+NovusCore.WorkbookCache.fileName();
+  const lbl=document.getElementById('upload-label');
+  if(lbl){lbl.style.cssText+=";background:var(--green,#059669);border-color:var(--green,#059669);color:#fff;";}
+}
+
 async function handleFileUpload(evt){
   const file=evt.target.files[0];
   if(!file)return;
   const st=document.getElementById('data-status');
   st.className='';st.textContent='Reading file…';
   try{
-    const buf=await NovusCore.readFile(file);
-    workbook=XLSX.read(buf,{type:'array',cellDates:false,raw:true});
-    renderDashboard();initDraggable();initResizable();
-    st.className='ok';st.textContent='✓ Data loaded';
+    const buf=await NovusCore.WorkbookCache.save(file);
+    applyBuffer(buf);
     NovusCore.Toast.success('Workbook loaded ✓');
   }catch(err){
     console.error(err);st.className='error';st.textContent=`⚠ ${err.message}`;
-    document.getElementById('current-date-display').textContent='File load failed.';
     NovusCore.Toast.error('Failed to read file.');
   }
 }
 
 window.__libsCallback=async()=>{
   loadSavedPlans();
-  document.getElementById('current-date-display').textContent=
-    'Upload your department workbook using the Upload Data button above.';
+  const cached=NovusCore.WorkbookCache.load();
+  if(cached){
+    applyBuffer(cached);
+  } else {
+    document.getElementById('current-date-display').textContent=
+      'Upload your department workbook using the Upload Data button above.';
+  }
 };
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',()=>{if(window.__libs.chartjs&&window.__libs.xlsx)window.__libsCallback();});
