@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap"></noscript>
-  <script src="novus-core.js" defer></script>
+  <script src="novus-core.js"></script>
   <style>
     :root {
       --bg: #f4f6fb; --surface: #fff; --border: #e2e8f0; --border2: #cbd5e1;
@@ -130,7 +130,7 @@
       }
 
       btn.classList.add('is-loading');
-      try { localStorage.setItem('novus1730_user', JSON.stringify({ username, plant: user.plant, role: user.role, loginTime: new Date().toISOString() })); } catch (_) {}
+      try { sessionStorage.setItem('novus1730_user', JSON.stringify({ username, plant: user.plant, role: user.role, loginTime: new Date().toISOString() })); } catch (_) {}
       setTimeout(() => { window.location.href = 'staff-meeting-dashboard.html'; }, 300);
     }
   </script>
