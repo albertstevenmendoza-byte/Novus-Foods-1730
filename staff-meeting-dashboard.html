@@ -711,7 +711,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 window.__libsCallback = async () => {
-  // Restore saved widget layout
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -719,7 +718,6 @@ window.__libsCallback = async () => {
       groups.forEach(g => { g.id=uid++; g.widgets.forEach(w=>{w.id=uid++;}); });
     }
   } catch(_) { groups = []; }
-  // Auto-restore workbook if already uploaded this session
   const cached = NovusCore.WorkbookCache.load();
   if (cached) {
     applyBuffer(cached);
