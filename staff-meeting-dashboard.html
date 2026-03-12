@@ -143,7 +143,7 @@
     <a class="nav-tab" href="Inventory-control.html">Inventory Control</a>
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
-    <label class="btn btn-primary" style="cursor:pointer;font-size:.78rem;padding:7px 14px;">
+    <label id="upload-label" class="btn btn-primary" style="cursor:pointer;font-size:.78rem;padding:7px 14px;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       Upload Data
       <input type="file" id="main-file-upload" accept=".xlsx,.xls" style="display:none;" onchange="handleFileUpload(event)">
@@ -336,41 +336,39 @@ const p2 = n => String(n).padStart(2,"0");
 /* ═══════════════════════════════════════════════════════
    DATA LOAD
 ═══════════════════════════════════════════════════════ */
-async function loadFromBuffer(buf) {
-  const st = $("data-status");
-  try {
-    const wb = XLSX.read(buf, {type:"array", cellDates:false});
-    deptData = {};
-    wb.SheetNames.forEach(name => {
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], {defval:null});
-      rows.forEach(r => { r._jsDate = excelToUTC(r.Date); });
-      deptData[name] = rows;
-    });
-    const keys = Object.keys(deptData);
-    st.className = "ok";
+function applyBuffer(buf) {
+  const wb = XLSX.read(buf, {type:"array", cellDates:false});
+  deptData = {};
+  wb.SheetNames.forEach(name => {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], {defval:null});
+    rows.forEach(r => { r._jsDate = excelToUTC(r.Date); });
+    deptData[name] = rows;
+  });
+  const keys = Object.keys(deptData);
+  const st   = $("data-status");
+  if (st) {
+    st.className  = keys.length ? "ok" : "error";
     st.textContent = keys.length
       ? `✓ ${keys.length} sheet${keys.length>1?"s":""} loaded`
       : "⚠ No sheets found";
-    onDeptChange();
-    render();
-  } catch(e) {
-    console.error(e);
-    st.className = "error";
-    st.textContent = `⚠ ${e.message}`;
   }
+  const lbl = document.getElementById("upload-label");
+  if (lbl) { lbl.style.cssText += ";background:var(--green,#059669);border-color:var(--green,#059669);color:#fff;"; lbl.title = NovusCore.WorkbookCache.fileName(); }
+  onDeptChange();
+  render();
 }
 
 async function handleFileUpload(evt) {
   const file = evt.target.files[0];
   if (!file) return;
   const st = $("data-status");
-  st.className = ""; st.textContent = "Reading…";
+  if (st) { st.className = ""; st.textContent = "Reading…"; }
   try {
-    const buf = await NovusCore.readFile(file);
-    await loadFromBuffer(buf);
+    const buf = await NovusCore.WorkbookCache.save(file);
+    applyBuffer(buf);
     NovusCore.Toast.success("Workbook loaded ✓");
   } catch(e) {
-    st.className = "error"; st.textContent = `⚠ ${e.message}`;
+    if (st) { st.className = "error"; st.textContent = `⚠ ${e.message}`; }
     NovusCore.Toast.error("Failed to read file.");
   }
 }
@@ -713,6 +711,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 window.__libsCallback = async () => {
+  // Restore saved widget layout
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -720,7 +719,15 @@ window.__libsCallback = async () => {
       groups.forEach(g => { g.id=uid++; g.widgets.forEach(w=>{w.id=uid++;}); });
     }
   } catch(_) { groups = []; }
-  render();
+  // Auto-restore workbook if already uploaded this session
+  const cached = NovusCore.WorkbookCache.load();
+  if (cached) {
+    applyBuffer(cached);
+  } else {
+    const st = $("data-status");
+    if (st) st.textContent = "Upload your data workbook →";
+    render();
+  }
 };
 
 if (document.readyState === "loading") {
