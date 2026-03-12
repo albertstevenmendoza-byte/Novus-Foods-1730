@@ -84,7 +84,9 @@
     .plan-card-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;padding:8px 12px;font-weight:700;font-size:.78rem;text-transform:uppercase;text-align:center;}
     .plan-card-body{padding:10px 12px;min-height:80px;outline:none;white-space:pre-wrap;color:var(--ink2);font-size:.82rem;background:var(--surface2);font-family:'DM Sans',sans-serif;}
     .plan-card-body:focus{background:var(--surface);}
-    #data-status{font-size:.72rem;}
+    #data-status{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--ink3);}
+    #data-status.ok{color:var(--green);}
+    #data-status.error{color:var(--red);}
     .resizer{position:absolute;right:0;bottom:0;width:22px;height:22px;cursor:nwse-resize;clip-path:polygon(100% 0,100% 100%,0 100%);background:linear-gradient(135deg,var(--border2),var(--blue));opacity:0;transition:opacity .2s;border-radius:0 0 var(--radius) 0;}
     .panel:hover .resizer{opacity:.5;}
     ::-webkit-scrollbar{width:7px;height:7px;}
@@ -106,14 +108,12 @@
     <a class="nav-tab" href="inventory-control.html">Inventory Control</a>
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
-    <span id="data-status"></span>
-    <button class="btn btn-ghost" onclick="location.reload()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>
-      Refresh
-    </button>
-    <!-- Clears session cache so next refresh re-fetches from SharePoint -->
-    <button class="btn btn-ghost" onclick="NovusCore.forceRefresh();" title="Force re-fetch latest file from SharePoint" style="font-size:.75rem;">🔄 Reload Data</button>
-    <button class="btn btn-ghost" onclick="NovusCore.resetDataSource();location.reload();" title="Change SharePoint URL" style="font-size:.75rem;">🔗 Data Source</button>
+    <span id="data-status">Upload workbook to load</span>
+    <label class="btn btn-ghost" style="cursor:pointer;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Data
+      <input type="file" id="main-file-upload" accept=".xlsx,.xls" style="display:none;" onchange="handleFileUpload(event)">
+    </label>
     <button class="btn btn-danger" onclick="NovusCore.navigateTo('index.html')">Logout</button>
   </div>
 </div>
@@ -121,6 +121,8 @@
 <div class="page">
   <div class="date-header" id="current-date-display">Loading…</div>
   <div class="dash-grid" id="main-sortable">
+
+    <!-- SAFETY -->
     <div class="panel" style="grid-column:span 4;position:relative;" id="panel-safety">
       <div class="panel-header"><span class="panel-title">Safety</span></div>
       <div class="panel-date" id="date-safety">—</div>
@@ -132,6 +134,8 @@
       </div>
       <div class="resizer"></div>
     </div>
+
+    <!-- QUALITY -->
     <div class="panel" style="grid-column:span 8;position:relative;" id="panel-quality">
       <div class="panel-header"><span class="panel-title">Quality</span></div>
       <div class="panel-date" id="date-quality">—</div>
@@ -145,6 +149,8 @@
       </div>
       <div class="resizer"></div>
     </div>
+
+    <!-- PRODUCTION -->
     <div class="panel" style="grid-column:span 8;position:relative;" id="panel-production">
       <div class="panel-header"><span class="panel-title">Production</span></div>
       <div class="panel-date" id="date-production">—</div>
@@ -164,6 +170,8 @@
       </div>
       <div class="resizer"></div>
     </div>
+
+    <!-- COSTS -->
     <div class="panel" style="grid-column:span 4;position:relative;" id="panel-costs">
       <div class="panel-header"><span class="panel-title">Costs</span></div>
       <div class="panel-date" id="date-costs">—</div>
@@ -181,6 +189,8 @@
       </div>
       <div class="resizer"></div>
     </div>
+
+    <!-- HR -->
     <div class="panel" style="grid-column:span 4;position:relative;" id="panel-hr">
       <div class="panel-header"><span class="panel-title">HR | Training</span></div>
       <div class="panel-date" id="date-hr">—</div>
@@ -197,6 +207,8 @@
       </div>
       <div class="resizer"></div>
     </div>
+
+    <!-- SAP -->
     <div class="panel" style="grid-column:span 4;position:relative;" id="panel-sap">
       <div class="panel-header"><span class="panel-title">SAP</span></div>
       <div class="panel-date" id="date-sap">—</div>
@@ -211,6 +223,8 @@
       </div>
       <div class="resizer"></div>
     </div>
+
+    <!-- WAREHOUSE -->
     <div class="panel" style="grid-column:span 4;position:relative;" id="panel-warehouse">
       <div class="panel-header"><span class="panel-title">Warehouse</span></div>
       <div class="panel-date" id="date-warehouse">—</div>
@@ -223,12 +237,22 @@
           <div class="metric-box"><div class="metric-label">Cases Scheduled</div><div class="metric-value" id="wh-bp-scheduled">—</div></div>
           <div class="metric-box"><div class="metric-label">Cases Shipped</div><div class="metric-value" id="wh-bp-shipped">—</div></div>
         </div>
+        <!-- *** CPMH metric box *** -->
+        <div class="metric-row">
+          <div class="metric-box" style="background:var(--blue-ll);border-color:var(--blue-l);">
+            <div class="metric-label" style="color:var(--blue);font-weight:800;">CPMH (Cases / Man Hour)</div>
+            <div class="metric-value" id="wh-bp-cpmh" style="color:var(--blue);">—</div>
+          </div>
+        </div>
         <div class="chart-wrap" style="height:130px;"><canvas id="wh-bp-chart"></canvas></div>
         <div class="chart-wrap" style="height:130px;"><canvas id="wh-ce-chart"></canvas></div>
-        <div class="chart-wrap" style="height:130px;"><canvas id="wh-bp-manhour-chart"></canvas></div>
+        <!-- *** CPMH trend bar chart *** -->
+        <div class="chart-wrap" style="height:220px;"><canvas id="wh-cpmh-chart"></canvas></div>
       </div>
       <div class="resizer"></div>
     </div>
+
+    <!-- INVENTORY -->
     <div class="panel" style="grid-column:span 4;position:relative;" id="panel-inventory">
       <div class="panel-header"><span class="panel-title">Inventory Control</span></div>
       <div class="panel-date" id="date-inventory">—</div>
@@ -245,6 +269,7 @@
       </div>
       <div class="resizer"></div>
     </div>
+
   </div>
 
   <div class="panel" style="margin-bottom:24px;">
@@ -266,7 +291,7 @@
 </div>
 
 <script>
-let workbook, GLOBAL_MAX_DATE=null;
+let workbook,GLOBAL_MAX_DATE=null;
 const TODAY_OBJ=new Date();
 
 function toDateString(d){if(!d||isNaN(d.getTime()))return null;return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;}
@@ -283,8 +308,22 @@ function getAggregatedProductionData(prod,maxPoints=30,limitDate){const m=new Ma
 function calcRegression(y){const n=y.length;if(n<2)return y;let sx=0,sy=0,sxy=0,sx2=0;for(let i=0;i<n;i++){sx+=i;sy+=y[i];sxy+=i*y[i];sx2+=i*i;}const sl=(n*sxy-sx*sy)/(n*sx2-sx*sx),ic=(sy-sl*sx)/n;return Array.from({length:n},(_,i)=>sl*i+ic);}
 function getHistoricalData(data,field,maxPoints=30,limitDate){const m=new Map();data.forEach(row=>{const d=parseDate(row.Date);if(!d)return;const ds=toDateString(d);if(limitDate&&ds>limitDate)return;if(!m.has(ds))m.set(ds,{val:Number(valByKey(row,field))||0,raw:d});});const keys=Array.from(m.keys()).sort().slice(-maxPoints);return{labels:keys.map(k=>{const r=m.get(k).raw;return new Date(r.getUTCFullYear(),r.getUTCMonth(),r.getUTCDate()).toLocaleDateString();}),values:keys.map(k=>m.get(k).val)};}
 
+// *** NEW: city-filtered historical data helper for CPMH ***
+function getHistoricalDataFiltered(data,filterFn,field,maxPoints=30,limitDate){
+  const m=new Map();
+  data.filter(filterFn).forEach(row=>{
+    const d=parseDate(row.Date);if(!d)return;
+    const ds=toDateString(d);
+    if(limitDate&&ds>limitDate)return;
+    const v=Number(valByKey(row,field));
+    if(!isNaN(v)&&v!==0)m.set(ds,{val:v,raw:d});
+  });
+  const keys=Array.from(m.keys()).sort().slice(-maxPoints);
+  return{labels:keys.map(k=>{const r=m.get(k).raw;return new Date(r.getUTCFullYear(),r.getUTCMonth(),r.getUTCDate()).toLocaleDateString();}),values:keys.map(k=>m.get(k).val)};
+}
+
 const CHART_DEFAULTS={font:{family:"'DM Sans', sans-serif",size:10},monoFont:{family:"'DM Mono', monospace",size:10},gridColor:'rgba(0,0,0,.04)',tickColor:'#94a3b8'};
-function mkChart(canvasId,type,labels,datasets,extraOpts={}){const canvas=document.getElementById(canvasId);if(!canvas)return;const existing=Chart.getChart(canvas);if(existing)existing.destroy();new Chart(canvas.getContext('2d'),{type,data:{labels,datasets:datasets.map(ds=>({tension:0.35,pointRadius:0,borderWidth:2,...ds}))},options:{responsive:true,maintainAspectRatio:false,animation:{duration:300,easing:'easeOutQuart'},plugins:{legend:{display:datasets.length>1,position:'bottom',labels:{font:CHART_DEFAULTS.font,color:CHART_DEFAULTS.tickColor,boxWidth:10,padding:8}},tooltip:{backgroundColor:'rgba(15,23,42,.88)',titleFont:{family:"'DM Sans'",size:11,weight:'600'},bodyFont:{family:"'DM Mono'",size:11},padding:10,cornerRadius:8}},scales:{x:{grid:{color:CHART_DEFAULTS.gridColor},ticks:{font:CHART_DEFAULTS.monoFont,color:CHART_DEFAULTS.tickColor,maxTicksLimit:8,maxRotation:40}},y:{beginAtZero:true,grid:{color:CHART_DEFAULTS.gridColor},ticks:{font:CHART_DEFAULTS.monoFont,color:CHART_DEFAULTS.tickColor}},...extraOpts}}});}
+function mkChart(canvasId,type,labels,datasets,extraOpts={}){const canvas=document.getElementById(canvasId);if(!canvas)return;const existing=Chart.getChart(canvas);if(existing)existing.destroy();new Chart(canvas.getContext('2d'),{type,data:{labels,datasets:datasets.map(ds=>({tension:0.35,pointRadius:0,borderWidth:2,...ds}))},options:{responsive:true,maintainAspectRatio:false,animation:{duration:300,easing:'easeOutQuart'},plugins:{title:{display:!!extraOpts.title,text:extraOpts.title||'',font:{family:"'DM Sans'",size:11,weight:'700'},color:'#334155',padding:{bottom:6}},legend:{display:datasets.length>1,position:'bottom',labels:{font:CHART_DEFAULTS.font,color:CHART_DEFAULTS.tickColor,boxWidth:10,padding:8}},tooltip:{backgroundColor:'rgba(15,23,42,.88)',titleFont:{family:"'DM Sans'",size:11,weight:'600'},bodyFont:{family:"'DM Mono'",size:11},padding:10,cornerRadius:8}},scales:{x:{grid:{color:CHART_DEFAULTS.gridColor},ticks:{font:CHART_DEFAULTS.monoFont,color:CHART_DEFAULTS.tickColor,maxTicksLimit:8,maxRotation:40}},y:{beginAtZero:true,grid:{color:CHART_DEFAULTS.gridColor},ticks:{font:CHART_DEFAULTS.monoFont,color:CHART_DEFAULTS.tickColor}},...extraOpts}}});}
 function createDoughnutChart(canvasId,value,label){const canvas=document.getElementById(canvasId);if(!canvas)return;let n=parseFloat(value)||0;if(n>0&&n<=2)n*=100;const color=n>=90?'#059669':(n>=70?'#d97706':'#dc2626');const shortLabel=label.includes('Overall')?'Overall':(label.includes('Walmart')?'Walmart':label);const existing=Chart.getChart(canvas);if(existing)existing.destroy();new Chart(canvas.getContext('2d'),{type:'doughnut',data:{datasets:[{data:[n,100-n],backgroundColor:[color,'#e2e8f0'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'76%',animation:{duration:300},plugins:{legend:{display:false}}},plugins:[{id:'textCenter',beforeDraw:chart=>{const{width,height,ctx}=chart;ctx.restore();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`600 10px 'DM Sans'`;ctx.fillStyle='#64748b';ctx.fillText(shortLabel,width/2,height/2-12);ctx.font=`bold 18px 'DM Sans'`;ctx.fillStyle=color;ctx.fillText(`${n.toFixed(1)}%`,width/2,height/2+8);ctx.save();}}]});}
 
 function getSheetData(name){const s=workbook.Sheets[name];return s?XLSX.utils.sheet_to_json(s,{defval:'',raw:true,blankrows:false}):[];}
@@ -293,16 +332,25 @@ function renderDashboard(){
   if(!workbook)return;
   const hr=getSheetData('HR | Training'),qa=getSheetData('QA'),prod=getSheetData('Production'),finance=getSheetData('Finance'),sap=getSheetData('SAP'),warehouse=getSheetData('Warehouse'),inventory=getSheetData('Inventory Control'),maintenance=getSheetData('Maintenance');
   GLOBAL_MAX_DATE=null;
+
+  // *** Pre-filter warehouse to Buena Park so date lookup is accurate for CPMH ***
+  const isBP=r=>String(valByKey(r,'City')||'').toLowerCase().trim()==='buena park';
+  const isCE=r=>String(valByKey(r,'City')||'').toLowerCase().trim()==='cerritos';
+  const bpWarehouse=warehouse.filter(isBP);
+
   const dSafety=updateSectionDate('date-safety',getLatestDateForSheet(hr));
   const dQA=updateSectionDate('date-quality',getLatestDateForSheet(qa));
   const dProd=updateSectionDate('date-production',getLatestDateForSheet(prod,'OEE'));
   const dCosts=updateSectionDate('date-costs',getLatestDateForSheet(finance));
   const dHR=updateSectionDate('date-hr',getLatestDateForSheet(hr));
   const dSAP=updateSectionDate('date-sap',getLatestDateForSheet(sap));
-  const dWarehouse=updateSectionDate('date-warehouse',getLatestDateForSheet(warehouse));
+  const dWarehouse=updateSectionDate('date-warehouse',getLatestDateForSheet(bpWarehouse));
   const dInventory=updateSectionDate('date-inventory',getLatestDateForSheet(inventory));
+
   document.getElementById('current-date-display').textContent=`Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
   [['date-safety',dSafety],['date-quality',dQA],['date-production',dProd],['date-costs',dCosts],['date-hr',dHR],['date-sap',dSAP],['date-warehouse',dWarehouse],['date-inventory',dInventory]].forEach(([id,d])=>checkStaleness(id,d));
+
+  // Safety / HR
   document.getElementById('days-incident').textContent=getTargetValue(hr,'Days Without Incident',dHR)??'—';
   document.getElementById('near-misses').textContent=getTargetValue(hr,'Near Miss Reports',dHR)??'—';
   document.getElementById('safety-audits').textContent=getTargetValue(hr,'Safety Audits',dHR)??'—';
@@ -311,16 +359,22 @@ function renderDashboard(){
   document.getElementById('trainings').textContent=fmtPercent(trainingsVal);
   const hcd=Number(getTargetValue(hr,'Head Count - Direct',dHR)||0),hci=Number(getTargetValue(hr,'Head Count - Indirect',dHR)||0);
   document.getElementById('headcount').textContent=(hcd+hci)>0?(hcd+hci):'—';
+
+  // Quality
   document.getElementById('holds').textContent=getTargetValue(qa,'Holds',dQA)??'—';
   document.getElementById('holds-coa').textContent=getTargetValue(qa,'Holds/COA',dQA)??'—';
   document.getElementById('pem').textContent=fmtPercent(getTargetValue(qa,'PEM %',dQA),1);
   document.getElementById('complaints').textContent=getTargetValue(qa,'Number of Complaints',dQA)??'—';
+
+  // Costs
   document.getElementById('cost-direct').textContent=getTargetValue(finance,'$/Pound - Direct',dCosts)??'—';
   document.getElementById('cost-indirect').textContent=getTargetValue(finance,'$/Pound - Indirect',dCosts)??'—';
   document.getElementById('pound-hr-direct').textContent=getTargetValue(finance,'Pounds/hour - Direct',dCosts)??'—';
   document.getElementById('pound-hr-indirect').textContent=getTargetValue(finance,'Pounds/hour - Indirect',dCosts)??'—';
   document.getElementById('conversion-costs').textContent=getTargetValue(finance,'Conversion Cost',dCosts)??'—';
   document.getElementById('pounds-prod').textContent=getTargetValue(finance,'Pounds Produced',dCosts)??'—';
+
+  // Production table
   const tbody=document.getElementById('prod-tbody');tbody.innerHTML='';
   ['2A','PL1','PL2','MP4','PXM6','2E'].forEach(line=>{
     const s=getProductionMetrics(prod,dProd,line);
@@ -332,27 +386,61 @@ function renderDashboard(){
   });
   document.getElementById('code-red').textContent=getTargetValue(maintenance,'Code Red',getLatestDateForSheet(maintenance)?.str)??'—';
   document.getElementById('code-yellow').textContent=getTargetValue(maintenance,'Code Yellow',getLatestDateForSheet(maintenance)?.str)??'—';
+
+  // Downtime drivers
   const driverCounts={};
   prod.filter(r=>toDateString(parseDate(r.Date))===dProd).forEach(r=>{['Mechanical Downtime Drivers','Material Downtime Drivers'].forEach(col=>{const v=r[col];if(v&&v!=='DNR'&&v!=='None'&&v!=='')String(v).split(/[;,]/).forEach(d=>{const c=d.trim();if(c.length>2)driverCounts[c]=(driverCounts[c]||0)+1;});});});
   document.getElementById('top-drivers').textContent=Object.entries(driverCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,c])=>`• ${n} (${c})`).join('\n')||`No drivers reported for ${dProd}.`;
+
+  // Production chart
   const pd=getAggregatedProductionData(prod,30,dProd);
-  if(pd.labels.length){mkChart('production-chart','line',pd.labels,[{label:'OEE',data:pd.oeeData,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true},{label:'Attainment',data:pd.attainmentData,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',fill:true},{label:'Downtime',data:pd.downtimeData,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.5)',type:'bar',fill:true,yAxisID:'y1'}],{y:{max:100},y1:{position:'right',grid:{drawOnChartArea:false}}});}
+  if(pd.labels.length){mkChart('production-chart','line',pd.labels,[{label:'OEE',data:pd.oeeData,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true},{label:'Attainment',data:pd.attainmentData,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',fill:true},{label:'Downtime',data:pd.downtimeData,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.5)',type:'bar',fill:true,yAxisID:'y1'}],{title:'OEE & Attainment Trend (Last 30 Days)',y:{max:100},y1:{position:'right',grid:{drawOnChartArea:false}}});}
+
+  // OT chart
   const dateMapCosts=new Map();
   finance.forEach(r=>{const d=parseDate(r.Date);if(!d)return;const ds=toDateString(d);if(dCosts&&ds>dCosts)return;if(!dateMapCosts.has(ds))dateMapCosts.set(ds,{raw:d,qa:0,prod:0,wh:0,maint:0,total:0});const e=dateMapCosts.get(ds);e.qa=parseFloat(valByKey(r,'OT - QA'))||0;e.prod=parseFloat(valByKey(r,'OT-Production'))||0;e.wh=parseFloat(valByKey(r,'OT - Warehouse'))||0;e.maint=parseFloat(valByKey(r,'OT - Maintenance'))||0;e.total=e.qa+e.prod+e.wh+e.maint;});
   const costKeys=Array.from(dateMapCosts.keys()).sort().slice(-30);
-  if(costKeys.length){mkChart('costs-ot-chart','line',costKeys.map(k=>new Date(dateMapCosts.get(k).raw).toLocaleDateString()),[{label:'QA',data:costKeys.map(k=>dateMapCosts.get(k).qa),borderColor:'#64748b'},{label:'Prod',data:costKeys.map(k=>dateMapCosts.get(k).prod),borderColor:'#ef4444'},{label:'WH',data:costKeys.map(k=>dateMapCosts.get(k).wh),borderColor:'#d97706'},{label:'Maint',data:costKeys.map(k=>dateMapCosts.get(k).maint),borderColor:'#3b82f6'},{label:'Trend',data:calcRegression(costKeys.map(k=>dateMapCosts.get(k).total)),borderColor:'#10b981',borderDash:[8,4]}]);}
+  if(costKeys.length){mkChart('costs-ot-chart','line',costKeys.map(k=>new Date(dateMapCosts.get(k).raw).toLocaleDateString()),[{label:'QA',data:costKeys.map(k=>dateMapCosts.get(k).qa),borderColor:'#64748b'},{label:'Prod',data:costKeys.map(k=>dateMapCosts.get(k).prod),borderColor:'#ef4444'},{label:'WH',data:costKeys.map(k=>dateMapCosts.get(k).wh),borderColor:'#d97706'},{label:'Maint',data:costKeys.map(k=>dateMapCosts.get(k).maint),borderColor:'#3b82f6'},{label:'Trend',data:calcRegression(costKeys.map(k=>dateMapCosts.get(k).total)),borderColor:'#10b981',borderDash:[8,4]}],{title:'OT Hours by Department'});}
+
   createDoughnutChart('hr-chart',trainingsVal,'Complete');
-  [{id:'sap-open-orders-chart',field:'Open Process Orders',color:'#d97706'},{id:'sap-teco-chart',field:'TECO',color:'#3b82f6'},{id:'sap-cogi-chart',field:'COGI',color:'#ef4444'}].forEach(c=>{const d=getHistoricalData(sap,c.field,30,dSAP);if(d.labels.length)mkChart(c.id,'line',d.labels,[{label:c.field,data:d.values,borderColor:c.color,fill:false}]);});
-  const whBP=warehouse.find(r=>toDateString(parseDate(r.Date))===dWarehouse&&String(valByKey(r,'City')||'').toLowerCase().trim()==='buena park');
-  const whCE=warehouse.find(r=>toDateString(parseDate(r.Date))===dWarehouse&&String(valByKey(r,'City')||'').toLowerCase().trim()==='cerritos');
+
+  // SAP charts
+  [{id:'sap-open-orders-chart',field:'Open Process Orders',color:'#d97706',title:'Open Process Orders'},{id:'sap-teco-chart',field:'TECO',color:'#3b82f6',title:'TECO'},{id:'sap-cogi-chart',field:'COGI',color:'#ef4444',title:'COGI'}].forEach(c=>{const d=getHistoricalData(sap,c.field,30,dSAP);if(d.labels.length)mkChart(c.id,'line',d.labels,[{label:c.field,data:d.values,borderColor:c.color,fill:false}],{title:c.title});});
+
+  // --- WAREHOUSE ---
+  const whBP=bpWarehouse.find(r=>toDateString(parseDate(r.Date))===dWarehouse);
+  const whCE=warehouse.find(r=>toDateString(parseDate(r.Date))===dWarehouse&&isCE(r));
+
   document.getElementById('wh-bp-fill').textContent=fmtPercent(whBP?valByKey(whBP,'Fill Rate %'):null,1);
   document.getElementById('wh-ce-fill').textContent=fmtPercent(whCE?valByKey(whCE,'Fill Rate %'):null,1);
-  document.getElementById('wh-bp-scheduled').textContent=whBP?valByKey(whBP,'Number of cases scheduled to ship'):'—';
-  document.getElementById('wh-bp-shipped').textContent=whBP?valByKey(whBP,'Number of cases shipped'):'—';
+  document.getElementById('wh-bp-scheduled').textContent=whBP?(valByKey(whBP,'Number of cases scheduled to ship')??'—'):'—';
+  document.getElementById('wh-bp-shipped').textContent=whBP?(valByKey(whBP,'Number of cases shipped')??'—'):'—';
+
+  // *** CPMH metric value ***
+  const cpmhVal=whBP?valByKey(whBP,'CPMH'):null;
+  document.getElementById('wh-bp-cpmh').textContent=cpmhVal!=null?Number(cpmhVal).toFixed(2):'—';
+
   createDoughnutChart('wh-bp-chart',parseFloat(whBP?valByKey(whBP,'Fill Rate %'):0),'Overall Fill Rate %');
   createDoughnutChart('wh-ce-chart',parseFloat(whCE?valByKey(whCE,'Fill Rate %'):0),'Walmart Fill Rate %');
-  const whMH=getHistoricalData(warehouse,'Man Hours',30,dWarehouse);
-  if(whMH.labels.length)mkChart('wh-bp-manhour-chart','line',whMH.labels,[{label:'Man Hours',data:whMH.values,borderColor:'#8b5cf6',fill:false}]);
+
+  // *** CPMH trend bar chart — Buena Park rows only, with target line at 450 ***
+  const cpmhHist=getHistoricalDataFiltered(warehouse,isBP,'CPMH',30,dWarehouse);
+  if(cpmhHist.labels.length){
+    const canvas=document.getElementById('wh-cpmh-chart');
+    if(canvas){const existing=Chart.getChart(canvas);if(existing)existing.destroy();}
+    new Chart(canvas.getContext('2d'),{
+      data:{
+        labels:cpmhHist.labels,
+        datasets:[
+          {type:'bar',label:'CPMH',data:cpmhHist.values,backgroundColor:'rgba(37,99,235,0.75)',borderRadius:3,borderWidth:0,order:2},
+          {type:'line',label:'Target (450)',data:Array(cpmhHist.labels.length).fill(450),borderColor:'#ef4444',borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false,order:1}
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},plugins:{title:{display:true,text:'CPMH — Cases Per Man Hour',font:{family:"'DM Sans'",size:11,weight:'700'},color:'#334155',padding:{bottom:6}},legend:{display:true,position:'bottom',labels:{font:CHART_DEFAULTS.font,color:CHART_DEFAULTS.tickColor,boxWidth:10,padding:8}},tooltip:{backgroundColor:'rgba(15,23,42,.88)',titleFont:{family:"'DM Sans'",size:11,weight:'600'},bodyFont:{family:"'DM Mono'",size:11},padding:10,cornerRadius:8}},scales:{x:{grid:{color:CHART_DEFAULTS.gridColor},ticks:{font:CHART_DEFAULTS.monoFont,color:CHART_DEFAULTS.tickColor,maxTicksLimit:8,maxRotation:40}},y:{beginAtZero:true,grid:{color:CHART_DEFAULTS.gridColor},ticks:{font:CHART_DEFAULTS.monoFont,color:CHART_DEFAULTS.tickColor}}}}
+    });
+  }
+
+  // Inventory
   const invBP=inventory.find(r=>toDateString(parseDate(r.Date))===dInventory&&String(valByKey(r,'City')||'').toLowerCase().trim()==='buena park');
   const invCE=inventory.find(r=>toDateString(parseDate(r.Date))===dInventory&&String(valByKey(r,'City')||'').toLowerCase().trim()==='cerritos');
   document.getElementById('inv-bp-completion').textContent=fmtPercent(invBP?valByKey(invBP,'Completion %'):null,1);
@@ -363,37 +451,40 @@ function renderDashboard(){
   accEl.textContent=fmtPercent(accVal,2);
   if(accVal!==null){const n=parseFloat(accVal)>2?parseFloat(accVal)/100:parseFloat(accVal);accEl.style.color=n<0.999?'var(--red-l)':'var(--green-l)';}
   document.getElementById('inv-notes').textContent=(invBP?valByKey(invBP,'Notes'):null)||'No inventory notes for this date.';
+
+  document.getElementById('proc-orders').textContent=getTargetValue(sap,'Open Process Orders',dSAP)??'—';
+  document.getElementById('warehouse-tasks').textContent=getTargetValue(sap,'Warehouse Tasks',dSAP)??'—';
 }
 
 function initDraggable(){if(window.Sortable){new Sortable(document.getElementById('main-sortable'),{animation:250,handle:'.panel-header',ghostClass:'sortable-ghost'});}}
 function initResizable(){document.querySelectorAll('.panel[style*="grid-column"]').forEach(panel=>{const resizer=panel.querySelector('.resizer');if(!resizer)return;resizer.addEventListener('mousedown',e=>{e.preventDefault();const startX=e.pageX,startY=e.pageY,startW=panel.offsetWidth,startH=panel.offsetHeight;const grid=document.querySelector('.dash-grid'),rect=grid.getBoundingClientRect(),colW=rect.width/12;function onMove(e){panel.style.width=`${startW+(e.pageX-startX)}px`;panel.style.height=`${startH+(e.pageY-startY)}px`;}function onUp(e){window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);const newCols=Math.max(2,Math.min(12,Math.round((startW+(e.pageX-startX))/colW)));panel.style.gridColumn=`span ${newCols}`;panel.style.width='';panel.style.height='';window.dispatchEvent(new Event('resize'));}window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);});});}
 function savePlan(id){localStorage.setItem('dds_'+id,document.getElementById(id).innerText);}
 function loadSavedPlans(){['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap'].forEach(id=>{const s=localStorage.getItem('dds_'+id);if(s)document.getElementById(id).innerText=s;});}
-function clearPlanData(){if(confirm('Revert plans to Excel data?')){['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap'].forEach(id=>localStorage.removeItem('dds_'+id));location.reload();}}
+function clearPlanData(){if(confirm('Revert plans to Excel data?')){localStorage.clear();location.reload();}}
 
-window.__libsCallback = async () => {
-  loadSavedPlans();
-  const st = document.getElementById('data-status');
-  NovusCore.setStatus(st, 'loading', 'Fetching latest data…');
-  try {
-    const buf = await NovusCore.getDataBuffer();
-    workbook = XLSX.read(buf, {type:'array', cellDates:false, raw:true});
-    renderDashboard();
-    initDraggable();
-    initResizable();
-    NovusCore.setStatus(st, 'ok', '✓ Live data loaded');
-    NovusCore.startAutoRefresh(newBuf => {
-      workbook = XLSX.read(newBuf, {type:'array', cellDates:false, raw:true});
-      renderDashboard();
-      NovusCore.setStatus(st, 'ok', '✓ Auto-refreshed');
-    });
-  } catch(err) {
-    console.error(err);
-    NovusCore.setStatus(st, 'error', `⚠ ${err.message}`);
-    document.getElementById('current-date-display').textContent = 'Data load failed.';
+async function handleFileUpload(evt){
+  const file=evt.target.files[0];
+  if(!file)return;
+  const st=document.getElementById('data-status');
+  st.className='';st.textContent='Reading file…';
+  try{
+    const buf=await NovusCore.readFile(file);
+    workbook=XLSX.read(buf,{type:'array',cellDates:false,raw:true});
+    renderDashboard();initDraggable();initResizable();
+    st.className='ok';st.textContent='✓ Data loaded';
+    NovusCore.Toast.success('Workbook loaded ✓');
+  }catch(err){
+    console.error(err);st.className='error';st.textContent=`⚠ ${err.message}`;
+    document.getElementById('current-date-display').textContent='File load failed.';
+    NovusCore.Toast.error('Failed to read file.');
   }
-};
+}
 
+window.__libsCallback=async()=>{
+  loadSavedPlans();
+  document.getElementById('current-date-display').textContent=
+    'Upload your department workbook using the Upload Data button above.';
+};
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',()=>{if(window.__libs.chartjs&&window.__libs.xlsx)window.__libsCallback();});
 }
