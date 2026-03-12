@@ -77,8 +77,8 @@
     .td-red{background:rgba(239,68,68,.12)!important;color:var(--red-l)!important;font-weight:600;}
     .chart-wrap{position:relative;width:100%;border-radius:var(--radius-sm);overflow:hidden;background:var(--surface2);border:1px solid var(--border);padding:10px;}
     .chart-wrap canvas{display:block;}
-    .plan-box{width:100%;min-height:140px;padding:14px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--ink2);font-size:.88rem;font-family:'DM Sans',sans-serif;line-height:1.6;outline:none;white-space:pre-wrap;resize:vertical;box-sizing:border-box;}
-    .plan-box:focus{background:var(--surface);border-color:var(--blue-l);box-shadow:0 0 0 3px var(--blue-glow);}
+    .plan-box{width:100%;height:120px;padding:14px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--ink2);font-size:.88rem;font-family:'DM Sans',sans-serif;line-height:1.6;resize:none;box-sizing:border-box;display:block;}
+    .plan-box:focus{background:var(--surface);border-color:var(--blue-l);box-shadow:0 0 0 3px var(--blue-glow);outline:none;}
     #data-status{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--ink3);}
     #data-status.ok{color:var(--green);}
     #data-status.error{color:var(--red);}
@@ -273,7 +273,7 @@
       <button class="btn btn-ghost" onclick="clearPlanData()">Clear Plan</button>
     </div>
     <div class="panel-body">
-      <div class="plan-box" id="plan-main" contenteditable="true" oninput="savePlan()" placeholder="Enter today's plan…"></div>
+      <textarea class="plan-box" id="plan-main" oninput="savePlan()" placeholder="Enter today's plan…"></textarea>
     </div>
   </div>
 </div>
@@ -446,9 +446,9 @@ function renderDashboard(){
 
 function initDraggable(){if(window.Sortable){new Sortable(document.getElementById('main-sortable'),{animation:250,handle:'.panel-header',ghostClass:'sortable-ghost'});}}
 function initResizable(){document.querySelectorAll('.panel[style*="grid-column"]').forEach(panel=>{const resizer=panel.querySelector('.resizer');if(!resizer)return;resizer.addEventListener('mousedown',e=>{e.preventDefault();const startX=e.pageX,startY=e.pageY,startW=panel.offsetWidth,startH=panel.offsetHeight;const grid=document.querySelector('.dash-grid'),rect=grid.getBoundingClientRect(),colW=rect.width/12;function onMove(e){panel.style.width=`${startW+(e.pageX-startX)}px`;panel.style.height=`${startH+(e.pageY-startY)}px`;}function onUp(e){window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);const newCols=Math.max(2,Math.min(12,Math.round((startW+(e.pageX-startX))/colW)));panel.style.gridColumn=`span ${newCols}`;panel.style.width='';panel.style.height='';window.dispatchEvent(new Event('resize'));}window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);});});}
-function savePlan(){localStorage.setItem('dds_plan_main',document.getElementById('plan-main').innerText);}
-function loadSavedPlans(){const s=localStorage.getItem('dds_plan_main');if(s)document.getElementById('plan-main').innerText=s;}
-function clearPlanData(){if(confirm('Clear the daily plan?')){localStorage.removeItem('dds_plan_main');document.getElementById('plan-main').innerText='';}}
+function savePlan(){localStorage.setItem('dds_plan_main',document.getElementById('plan-main').value);}
+function loadSavedPlans(){const s=localStorage.getItem('dds_plan_main');if(s)document.getElementById('plan-main').value=s;}
+function clearPlanData(){if(confirm('Clear the daily plan?')){localStorage.removeItem('dds_plan_main');document.getElementById('plan-main').value='';}}
 
 function applyBuffer(buf){
   const st=document.getElementById('data-status');
