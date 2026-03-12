@@ -1,153 +1,138 @@
-/**
- * novus-core.js  –  Novus Foods 1730 Ops Hub shared utilities
- * Fully client-side; safe for GitHub Pages.
- */
-window.NovusCore = (() => {
-
-  /* ── Auth ──────────────────────────────────────────────────────────────── */
-  function requireAuth() {
-    try {
-      const raw = sessionStorage.getItem('novus1730_user');
-      if (!raw) { window.location.replace('index.html'); return null; }
-      const user = JSON.parse(raw);
-      if (!user || user.plant !== '1730') { window.location.replace('index.html'); return null; }
-      return user;
-    } catch (_) { window.location.replace('index.html'); return null; }
-  }
-
-  /* ── Navigation ────────────────────────────────────────────────────────── */
-  function navigateTo(page) {
-    if (page === 'index.html') {
-      try { sessionStorage.removeItem('novus1730_user'); } catch (_) {}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Novus 1730 Ops Hub – Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap"></noscript>
+  <script src="novus-core.js" defer></script>
+  <style>
+    :root {
+      --bg: #f4f6fb; --surface: #fff; --border: #e2e8f0; --border2: #cbd5e1;
+      --ink: #0f172a; --ink2: #334155; --ink3: #64748b;
+      --blue: #2563eb; --blue-l: #3b82f6; --blue-ll: #dbeafe; --blue-glow: rgba(37,99,235,.12);
+      --green: #059669; --red: #dc2626;
+      --radius: 14px; --radius-sm: 8px;
+      --ease: cubic-bezier(.4,0,.2,1); --ease-spring: cubic-bezier(.34,1.56,.64,1);
     }
-    window.location.href = page;
-  }
-
-  /* ── WorkbookCache ─────────────────────────────────────────────────────────
-   *
-   *  Persists the uploaded workbook as Base64 in sessionStorage so it survives
-   *  page navigation within the same browser tab.
-   *
-   *  WorkbookCache.save(file)   → Promise<ArrayBuffer>   store + return buffer
-   *  WorkbookCache.load()       → ArrayBuffer | null      restore from cache
-   *  WorkbookCache.has()        → boolean
-   *  WorkbookCache.fileName()   → string
-   *  WorkbookCache.clear()      → void
-   * ───────────────────────────────────────────────────────────────────────── */
-  const _CACHE_KEY  = 'novus1730_wb';
-  const _CACHE_NAME = 'novus1730_wb_name';
-
-  const WorkbookCache = {
-    async save(file) {
-      const buf    = await _readFile(file);
-      const bytes  = new Uint8Array(buf);
-      let   binary = '';
-      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-      try {
-        sessionStorage.setItem(_CACHE_KEY,  btoa(binary));
-        sessionStorage.setItem(_CACHE_NAME, file.name);
-      } catch (e) {
-        console.warn('WorkbookCache: sessionStorage write failed –', e.message);
-      }
-      return buf;
-    },
-
-    load() {
-      try {
-        const b64 = sessionStorage.getItem(_CACHE_KEY);
-        if (!b64) return null;
-        const binary = atob(b64);
-        const bytes  = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        return bytes.buffer;
-      } catch (_) { return null; }
-    },
-
-    has()      { return !!sessionStorage.getItem(_CACHE_KEY); },
-    fileName() { return sessionStorage.getItem(_CACHE_NAME) || 'workbook'; },
-    clear()    {
-      try {
-        sessionStorage.removeItem(_CACHE_KEY);
-        sessionStorage.removeItem(_CACHE_NAME);
-      } catch (_) {}
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
     }
-  };
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 36px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      animation: cardIn .3s var(--ease-spring) both;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(16px) scale(.97)} to{opacity:1;transform:none} }
+    .login-header { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; }
+    .login-logo {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-l));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; flex-shrink: 0;
+    }
+    .login-title { font-size: 1.2rem; font-weight: 800; color: var(--ink); letter-spacing: -.02em; }
+    .login-subtitle { font-size: .82rem; color: var(--ink3); margin-top: 2px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink3); margin-bottom: 7px; }
+    .form-group input {
+      width: 100%; padding: 10px 13px;
+      border: 1px solid var(--border2); border-radius: var(--radius-sm);
+      font-family: inherit; font-size: .9rem; color: var(--ink);
+      background: #f8fafc; outline: none;
+      transition: border-color .15s var(--ease), box-shadow .15s var(--ease), background .15s;
+    }
+    .form-group input:focus { border-color: var(--blue-l); box-shadow: 0 0 0 3px var(--blue-glow); background: var(--surface); }
+    .btn-submit {
+      width: 100%; padding: 11px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-l));
+      color: white; border: none; border-radius: var(--radius-sm);
+      font-family: inherit; font-size: .9rem; font-weight: 700;
+      cursor: pointer; margin-top: 8px;
+      transition: filter .12s, transform .1s var(--ease-spring), box-shadow .12s;
+      box-shadow: 0 2px 8px rgba(37,99,235,.3);
+      position: relative; overflow: hidden;
+    }
+    .btn-submit:hover { filter: brightness(1.07); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(37,99,235,.38); }
+    .btn-submit:active { transform: scale(.97); }
+    .login-footer-text { font-size: .75rem; color: var(--ink3); text-align: center; margin-top: 24px; line-height: 1.6; }
+    #login-error { display:none; background: rgba(220,38,38,.08); border: 1px solid rgba(220,38,38,.2); color: var(--red); border-radius: var(--radius-sm); padding: 10px 14px; font-size: .82rem; font-weight: 600; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">🍅</div>
+      <div>
+        <div class="login-title">Novus Foods 1730</div>
+        <div class="login-subtitle">Ops Hub &bull; Staff Access Only</div>
+      </div>
+    </div>
 
-  /* ── Toast notifications ───────────────────────────────────────────────── */
-  const Toast = (() => {
-    let container;
-    function _container() {
-      if (!container) {
-        container = document.createElement('div');
-        Object.assign(container.style, {
-          position:'fixed', bottom:'24px', right:'24px',
-          display:'flex', flexDirection:'column', gap:'10px',
-          zIndex:'9999', pointerEvents:'none'
-        });
-        document.body.appendChild(container);
-      }
-      return container;
-    }
-    function show(message, type) {
-      const cfg = {
-        success:{ bg:'#059669', icon:'✓' },
-        warning:{ bg:'#d97706', icon:'⚠' },
-        error:  { bg:'#dc2626', icon:'✕' },
-        info:   { bg:'#2563eb', icon:'ℹ' }
-      }[type] || { bg:'#2563eb', icon:'ℹ' };
-      const t = document.createElement('div');
-      Object.assign(t.style, {
-        background:cfg.bg, color:'white', padding:'10px 16px',
-        borderRadius:'9px', fontFamily:"'DM Sans',system-ui,sans-serif",
-        fontSize:'13px', fontWeight:'600', boxShadow:'0 4px 16px rgba(0,0,0,.18)',
-        opacity:'0', transform:'translateX(20px)',
-        transition:'all .2s cubic-bezier(.34,1.56,.64,1)',
-        pointerEvents:'auto', maxWidth:'320px', lineHeight:'1.45'
-      });
-      t.textContent = cfg.icon + '  ' + message;
-      _container().appendChild(t);
-      requestAnimationFrame(() => { t.style.opacity='1'; t.style.transform='translateX(0)'; });
-      setTimeout(() => {
-        t.style.opacity='0'; t.style.transform='translateX(20px)';
-        setTimeout(() => t.remove(), 250);
-      }, 3200);
-    }
-    return {
-      success: m => show(m,'success'),
-      warning: m => show(m,'warning'),
-      error:   m => show(m,'error'),
-      info:    m => show(m,'info')
+    <div id="login-error">Invalid credentials. Please try again.</div>
+
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input id="username" type="text" autocomplete="username" required />
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required />
+    </div>
+    <button class="btn-submit" id="btn-signin">Sign In</button>
+
+    <p class="login-footer-text">Plant 1730 internal tool.<br>Only configured usernames &amp; passwords for Plant 1730 are allowed.</p>
+  </div>
+
+  <script>
+    const ALLOWED_USERS = {
+      "amendoza":      { password: "1730data",   plant: "1730", role: "admin"  },
+      "mcaballero":    { password: "novus26",    plant: "1730", role: "admin"  },
+      "manager1730":   { password: "viewer1730", plant: "1730", role: "viewer" },
+      "hdiaz":         { password: "novus26",    plant: "1730", role: "admin"  },
+      "supervisor1730":{ password: "viewer1730", plant: "1730", role: "viewer" },
+      "hwang":         { password: "novus26",    plant: "1730", role: "admin"  }
     };
-  })();
 
-  /* ── Button loader ─────────────────────────────────────────────────────── */
-  const BtnLoader = {
-    start(btn) {
-      btn._origHTML = btn.innerHTML;
-      btn.disabled  = true;
-      btn.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:nc-spin .6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Processing…';
-      if (!document.getElementById('nc-spin-style')) {
-        const s = document.createElement('style');
-        s.id = 'nc-spin-style';
-        s.textContent = '@keyframes nc-spin{to{transform:rotate(360deg)}}';
-        document.head.appendChild(s);
+    document.getElementById('btn-signin').addEventListener('click', handleLogin);
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+    function handleLogin() {
+      const btn      = document.getElementById('btn-signin');
+      const errEl    = document.getElementById('login-error');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      errEl.style.display = 'none';
+      if (!username || !password) { errEl.textContent = 'Please enter both username and password.'; errEl.style.display = 'block'; return; }
+
+      const user = ALLOWED_USERS[username];
+      if (!user || user.password !== password || user.plant !== '1730') {
+        errEl.textContent = 'Invalid Plant 1730 credentials.';
+        errEl.style.display = 'block';
+        document.getElementById('password').value = '';
+        return;
       }
-    },
-    stop(btn) {
-      btn.disabled = false;
-      if (btn._origHTML !== undefined) btn.innerHTML = btn._origHTML;
+
+      btn.classList.add('is-loading');
+      try { sessionStorage.setItem('novus1730_user', JSON.stringify({ username, plant: user.plant, role: user.role, loginTime: new Date().toISOString() })); } catch (_) {}
+      setTimeout(() => { window.location.href = 'staff-meeting-dashboard.html'; }, 300);
     }
-  };
-
-  /* ── File reader (internal + exported for compat) ──────────────────────── */
-  function _readFile(file) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload  = e => resolve(e.target.result);
-      r.onerror = () => reject(new Error('File read failed'));
-      r.readAsArrayBuffer(file);
-    });
-  }
-
-  return { requireAuth, navigateTo, WorkbookCache, Toast, BtnLoader, readFile: _readFile };
-})();
+  </script>
+</body>
+</html>
