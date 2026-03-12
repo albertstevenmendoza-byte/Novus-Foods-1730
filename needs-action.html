@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Needs Action – Novus Foods Ops Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:'DM Sans',system-ui,sans-serif;font-size:13.5px;line-height:1.55;background:var(--bg);color:var(--ink);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");}
     .page{max-width:1600px;margin:0 auto;padding:0 20px 60px;}
-    .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);margin-bottom:24px;}
+    .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);margin-bottom:24px;will-change:transform;transform:translateZ(0);}
     .logo{display:flex;align-items:center;gap:10px;}
     .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--blue-l));border-radius:8px;display:flex;align-items:center;justify-content:center;}
     .logo-icon svg{width:16px;height:16px;fill:white;}
@@ -26,7 +26,7 @@
     .nav-tab{color:var(--ink3);text-decoration:none;font-weight:500;font-size:.82rem;padding:6px 14px;border-radius:7px;transition:all .15s;}
     .nav-tab:hover{background:var(--surface);color:var(--ink2);}
     .nav-tab.active{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:transform .1s,filter .1s;}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:transform .1s,filter .1s;position:relative;overflow:hidden;}
     .btn:active{transform:scale(.97);}
     .btn-brand{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;box-shadow:0 2px 8px rgba(37,99,235,.25);}
     .btn-brand:hover{filter:brightness(1.07);}
@@ -42,8 +42,8 @@
     .panel-body{padding:16px;}
     .filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;}
     .form-group label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;}
-    select{width:100%;padding:9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:.85rem;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2394a3b8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;}
-    select:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px var(--blue-glow);}
+    select, input[type="text"], input[type="date"]{width:100%;padding:9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:.85rem;outline:none;}
+    select:focus, input:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px var(--blue-glow);}
     .metric-row{display:flex;gap:12px;margin-bottom:4px;}
     .metric-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;flex:1;text-align:center;}
     .metric-label{font-size:.65rem;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;}
@@ -57,6 +57,14 @@
     .date-mono{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--ink3);}
     .date-input-sm{padding:5px;border:1px solid var(--border2);border-radius:5px;font-family:'DM Mono',monospace;font-size:.75rem;margin-right:6px;}
     #save-msg{font-family:'DM Mono',monospace;font-weight:600;}
+    
+    .checkbox-wrapper { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .checkbox-wrapper input { display: none; }
+    .checkmark { width: 20px; height: 20px; border: 2px solid var(--border2); border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .checkbox-wrapper input:checked + .checkmark { background: var(--green); border-color: var(--green); }
+    .checkmark svg { width: 12px; height: 12px; fill: white; display: none; }
+    .checkbox-wrapper input:checked + .checkmark svg { display: block; }
+
     ::-webkit-scrollbar{width:7px;height:7px;}
     ::-webkit-scrollbar-track{background:transparent;}
     ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
@@ -73,11 +81,14 @@
     <a class="nav-tab" href="dds-dashboard.html">DDS Dashboard</a>
     <a class="nav-tab active" href="needs-action.html">Needs Action</a>
     <a class="nav-tab" href="sap-audit.html">SAP Audit</a>
-    <a class="nav-tab" href="inventory-control.html">Inventory Control</a>
+    <a class="nav-tab" href="Inventory-control.html">Inventory Control</a>
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
-    <button class="btn btn-ghost" onclick="NovusCore.forceRefresh();" style="font-size:.75rem;">🔄 Reload Data</button>
-    <button class="btn btn-ghost" onclick="NovusCore.resetDataSource();location.reload();" style="font-size:.75rem;">🔗 Data Source</button>
+    <label class="btn btn-brand" style="cursor:pointer;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Data
+      <input type="file" id="main-file-upload" accept=".xlsx,.xls" style="display:none;" onchange="handleFileUpload(event)">
+    </label>
     <button class="btn btn-danger" onclick="NovusCore.navigateTo('index.html')">Logout</button>
   </div>
 </div>
@@ -88,7 +99,8 @@
       <h1 class="page-title">Needs Action Tracker</h1>
       <p class="page-subtitle">Departmental action items and task monitoring</p>
     </div>
-    <div style="text-align:right;">
+    <div style="text-align:right; display: flex; gap: 10px; align-items: center;">
+      <button class="btn btn-ghost" onclick="resetInternalData()">Reset Internal Storage</button>
       <button id="btn-save-excel" class="btn btn-brand" onclick="exportUpdatedExcel()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Save Changes to Excel
@@ -97,12 +109,27 @@
     </div>
   </div>
 
+  <!-- ADD ACTION PANEL -->
+  <div class="panel" style="border-left: 4px solid var(--blue);">
+    <div class="panel-header"><span class="panel-title">Add New Action Item</span></div>
+    <div class="panel-body">
+      <div class="filter-grid" style="grid-template-columns: 1fr 2fr 1fr 1fr;">
+        <div class="form-group"><label>Date</label><input type="date" id="new-date"></div>
+        <div class="form-group"><label>Action Description</label><input type="text" id="new-desc" placeholder="What needs to be done?"></div>
+        <div class="form-group"><label>Owner</label><input type="text" id="new-owner" placeholder="Name or Dept"></div>
+        <div class="form-group" style="display:flex; align-items:flex-end;">
+          <button class="btn btn-brand" style="width:100%; height:38px;" onclick="addNewAction()">Add Item</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
     <div class="panel">
       <div class="panel-header"><span class="panel-title">Data Filters</span></div>
       <div class="panel-body">
         <div class="filter-grid">
-          <div class="form-group"><label>Department</label><select id="na-dept"><option value="">All Departments</option></select></div>
+          <div class="form-group"><label>Owner Filter</label><select id="na-owner"><option value="">All Owners</option></select></div>
           <div class="form-group">
             <label>Status</label>
             <select id="na-status">
@@ -135,14 +162,14 @@
             <tr>
               <th style="width:110px;">Created</th>
               <th>Needs Action Description</th>
-              <th style="width:120px;">Completed</th>
-              <th style="width:150px;">Dept</th>
+              <th style="width:120px;">Completed Date</th>
+              <th style="width:150px;">Owner</th>
               <th style="width:100px;">Status</th>
-              <th style="width:240px;">Actions</th>
+              <th style="width:80px; text-align:center;">Mark</th>
             </tr>
           </thead>
           <tbody id="na-table-body">
-            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">Loading…</td></tr>
+            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">Initializing tracker...</td></tr>
           </tbody>
         </table>
       </div>
@@ -151,131 +178,223 @@
 </div>
 
 <script>
-const NEEDS_SHEET_NAME = 'Needs Action';
-let fullWorkbook = null, needsRows = [], filteredRows = [];
+const NEEDS_SHEET_NAME="Needs Action";
+const LOCAL_STORAGE_KEY = "novus_needs_action_overlay";
 
-const deptSelect   = document.getElementById('na-dept');
-const statusSelect = document.getElementById('na-status');
-const totalCountEl = document.getElementById('na-total-count');
-const openCountEl  = document.getElementById('na-open-count');
-const completedCountEl = document.getElementById('na-completed-count');
-const tableBody    = document.getElementById('na-table-body');
-const saveMsg      = document.getElementById('save-msg');
+let fullWorkbook=null, needsRows=[], filteredRows=[];
+const ownerSelect=document.getElementById("na-owner"), statusSelect=document.getElementById("na-status");
+const totalCountEl=document.getElementById("na-total-count"), openCountEl=document.getElementById("na-open-count"), completedCountEl=document.getElementById("na-completed-count"), tableBody=document.getElementById("na-table-body"), saveMsg=document.getElementById("save-msg");
 
-function safeString(v){return(v===null||v===undefined)?'':String(v);}
-function pad2(n){return String(n).padStart(2,'0');}
-function parseExcelDate(value){if(!value&&value!==0)return null;if(value instanceof Date)return isNaN(value)?null:value;if(typeof value==='number'){const base=new Date(Date.UTC(1899,11,30));return new Date(base.getTime()+value*86400000);}const d=new Date(value);return isNaN(d)?null:d;}
-function formatDateShort(d){if(!d||!(d instanceof Date)||isNaN(d))return'';return`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;}
-function rowStatus(row){const dcRaw=row['Date Completed'];return(dcRaw!==null&&dcRaw!==undefined&&String(dcRaw).trim()!=='')?'completed':'open';}
+function safeString(v){return(v===null||v===undefined)?"":String(v);}
+function pad2(n){return String(n).padStart(2,"0");}
 
-async function loadNeedsActionSheet(){
+function parseExcelDate(value){
+  if(!value) return null;
+  if(value instanceof Date) return value;
+  if(typeof value === 'number') return new Date((value - 25569) * 86400 * 1000);
+  const d = new Date(value);
+  return isNaN(d) ? null : d;
+}
+
+function formatDateShort(d){
+  if(!d) return "";
+  const date = parseExcelDate(d);
+  if(!date) return "";
+  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth()+1)}-${pad2(date.getUTCDate())}`;
+}
+
+function rowStatus(row){
+  const dcRaw=row["Date Completed"];
+  return(dcRaw!==null&&dcRaw!==undefined&&String(dcRaw).trim()!=="")?"completed":"open";
+}
+
+// Helper to handle mapping between "Owner" and "Department" columns in Excel
+function getOwnerValue(row) {
+  return safeString(row["Owner"] || row["Department"]);
+}
+
+function mergeExcelWithLocal(excelRows) {
+  const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
+  const merged = [...excelRows];
+  localData.forEach(localItem => {
+    const existingIdx = merged.findIndex(r =>
+      safeString(r["Needs Action"]) === safeString(localItem["Needs Action"]) &&
+      formatDateShort(r["Date"]) === formatDateShort(localItem["Date"])
+    );
+    if (existingIdx > -1) { merged[existingIdx] = localItem; }
+    else { merged.push(localItem); }
+  });
+  return merged;
+}
+
+async function handleFileUpload(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">Reading file…</td></tr>';
   try {
-    const buf = await NovusCore.getDataBuffer();
-    fullWorkbook = XLSX.read(buf, {type:'array'});
+    const buf = await NovusCore.readFile(file);
+    fullWorkbook = XLSX.read(buf, {type:"array", cellDates: true});
     const ws = fullWorkbook.Sheets[NEEDS_SHEET_NAME];
-    if(!ws){
-      tableBody.innerHTML=`<tr><td colspan="6" style="text-align:center;">Sheet "${NEEDS_SHEET_NAME}" not found.</td></tr>`;
-      return;
-    }
-    let rows = XLSX.utils.sheet_to_json(ws, {defval:null, cellDates:true, raw:false});
-    needsRows = rows.map((r,idx) => ({_id:idx,...r}));
+    const excelRows = ws ? XLSX.utils.sheet_to_json(ws, {defval:null}) : [];
+    needsRows = mergeExcelWithLocal(excelRows).map((r,idx) => ({_id:idx,...r}));
+    document.getElementById('new-date').value = formatDateShort(new Date());
     initFilters();
     applyFilters();
-    NovusCore.Toast.success('Data loaded ✓');
-    NovusCore.startAutoRefresh(newBuf => {
-      loadNeedsActionSheet(newBuf);
-    });
+    NovusCore.Toast.success("Workbook loaded ✓");
   } catch(err) {
     console.error(err);
-    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;padding:40px;">Error loading data: ${err.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;padding:40px;">Error reading file: ${err.message}</td></tr>`;
+    NovusCore.Toast.error("Failed to read file.");
+  }
+}
+
+function loadNeedsActionSheet() {
+  // Load any locally-saved items (added/completed while no workbook was loaded)
+  const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
+  needsRows = localData.map((r, idx) => ({_id: idx, ...r}));
+  document.getElementById('new-date').value = formatDateShort(new Date());
+  initFilters();
+  applyFilters();
+  if (needsRows.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">⬆ Upload your department data workbook to load items from Excel, or add new items below.</td></tr>';
   }
 }
 
 function initFilters(){
-  const deptSet = new Set();
-  needsRows.forEach(r => { if(r['Department']) deptSet.add(String(r['Department']).trim()); });
-  const depts = Array.from(deptSet).sort();
-  while(deptSelect.options.length > 1) deptSelect.remove(1);
-  depts.forEach(dep => { const o = document.createElement('option'); o.value=dep; o.textContent=dep; deptSelect.appendChild(o); });
+  const ownerSet=new Set();
+  needsRows.forEach(r=>{
+    const owner = getOwnerValue(r);
+    if(owner) ownerSet.add(owner.trim());
+  });
+  const owners=Array.from(ownerSet).sort();
+  while(ownerSelect.options.length>1)ownerSelect.remove(1);
+  owners.forEach(owner=>{const o=document.createElement("option");o.value=owner;o.textContent=owner;ownerSelect.appendChild(o);});
 }
 
-function markRowCompleted(rowId, completionDateStr){
+function addNewAction() {
+  const dateVal = document.getElementById('new-date').value;
+  const descVal = document.getElementById('new-desc').value;
+  const ownerVal = document.getElementById('new-owner').value;
+
+  if(!descVal) { alert("Please enter a description"); return; }
+
+  const newItem = {
+    "Date": dateVal,
+    "Needs Action": descVal,
+    "Owner": ownerVal,
+    "Department": ownerVal, // Sync to both for compatibility
+    "Date Completed": null
+  };
+
+  needsRows.unshift({_id: Date.now(), ...newItem});
+  saveToInternal();
+  
+  document.getElementById('new-desc').value = "";
+  document.getElementById('new-owner').value = "";
+  applyFilters();
+  NovusCore.Toast.success("Action Item Added");
+}
+
+function toggleCompletion(rowId) {
   const row = needsRows.find(r => r._id === rowId);
   if(!row) return;
-  let finalDateStr = completionDateStr && completionDateStr.trim() ? completionDateStr.trim() : formatDateShort(new Date());
-  if(!confirm(`Mark completed on ${finalDateStr}?`)) return;
-  row['Date Completed'] = finalDateStr;
-  const btn = document.getElementById('btn-save-excel');
-  btn.style.background = 'var(--amber)';
-  btn.innerHTML = '💾 Unsaved Changes (Click to Export)';
+
+  if (rowStatus(row) === "open") {
+    row["Date Completed"] = formatDateShort(new Date());
+  } else {
+    row["Date Completed"] = null;
+  }
+
+  saveToInternal();
   applyFilters();
 }
 
+function saveToInternal() {
+  const dataToSave = needsRows.map(r => {
+    const { _id, ...rest } = r;
+    return rest;
+  });
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
+  
+  const btn=document.getElementById("btn-save-excel");
+  btn.style.background="var(--amber)";
+  btn.innerHTML="💾 Unsaved Changes (Export to Excel)";
+}
+
+function resetInternalData() {
+  if(confirm("Clear all internal changes and revert to original Excel file?")) {
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    location.reload();
+  }
+}
+
 function exportUpdatedExcel(){
-  if(!fullWorkbook) return;
-  const cleanData = needsRows.map(r => { const{_id,...rest}=r; return rest; });
+  if(!fullWorkbook)return;
+  const cleanData = needsRows.map(r=>{const{_id,...rest}=r; return rest;});
   const newSheet = XLSX.utils.json_to_sheet(cleanData);
   fullWorkbook.Sheets[NEEDS_SHEET_NAME] = newSheet;
-  XLSX.writeFile(fullWorkbook, 'all_department_data_2026.xlsx');
-  const btn = document.getElementById('btn-save-excel');
-  btn.style.background = '';
-  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Changes to Excel`;
-  saveMsg.style.display = 'block';
-  setTimeout(() => { saveMsg.style.display = 'none'; }, 3000);
-  NovusCore.Toast.success('Excel file downloaded ✓');
-  // Clear cache so next load picks up fresh file (user should re-upload to SharePoint)
-  NovusCore.forceRefresh();
+  XLSX.writeFile(fullWorkbook,"all_department_data_2026.xlsx");
+  
+  const btn=document.getElementById("btn-save-excel");
+  btn.style.background="";
+  btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Changes to Excel`;
+  
+  saveMsg.style.display="block";
+  setTimeout(()=>{saveMsg.style.display="none";},3000);
 }
 
 function applyFilters(){
-  const selDept = deptSelect.value, selStatus = statusSelect.value;
-  filteredRows = needsRows.filter(row => {
-    if(selDept && safeString(row['Department']).trim() !== selDept) return false;
-    const st = rowStatus(row);
-    if(selStatus === 'open' && st !== 'open') return false;
-    if(selStatus === 'completed' && st !== 'completed') return false;
+  const selOwner=ownerSelect.value, selStatus=statusSelect.value;
+  filteredRows=needsRows.filter(row=>{
+    if(selOwner && getOwnerValue(row).trim() !== selOwner) return false;
+    const st=rowStatus(row);
+    if(selStatus==="open"&&st!=="open")return false;
+    if(selStatus==="completed"&&st!=="completed")return false;
     return true;
   });
   renderSummaryAndTable();
 }
 
 function renderSummaryAndTable(){
-  let open=0,comp=0;
-  filteredRows.forEach(r => { const st=rowStatus(r); if(st==='open')open++; else comp++; });
-  totalCountEl.textContent = filteredRows.length;
-  openCountEl.textContent  = open;
-  completedCountEl.textContent = comp;
+  let open=0, comp=0;
+  filteredRows.forEach(r=>{const st=rowStatus(r); if(st==="open")open++; else comp++;});
+  totalCountEl.textContent=filteredRows.length;
+  openCountEl.textContent=open;
+  completedCountEl.textContent=comp;
   renderTable();
 }
 
 function renderTable(){
-  tableBody.innerHTML = '';
-  if(!filteredRows.length){
-    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">No items match current filters.</td></tr>`;
-    return;
-  }
-  filteredRows.forEach(row => {
-    const tr = document.createElement('tr');
-    const status = rowStatus(row);
-    tr.innerHTML = `<td class="date-mono">${formatDateShort(parseExcelDate(row['Date']))}</td><td class="na-text-cell">${safeString(row['Needs Action'])}</td><td class="date-mono">${formatDateShort(parseExcelDate(row['Date Completed']))}</td><td style="font-weight:600;color:var(--blue);">${safeString(row['Department'])}</td><td><span style="font-weight:700;color:${status==='open'?'var(--red)':'var(--green)'};">${status==='open'?'Open':'Completed'}</span></td><td id="action-${row._id}"></td>`;
-    const actionCell = tr.querySelector(`#action-${row._id}`);
-    if(status === 'open'){
-      const input = document.createElement('input');
-      input.type = 'date'; input.className = 'date-input-sm'; input.value = formatDateShort(new Date());
-      const btn = document.createElement('button');
-      btn.className = 'btn btn-complete'; btn.textContent = 'Complete';
-      btn.onclick = () => markRowCompleted(row._id, input.value);
-      actionCell.appendChild(input); actionCell.appendChild(btn);
-    } else {
-      actionCell.innerHTML = `<span style="color:var(--ink4)">—</span>`;
-    }
+  tableBody.innerHTML="";
+  if(!filteredRows.length){tableBody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">No items match current filters.</td></tr>`;return;}
+  
+  filteredRows.forEach(row=>{
+    const tr=document.createElement("tr");
+    const status=rowStatus(row);
+    const isChecked = status === 'completed' ? 'checked' : '';
+    
+    tr.innerHTML=`
+      <td class="date-mono">${formatDateShort(row["Date"])}</td>
+      <td class="na-text-cell" style="${status === 'completed' ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${safeString(row["Needs Action"])}</td>
+      <td class="date-mono">${formatDateShort(row["Date Completed"])}</td>
+      <td style="font-weight:600;color:var(--blue);">${getOwnerValue(row)}</td>
+      <td><span style="font-weight:700;color:${status==='open'?'var(--red)':'var(--green)'};">${status==='open'?'Open':'Completed'}</span></td>
+      <td style="text-align:center;">
+        <label class="checkbox-wrapper">
+          <input type="checkbox" ${isChecked} onchange="toggleCompletion(${row._id})">
+          <div class="checkmark">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          </div>
+        </label>
+      </td>
+    `;
     tableBody.appendChild(tr);
   });
 }
 
-deptSelect.onchange   = applyFilters;
-statusSelect.onchange = applyFilters;
-window.onload = loadNeedsActionSheet;
+ownerSelect.onchange=applyFilters;
+statusSelect.onchange=applyFilters;
+window.onload=loadNeedsActionSheet;
 </script>
 </body>
 </html>
