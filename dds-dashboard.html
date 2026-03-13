@@ -96,14 +96,10 @@
     .chart-wrap{position:relative;width:100%;border-radius:var(--radius-sm);overflow:hidden;background:var(--surface2);border:1px solid var(--border);padding:10px;}
     .chart-wrap canvas{display:block;}
 
-    /* 6-Card Plan Grid */
-    .plan-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
-    @media(max-width:1100px){.plan-grid{grid-template-columns:repeat(3,1fr)}}
-    @media(max-width:660px){.plan-grid{grid-template-columns:repeat(2,1fr)}}
+    /* Plan Card Styling */
     .plan-card{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
-    .plan-card-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;padding:8px 12px;font-weight:700;font-size:.78rem;text-transform:uppercase;text-align:center;}
-    .plan-card-body{padding:10px 12px;min-height:80px;outline:none;white-space:pre-wrap;color:var(--ink2);font-size:.82rem;background:var(--surface2);font-family:'DM Sans',sans-serif;}
-    .plan-card-body:focus{background:var(--surface);}
+    .plan-card-body{padding:16px;min-height:220px;outline:none;white-space:pre-wrap;color:var(--ink2);font-size:.95rem;background:var(--surface2);font-family:'DM Sans',sans-serif;line-height:1.6;}
+    .plan-card-body:focus{background:var(--surface);box-shadow: inset 0 0 0 1px var(--blue-l);}
 
     #data-status{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--ink3);}
     #data-status.ok{color:var(--green);}
@@ -335,20 +331,15 @@
 
   </div>
 
-  <!-- 6-CARD DAILY PLAN -->
+  <!-- MERGED DAILY PLAN / GEMBA WALK -->
   <div class="panel" style="margin-bottom:24px;">
     <div class="panel-header" style="cursor:default;">
-      <span class="panel-title">Daily Plan</span>
+      <span class="panel-title">Daily Plan/Gemba Walk</span>
       <button class="btn btn-danger" onclick="clearPlanData()">Reset Plan</button>
     </div>
     <div class="panel-body">
-      <div class="plan-grid">
-        <div class="plan-card"><div class="plan-card-header">Production</div><div class="plan-card-body" id="plan-production" contenteditable="true" oninput="savePlan('plan-production')">—</div></div>
-        <div class="plan-card"><div class="plan-card-header">Maintenance</div><div class="plan-card-body" id="plan-maintenance" contenteditable="true" oninput="savePlan('plan-maintenance')">—</div></div>
-        <div class="plan-card"><div class="plan-card-header">Quality</div><div class="plan-card-body" id="plan-quality" contenteditable="true" oninput="savePlan('plan-quality')">—</div></div>
-        <div class="plan-card"><div class="plan-card-header">Warehouse</div><div class="plan-card-body" id="plan-warehouse" contenteditable="true" oninput="savePlan('plan-warehouse')">—</div></div>
-        <div class="plan-card"><div class="plan-card-header">Inventory</div><div class="plan-card-body" id="plan-inventory-control" contenteditable="true" oninput="savePlan('plan-inventory-control')">—</div></div>
-        <div class="plan-card"><div class="plan-card-header">SAP</div><div class="plan-card-body" id="plan-sap" contenteditable="true" oninput="savePlan('plan-sap')">—</div></div>
+      <div class="plan-card">
+        <div class="plan-card-body" id="plan-gemba-walk" contenteditable="true" oninput="savePlan('plan-gemba-walk')" placeholder="Enter daily plan and Gemba walk notes here...">—</div>
       </div>
     </div>
   </div>
@@ -546,8 +537,16 @@ function initDraggable(){if(window.Sortable){new Sortable(document.getElementByI
 function initResizable(){document.querySelectorAll('.panel[style*="grid-column"]').forEach(panel=>{const resizer=panel.querySelector('.resizer');if(!resizer)return;resizer.addEventListener('mousedown',e=>{e.preventDefault();const startX=e.pageX,startY=e.pageY,startW=panel.offsetWidth,startH=panel.offsetHeight;const grid=document.querySelector('.dash-grid'),rect=grid.getBoundingClientRect(),colW=rect.width/12;function onMove(e){panel.style.width=`${startW+(e.pageX-startX)}px`;panel.style.height=`${startH+(e.pageY-startY)}px`;}function onUp(e){window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);const newCols=Math.max(2,Math.min(12,Math.round((startW+(e.pageX-startX))/colW)));panel.style.gridColumn=`span ${newCols}`;panel.style.width='';panel.style.height='';window.dispatchEvent(new Event('resize'));}window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);});});}
 
 function savePlan(id){localStorage.setItem('dds_'+id,document.getElementById(id).innerText);}
-function loadSavedPlans(){['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap'].forEach(id=>{const s=localStorage.getItem('dds_'+id);if(s)document.getElementById(id).innerText=s;});}
-function clearPlanData(){if(confirm('Reset all daily plan cards?')){['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap'].forEach(id=>{localStorage.removeItem('dds_'+id);document.getElementById(id).innerText='—';});}}
+function loadSavedPlans(){
+  const s=localStorage.getItem('dds_plan-gemba-walk');
+  if(s)document.getElementById('plan-gemba-walk').innerText=s;
+}
+function clearPlanData(){
+  if(confirm('Reset the Daily Plan/Gemba Walk?')){
+    localStorage.removeItem('dds_plan-gemba-walk');
+    document.getElementById('plan-gemba-walk').innerText='—';
+  }
+}
 
 function applyBuffer(buf){
   const st=document.getElementById('data-status');
