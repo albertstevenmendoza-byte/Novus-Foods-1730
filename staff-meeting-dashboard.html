@@ -164,6 +164,7 @@
             <option>Inventory Control</option><option>Production</option><option>Warehouse</option>
             <option>SAP</option><option>SAP PSA Tracking</option><option>Maintenance</option>
             <option>QA</option><option>Finance</option>
+            <option>In | Out</option>
           </select>
         </div>
         <div class="field"><span class="field-label">Metric</span><select id="builder-metric" disabled><option value="">Select dept first</option></select></div>
@@ -212,34 +213,33 @@ const DEPT_CAT_COL = {
   "Production":        "Line",
   "Inventory Control": "City",
   "Warehouse":         "City",
-  "SAP PSA Tracking":  "PSA Bin"
+  "SAP PSA Tracking":  "PSA Bin",
+  // In | Out: split/filter by Item (Organic Tomato / Aseptic Tomato / Finished Goods)
+  "In | Out":          "Item"
 };
 
 const NON_METRIC = new Set([
-  "Date","City","Line","Notes","Near Miss","Department","PSA Bin","_jsDate"
+  "Date","City","Line","Notes","Near Miss","Department","PSA Bin","_jsDate",
+  // In | Out dimension/label columns — never treated as plottable metrics
+  "Item","Flow","Supplier Lot","Month","Season","Week #"
 ]);
 
 // ─── AGGREGATION RULES ────────────────────────────────
-// Metrics in this set must NEVER be summed across rows.
-// They are averaged, optionally weighted by a time column.
 const AVG_METRICS = new Set([
-  // OEE components
   "OEE","oee",
   "Availability","Performance","Quality Rate",
-  // Rate / efficiency metrics
   "Attainment","Attainment %",
   "Fill Rate %","Fill Rate",
   "Completion %","Bin Accuracy",
   "PEM %",
-  // Any metric whose name contains these keywords (checked below)
+  // In | Out — these are rates/ratios; average across time, never sum
+  "Variance (%)","Scrap Rate (%)","Cost / Usable Lb",
 ]);
 const AVG_KEYWORDS = [
   "oee","rate","efficiency","attainment",
   "completion","accuracy","yield","availability","performance"
 ];
 
-// Columns used to weight OEE / efficiency averages.
-// First column found in the row wins.
 const WEIGHT_COLS = [
   "Planned Production Time","Scheduled Time","Runtime Hours",
   "Available Time","Shift Hours","Hours"
@@ -255,7 +255,6 @@ const COLORS = [
 /* ═══════════════════════════════════════════════════════
    AGGREGATION TYPE DETECTION
 ═══════════════════════════════════════════════════════ */
-// Returns 'fill-rate' | 'weighted-avg' | 'avg' | 'sum'
 function aggType(metricName) {
   if (metricName === "Fill Rate %") return "fill-rate";
   if (AVG_METRICS.has(metricName)) return "weighted-avg";
@@ -264,7 +263,6 @@ function aggType(metricName) {
   return "sum";
 }
 
-// Find first available weight column value in a row
 function weightOf(row) {
   for (const col of WEIGHT_COLS) {
     const v = row[col];
@@ -273,14 +271,11 @@ function weightOf(row) {
       if (n > 0) return n;
     }
   }
-  return null; // no weight column present — fall back to plain average
+  return null;
 }
 
-// Normalise OEE: SAP often stores it as 0–1 decimal; convert to 0–100
 function normaliseRate(v, metricName) {
   const n = num(v);
-  // If the stored value is ≤ 1.5 and the metric looks like a % or OEE/rate,
-  // treat it as a decimal fraction and multiply by 100
   const lower = metricName.toLowerCase();
   const looksLikeDecimal =
     lower.includes("oee") || lower.includes("rate") ||
@@ -446,72 +441,44 @@ function filterRows(rows) {
 
 /* ═══════════════════════════════════════════════════════
    AGGREGATION
-   Returns { labels, data, agg } where agg is the method used.
 ═══════════════════════════════════════════════════════ */
 function aggregateMetric(rows, metric, mode) {
   const type = aggType(metric);
-  const map  = {};   // key → bucket
+  const map  = {};
 
   rows.forEach(r => {
     const k = aggKey(r._jsDate, mode);
     if (!k) return;
-
     if (!map[k]) {
-      map[k] = {
-        // sum path
-        sumV: 0,
-        // fill-rate path
-        ship: 0, sched: 0,
-        // weighted-avg path
-        weightedSum: 0, totalWeight: 0,
-        // plain-avg fallback
-        plainSum: 0, plainCount: 0,
-      };
+      map[k] = { sumV:0, ship:0, sched:0, weightedSum:0, totalWeight:0, plainSum:0, plainCount:0 };
     }
-
     const bucket = map[k];
-
     if (type === "fill-rate") {
       bucket.ship  += num(r["Number of cases shipped"]);
       bucket.sched += num(r["Number of cases scheduled to ship"]);
-
     } else if (type === "weighted-avg") {
       const v = normaliseRate(r[metric], metric);
       const w = weightOf(r);
       if (!isNaN(v)) {
-        if (w !== null) {
-          // Weighted: accumulate v*w and total weight separately
-          bucket.weightedSum  += v * w;
-          bucket.totalWeight  += w;
-        } else {
-          // No weight column — plain average
-          bucket.plainSum   += v;
-          bucket.plainCount += 1;
-        }
+        if (w !== null) { bucket.weightedSum += v * w; bucket.totalWeight += w; }
+        else            { bucket.plainSum += v; bucket.plainCount += 1; }
       }
-
     } else {
-      // sum
       bucket.sumV += num(r[metric]);
     }
   });
 
   const labels = Object.keys(map).sort();
-
   const data = labels.map(k => {
     const b = map[k];
-    if (type === "fill-rate") {
-      return b.sched > 0 ? (b.ship / b.sched) * 100 : 0;
-    }
+    if (type === "fill-rate") return b.sched > 0 ? (b.ship / b.sched) * 100 : 0;
     if (type === "weighted-avg") {
-      // Prefer weighted average; fall back to plain average
       if (b.totalWeight > 0) return b.weightedSum / b.totalWeight;
       if (b.plainCount  > 0) return b.plainSum    / b.plainCount;
       return 0;
     }
     return b.sumV;
   });
-
   return { labels, data, type };
 }
 
@@ -521,15 +488,12 @@ function aggregateMetric(rows, metric, mode) {
 function render() {
   Object.values(charts).forEach(c=>{try{c.destroy();}catch(_){}});
   charts = {}; output.innerHTML = "";
-
   const mode   = $("global-aggregation").value;
   const mLabel = mode[0].toUpperCase()+mode.slice(1);
-
   if (!groups.length) {
     output.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><h3>No widgets yet</h3><p>Use the Widget Builder above to add your first visualization.</p></div>`;
     return;
   }
-
   groups.forEach((g, gi) => {
     const el = document.createElement("div");
     el.className = "group";
@@ -546,26 +510,22 @@ function render() {
    BUILD ONE WIDGET
 ═══════════════════════════════════════════════════════ */
 function buildWidget(container, g, w, mode, mLabel, wi) {
-  // Determine badge label and style based on aggregation type
   const type = aggType(w.metric);
   let mDesc, bClass;
-  if (type === "fill-rate")    { mDesc = "Weighted Avg"; bClass = "badge-weighted"; }
-  else if (type === "weighted-avg") { mDesc = "Wtd Avg";  bClass = "badge-avg"; }
-  else                         { mDesc = "Sum";          bClass = "badge-sum"; }
+  if (type === "fill-rate")         { mDesc = "Weighted Avg"; bClass = "badge-weighted"; }
+  else if (type === "weighted-avg") { mDesc = "Wtd Avg";      bClass = "badge-avg"; }
+  else                              { mDesc = "Sum";          bClass = "badge-sum"; }
 
   const badgeTxt = `${mLabel} · ${mDesc}`;
   const color    = COLORS[(w.ci ?? 0) % COLORS.length];
   const title    = w.filterValue ? `${w.metric} (${w.filterValue})` : w.metric;
 
-  // Filter rows
   let rows = filterRows(deptData[w.dept] || []);
   if (w.filterValue && w.catField)
     rows = rows.filter(r => str(r[w.catField]) === w.filterValue);
 
-  // ── AGGREGATE ──────────────────────────────────────
   const { labels, data } = aggregateMetric(rows, w.metric, mode);
 
-  // ── CARD SHELL ─────────────────────────────────────
   const card = document.createElement("div");
   card.className = "widget";
   card.style.animationDelay = `${wi * 30}ms`;
@@ -578,7 +538,6 @@ function buildWidget(container, g, w, mode, mLabel, wi) {
       <button class="btn-remove" title="Remove" onclick="removeWidget(${g.id},${w.id})">×</button>
     </div>`;
 
-  // ── METRIC CARD ────────────────────────────────────
   if (w.chartType === "metric") {
     const last = data.length ? data[data.length - 1] : 0;
     const isPercent = type !== "sum" || w.metric.includes("%");
@@ -591,8 +550,6 @@ function buildWidget(container, g, w, mode, mLabel, wi) {
         ${labels.length > 1 ? ` &middot; ${labels.length} periods` : ""}
       </div>`;
     card.appendChild(inner);
-
-  // ── CHART ──────────────────────────────────────────
   } else {
     const wrap   = document.createElement("div");
     wrap.className = "chart-wrap";
@@ -601,9 +558,7 @@ function buildWidget(container, g, w, mode, mLabel, wi) {
     canvas.id    = cid;
     wrap.appendChild(canvas);
     card.appendChild(wrap);
-
     const isPercent = type !== "sum" || w.metric.includes("%");
-
     requestAnimationFrame(() => {
       if (!canvas.isConnected) return;
       try {
@@ -649,7 +604,6 @@ function buildWidget(container, g, w, mode, mLabel, wi) {
               },
               y: {
                 beginAtZero: !isPercent,
-                // For OEE / rates cap suggestion at 100%
                 ...(isPercent ? { suggestedMax: 100 } : {}),
                 grid: { color:"rgba(0,0,0,.04)" },
                 ticks: {
@@ -666,7 +620,6 @@ function buildWidget(container, g, w, mode, mLabel, wi) {
       }
     });
   }
-
   container.appendChild(card);
 }
 
