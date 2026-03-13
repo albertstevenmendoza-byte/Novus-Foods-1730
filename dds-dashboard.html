@@ -190,14 +190,14 @@
           <div class="split-col">
             <div class="col-label">Salsa Lines</div>
             <table class="data-table">
-              <thead><tr><th>Line</th><th>OEE</th><th>Attainment</th></tr></thead>
+              <thead><tr><th>Line</th><th>OEE</th><th>Attainment</th><th>Downtime</th></tr></thead>
               <tbody id="prod-tbody-salsa"></tbody>
             </table>
           </div>
           <div class="split-col">
             <div class="col-label">Layer Lines</div>
             <table class="data-table">
-              <thead><tr><th>Line</th><th>OEE</th><th>Attainment</th></tr></thead>
+              <thead><tr><th>Line</th><th>OEE</th><th>Attainment</th><th>Downtime</th></tr></thead>
               <tbody id="prod-tbody-layer"></tbody>
             </table>
           </div>
@@ -448,7 +448,13 @@ function renderDashboard(){
       let oeeClass = '';
       if(s.oee !== null){const n=Number(s.oee)<=2?Number(s.oee):Number(s.oee)/100;oeeClass=n<=0.60?'td-red':(n<0.65?'td-amber':'td-green');}
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td style="font-weight:700">${line}</td><td class="${oeeClass}">${fmtPercent(s.oee)}</td><td>${fmtPercent(s.attainment,1)}</td>`;
+      // Added Downtime column to the row generation
+      tr.innerHTML = `
+        <td style="font-weight:700">${line}</td>
+        <td class="${oeeClass}">${fmtPercent(s.oee)}</td>
+        <td>${fmtPercent(s.attainment,1)}</td>
+        <td>${s.downtime !== null ? s.downtime.toFixed(0) + 'm' : '—'}</td>
+      `;
       tbody.appendChild(tr);
 
       const card = document.createElement('div');
