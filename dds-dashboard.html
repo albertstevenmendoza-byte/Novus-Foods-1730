@@ -173,16 +173,16 @@
       <div class="panel-date" id="date-production" style="display:none;">—</div>
       <div class="panel-body">
         
-        <!-- Global Alerts -->
-        <div class="metric-row">
-          <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red">—</div></div>
-          <div class="metric-box"><div class="metric-label">Code Yellow</div><div class="metric-value" id="code-yellow">—</div></div>
-        </div>
-
         <!-- YESTERDAY HEADER -->
         <div class="timeframe-block timeframe-yesterday">
           <div class="timeframe-title">Yesterday's Performance</div>
           <div class="timeframe-date" id="yesterday-date-label">Loading...</div>
+        </div>
+
+        <!-- Alerts moved inside Yesterday -->
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red">—</div></div>
+          <div class="metric-box"><div class="metric-label">Code Yellow</div><div class="metric-value" id="code-yellow">—</div></div>
         </div>
 
         <!-- SPLIT TABLES -->
@@ -203,6 +203,12 @@
           </div>
         </div>
 
+        <!-- Drivers moved inside Yesterday -->
+        <div style="margin-top:4px;">
+          <div class="section-label">Top Downtime Drivers (Yesterday)</div>
+          <div class="drivers-box alert" id="top-drivers">Scanning data…</div>
+        </div>
+
         <!-- TODAY HEADER -->
         <div class="timeframe-block timeframe-today">
           <div class="timeframe-title">Today's Operational Status</div>
@@ -219,11 +225,6 @@
             <div class="col-label">Layer Lines</div>
             <div class="readiness-stack" id="readiness-grid-layer"></div>
           </div>
-        </div>
-
-        <div style="margin-top:16px;">
-          <div class="section-label">Top Downtime Drivers (Yesterday)</div>
-          <div class="drivers-box alert" id="top-drivers">Scanning data…</div>
         </div>
 
         <div class="chart-wrap" style="height:200px; margin-top:10px;"><canvas id="production-chart"></canvas></div>
@@ -448,7 +449,6 @@ function renderDashboard(){
       let oeeClass = '';
       if(s.oee !== null){const n=Number(s.oee)<=2?Number(s.oee):Number(s.oee)/100;oeeClass=n<=0.60?'td-red':(n<0.65?'td-amber':'td-green');}
       const tr = document.createElement('tr');
-      // Added Downtime column to the row generation
       tr.innerHTML = `
         <td style="font-weight:700">${line}</td>
         <td class="${oeeClass}">${fmtPercent(s.oee)}</td>
