@@ -6,7 +6,7 @@
   <title>DDS Dashboard – Novus Foods Ops Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Added Permanent Marker for the Plaque Look -->
+  <!-- DM Sans for UI, Permanent Marker for the Plaque Look -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Permanent+Marker&display=swap" rel="stylesheet">
   <script src="novus-core.js"></script>
   <script async src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" onload="window.__libs.sortable=true;_checkLibsReady()"></script>
@@ -48,7 +48,7 @@
     .info-panel { display: none; animation: fadeUp 0.3s var(--ease-out); }
     .info-panel.active { display: block; }
 
-    /* CORE VALUES: PLAQUE MIMICRY */
+    /* CORE VALUES: PLAQUE STYLE */
     .values-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 10px; }
     .value-card { 
       background: var(--plaque-bg); 
@@ -62,11 +62,11 @@
     }
     .value-card:hover { transform: translateY(-5px); border-color: var(--green); }
     .value-name { 
-      font-family: 'Permanent Marker', cursive; /* Mimics the marker font in photo */
-      font-size: 1.4rem; 
+      font-family: 'Permanent Marker', cursive; 
+      font-size: 1.3rem; 
       display: block; 
       margin-bottom: 15px; 
-      color: var(--green-bright); /* Punchy Green */
+      color: var(--green-bright); 
       letter-spacing: 0.05em;
       font-style: italic;
     }
@@ -75,18 +75,20 @@
       font-size: 0.8rem; 
       line-height: 1.6; 
       font-weight: 600; 
-      text-transform: uppercase; /* Matches the plaque body text */
+      text-transform: uppercase; 
       letter-spacing: 0.06em;
       opacity: 0.9;
     }
 
-    /* ANNOUNCEMENTS & RULES */
+    /* INTERACTIVE BOARD (Meeting Rules) */
     .board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
     .pretty-card { background: var(--surface); border-radius: var(--radius); padding: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); position: relative; border: 1px solid var(--border); transition: transform 0.2s; }
     .pretty-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
     .card-announcement::before { background: var(--blue); }
     .card-expectation::before { background: var(--teal); }
     .card-body { font-size: 1rem; color: var(--ink2); min-height: 80px; outline: none; white-space: pre-wrap; line-height: 1.6; }
+    /* Logic for bolding text before colon */
+    .card-body strong { color: var(--ink); font-weight: 800; }
     .card-footer { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--surface2); display: flex; justify-content: space-between; align-items: center; }
     .card-meta { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--ink4); text-transform: uppercase; }
     .delete-btn { cursor: pointer; color: var(--ink4); transition: .2s; }
@@ -107,11 +109,7 @@
     .metric-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 10px;flex:1;text-align:center;}
     .metric-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:5px;}
     .metric-value{font-size:1.6rem;font-weight:700;letter-spacing:-.03em;color:var(--ink);outline:none;}
-    .data-table{width:100%;border-collapse:collapse;font-size:.8rem;}
-    .data-table th{background:var(--blue-ll);color:var(--blue);font-weight:700;padding:7px 8px;text-align:center;border-bottom:2px solid var(--blue-l);}
-    .data-table td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--border);}
     .chart-wrap{position:relative;width:100%;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--border);padding:10px;}
-    .resizer{position:absolute;right:0;bottom:0;width:20px;height:20px;cursor:nwse-resize;opacity:0.3;background:linear-gradient(135deg,transparent 50%,var(--border2) 50%);}
     .hidden{display:none!important}
   </style>
 </head>
@@ -155,16 +153,16 @@
     <div class="board-container" id="announcement-board"></div>
   </div>
 
-  <!-- RULES OF ENGAGEMENT -->
+  <!-- RULES OF ENGAGEMENT (Meeting Rules) -->
   <div id="panel-expectations" class="info-panel">
     <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
-      <h2 style="font-weight: 800;">Rules of Engagement</h2>
+      <h2 style="font-weight: 800;">Meeting Rules of Engagement</h2>
       <button class="btn" style="background:var(--teal); color:white;" onclick="addItem('expectation')">+ Add Rule</button>
     </div>
     <div class="board-container" id="expectation-board"></div>
   </div>
 
-  <!-- CORE VALUES (MIMICS PHOTO) -->
+  <!-- CORE VALUES (PLAQUE MIMICRY) -->
   <div id="panel-corevalues" class="info-panel">
     <div class="values-grid">
       <div class="value-card"><span class="value-name">1. DO THE RIGHT THING</span><p class="value-desc">SAFETY AND QUALITY ALWAYS. RESPECT IS NONNEGOTIABLE. SPEAK YOUR TRUTH.</p></div>
@@ -208,44 +206,10 @@
       <div class="panel" style="grid-column:span 12; position:relative;">
         <div class="panel-header"><span class="panel-title">Production Performance</span></div>
         <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Yesterday OEE</div><div class="metric-value" id="yest-oee">—</div></div>
-            <div class="metric-box"><div class="metric-label">Attainment</div><div class="metric-value" id="yest-attain">—</div></div>
-          </div>
           <div class="chart-wrap" style="height:200px;"><canvas id="production-chart"></canvas></div>
         </div>
       </div>
 
-      <!-- SAP -->
-      <div class="panel" style="grid-column:span 6;position:relative;">
-        <div class="panel-header"><span class="panel-title">SAP Orders</span></div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Open Process Orders</div><div class="metric-value" id="proc-orders" contenteditable="true" oninput="saveManualMetric(this.id)">—</div></div>
-          </div>
-          <div class="chart-wrap" style="height:150px;"><canvas id="sap-chart"></canvas></div>
-        </div>
-      </div>
-
-      <!-- WAREHOUSE -->
-      <div class="panel" style="grid-column:span 6;position:relative;">
-        <div class="panel-header"><span class="panel-title">Warehouse</span></div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Fill Rate %</div><div class="metric-value" id="wh-fill" contenteditable="true" oninput="saveManualMetric(this.id)">—</div></div>
-            <div class="metric-box"><div class="metric-label">CPMH</div><div class="metric-value" id="wh-cpmh" contenteditable="true" oninput="saveManualMetric(this.id)">—</div></div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- PLAN -->
-    <div class="panel" style="margin-top:20px;">
-      <div class="panel-header"><span class="panel-title">Daily Plan & Gemba Notes</span></div>
-      <div class="panel-body">
-        <div id="plan-gemba-walk" contenteditable="true" style="min-height:150px; outline:none; white-space:pre-wrap;" oninput="savePlan('plan-gemba-walk')">Enter notes here...</div>
-      </div>
     </div>
   </div>
 </div>
@@ -254,37 +218,18 @@
 let workbook;
 const TODAY_OBJ = new Date();
 
-// --- DATA LOGIC ---
-function toDateString(d){ if(!d||isNaN(d.getTime()))return null; return d.toISOString().split('T')[0]; }
-function parseDate(val){ if(!val)return null; const d=new Date(val); return isNaN(d.getTime())?null:d; }
-
-function renderDashboard(){
-  if(!workbook) return;
-  const prod = getSheetData('Production');
-  const sap = getSheetData('SAP');
-  const wh = getSheetData('Warehouse');
-
-  document.getElementById('current-date-display').textContent = `Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`;
-
-  // Simple Render Example
-  loadManualMetrics();
-}
-
-function getSheetData(name){
-  const s = workbook.Sheets[name];
-  return s ? XLSX.utils.sheet_to_json(s,{defval:''}) : [];
-}
-
-// --- BOARD LOGIC (WITH BOLDING) ---
+// --- BOARD LOGIC ---
 const DEFAULT_RULES = [
   { id: 1, text: "🚀 Punctuality: Meeting starts exactly on time. Be present 2 minutes early." },
   { id: 2, text: "📊 Preparation: Have your specific department metrics ready to discuss." },
-  { id: 3, text: "🧠 Focus: No side conversations. Stay focused on the data." }
+  { id: 3, text: "🧠 Focus: No side conversations. Stay focused on the data and the 'Why'." },
+  { id: 4, text: "🛠️ Action Oriented: Identify gaps, assign owners, and set clear deadlines." },
+  { id: 5, text: "🤝 Respect: One person speaks at a time. Keep updates concise." }
 ];
 
 let boards = {
-  announcement: JSON.parse(localStorage.getItem('dds_ann_v8') || '[]'),
-  expectation: JSON.parse(localStorage.getItem('dds_exp_v8') || JSON.stringify(DEFAULT_RULES))
+  announcement: JSON.parse(localStorage.getItem('dds_ann_v9') || '[]'),
+  expectation: JSON.parse(localStorage.getItem('dds_exp_v9') || JSON.stringify(DEFAULT_RULES))
 };
 
 function addItem(type) {
@@ -299,11 +244,14 @@ function deleteItem(type, id) {
 
 function editItem(type, id, text) {
   const item = boards[type].find(i => i.id === id);
-  if(item) { item.text = text; localStorage.setItem(`dds_${type === 'announcement' ? 'ann' : 'exp'}_v8`, JSON.stringify(boards[type])); }
+  if(item) { 
+    item.text = text; 
+    localStorage.setItem(`dds_${type === 'announcement' ? 'ann' : 'exp'}_v9`, JSON.stringify(boards[type])); 
+  }
 }
 
 function saveBoard(type) {
-  localStorage.setItem(`dds_${type === 'announcement' ? 'ann' : 'exp'}_v8`, JSON.stringify(boards[type]));
+  localStorage.setItem(`dds_${type === 'announcement' ? 'ann' : 'exp'}_v9`, JSON.stringify(boards[type]));
   renderBoard(type);
 }
 
@@ -317,8 +265,10 @@ function renderBoard(type) {
       <div class="pretty-card card-${type}">
         <div class="card-body" contenteditable="true" onblur="editItem('${type}', ${i.id}, this.innerText)">${display}</div>
         <div class="card-footer">
-          <span class="card-meta">${type === 'announcement' ? i.date : 'Rule'}</span>
-          <span class="delete-btn" onclick="deleteItem('${type}', ${i.id})">Delete</span>
+          <span class="card-meta">${type === 'announcement' ? i.date : 'Meeting Rule'}</span>
+          <span class="delete-btn" onclick="deleteItem('${type}', ${i.id})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </span>
         </div>
       </div>`;
   }).join('');
@@ -335,11 +285,10 @@ function switchView(view, el) {
 
 function saveManualMetric(id){ localStorage.setItem('dds_m_'+id, document.getElementById(id).innerText); }
 function loadManualMetrics(){ 
-  ['days-incident','near-misses','holds','pem','complaints','proc-orders','wh-fill','wh-cpmh'].forEach(id => {
-    const v = localStorage.getItem('dds_m_'+id); if(v) document.getElementById(id).innerText = v;
+  ['days-incident','near-misses','holds','pem','complaints'].forEach(id => {
+    const v = localStorage.getItem('dds_m_'+id); if(v) { const el = document.getElementById(id); if(el) el.innerText = v; }
   });
 }
-function savePlan(id){ localStorage.setItem('dds_p_'+id, document.getElementById(id).innerText); }
 
 async function handleFileUpload(evt){
   const file = evt.target.files[0]; if(!file) return;
@@ -349,11 +298,16 @@ async function handleFileUpload(evt){
   renderDashboard();
 }
 
+function renderDashboard(){
+  if(!workbook) return;
+  document.getElementById('current-date-display').textContent = `Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`;
+  loadManualMetrics();
+}
+
 window.__libsCallback = () => {
   renderBoard('announcement');
   renderBoard('expectation');
-  const plan = localStorage.getItem('dds_p_plan-gemba-walk');
-  if(plan) document.getElementById('plan-gemba-walk').innerText = plan;
+  renderDashboard();
 };
 
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _checkLibsReady);
