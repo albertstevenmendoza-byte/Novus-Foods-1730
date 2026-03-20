@@ -22,7 +22,7 @@
       --blue:#2563eb;--blue-l:#3b82f6;--blue-ll:#dbeafe;--blue-glow:rgba(37,99,235,.12);
       --teal:#0d9488;--teal-ll:#ccfbf1;--green:#059669;--green-l:#10b981;
       --red:#dc2626;--red-l:#ef4444;--amber:#d97706;--amber-ll:#fef3c7;
-      --novus-green: #22c55e; /* Vibrant green from plaque */
+      --novus-green: #22c55e;
       --plaque-bg: #000000;
       --radius:14px;--radius-sm:8px;--radius-xs:5px;--nav-h:58px;
       --ease:cubic-bezier(.4,0,.2,1);--ease-out:cubic-bezier(0,0,.2,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);
@@ -52,33 +52,12 @@
     /* CORE VALUES: PLAQUE DESIGN */
     .values-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 10px; }
     .value-card { 
-      background: var(--plaque-bg); 
-      border-radius: var(--radius); 
-      padding: 40px 25px; 
-      text-align: center; 
-      box-shadow: 0 15px 35px rgba(0,0,0,0.4); 
-      border: 1px solid #222;
-      transition: transform 0.3s var(--ease);
+      background: var(--plaque-bg); border-radius: var(--radius); padding: 40px 25px; text-align: center; 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 1px solid #222; transition: transform 0.3s var(--ease);
     }
     .value-card:hover { transform: translateY(-5px); border-color: var(--novus-green); }
-    .value-name { 
-      font-family: 'Permanent Marker', cursive; 
-      font-size: 1.35rem; 
-      display: block; 
-      margin-bottom: 15px; 
-      color: var(--novus-green); 
-      font-style: italic;
-      letter-spacing: 0.05em;
-    }
-    .value-desc { 
-      color: #ffffff; 
-      font-size: 0.82rem; 
-      line-height: 1.6; 
-      font-weight: 600; 
-      text-transform: uppercase; 
-      letter-spacing: 0.06em;
-      opacity: 0.95;
-    }
+    .value-name { font-family: 'Permanent Marker', cursive; font-size: 1.35rem; display: block; margin-bottom: 15px; color: var(--novus-green); font-style: italic; letter-spacing: 0.05em; }
+    .value-desc { color: #ffffff; font-size: 0.82rem; line-height: 1.6; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.95; }
 
     /* INTERACTIVE BOARDS */
     .board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
@@ -93,7 +72,7 @@
     .delete-btn { cursor: pointer; color: var(--ink4); transition: .2s; }
     .delete-btn:hover { color: var(--red); }
 
-    /* MAIN DASHBOARD PANELS */
+    /* DASHBOARD ELEMENTS */
     .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:all .12s;}
     .btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--ink2);}
     .btn-danger{background:var(--red-l);color:white;}
@@ -117,25 +96,8 @@
     .data-table{width:100%;border-collapse:collapse;font-size:.8rem;}
     .data-table th{background:var(--blue-ll);color:var(--blue);font-weight:700;font-size:.68rem;text-transform:uppercase;padding:7px 8px;text-align:center;border-bottom:2px solid var(--blue-l);}
     .data-table td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--border);}
-
-    /* PRODUCTION COMMAND CENTER */
-    .prod-command-split { display: grid; grid-template-columns: 1fr 1.8fr; gap: 24px; }
-    .timeframe-block { padding: 10px 14px; border-radius: var(--radius-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 12px; }
-    .timeframe-yesterday { background: var(--ink); color: white; }
-    .timeframe-today { background: var(--blue); color: white; }
-    .timeframe-title { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
-    .split-row { display: flex; gap: 16px; }
-    .split-col { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-    .col-label { background: var(--surface2); padding: 4px; border-radius: var(--radius-xs); border: 1px solid var(--border); text-align: center; font-weight: 800; font-size: 0.68rem; color: var(--ink3); text-transform: uppercase; }
-    .readiness-stack { background: rgba(37, 99, 235, 0.04); border: 1px dashed var(--blue-ll); border-radius: var(--radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-    .readiness-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
-    .readiness-line { font-weight: 800; font-size: 0.75rem; color: var(--blue); margin-bottom: 6px; border-bottom: 1px solid var(--surface2); }
-    .status-pill { font-size: 0.65rem; font-weight: 700; padding: 3px 6px; border-radius: 4px; display: flex; justify-content: space-between; }
-    .pill-yes { background: rgba(16, 185, 129, 0.1); color: var(--green); }
-    .pill-no { background: rgba(239, 68, 68, 0.1); color: var(--red-l); }
     .chart-wrap{position:relative;width:100%;border-radius:var(--radius-sm);overflow:hidden;background:var(--surface2);border:1px solid var(--border);padding:10px;}
     .plan-card-body{padding:16px;min-height:220px;outline:none;white-space:pre-wrap;color:var(--ink2);font-size:.95rem;background:var(--surface2);line-height:1.6;}
-    .resizer{position:absolute;right:0;bottom:0;width:22px;height:22px;cursor:nwse-resize;clip-path:polygon(100% 0,100% 100%,0 100%);background:var(--border2);opacity:0.3;}
     .hidden{display:none!important}
   </style>
 </head>
@@ -154,7 +116,7 @@
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
     <span id="data-status" style="font-size:0.7rem;font-family:'DM Mono';color:var(--ink3);">Upload workbook to load</span>
-    <label id="upload-label" class="btn btn-ghost" style="cursor:pointer;">
+    <label class="btn btn-ghost" style="cursor:pointer;">
       Upload Data
       <input type="file" id="main-file-upload" accept=".xlsx,.xls" style="display:none;" onchange="handleFileUpload(event)">
     </label>
@@ -170,27 +132,10 @@
     <div class="sub-tab" onclick="switchView('corevalues', this)">Core Values</div>
   </div>
 
-  <!-- ANNOUNCEMENTS -->
-  <div id="panel-announcements" class="info-panel">
-    <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
-      <h2 style="font-weight: 800;">Announcement Board</h2>
-      <button class="btn" style="background:var(--blue); color:white;" onclick="addItem('announcement')">+ Create New Note</button>
-    </div>
-    <div class="board-container" id="announcement-board"></div>
-  </div>
-
-  <!-- RULES OF ENGAGEMENT -->
-  <div id="panel-expectations" class="info-panel">
-    <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
-      <h2 style="font-weight: 800;">Meeting Rules of Engagement</h2>
-      <button class="btn" style="background:var(--teal); color:white;" onclick="addItem('expectation')">+ Add New Rule</button>
-    </div>
-    <div class="board-container" id="expectation-board"></div>
-  </div>
-
-  <!-- CORE VALUES (PLAQUE THEME) -->
+  <!-- PANELS -->
+  <div id="panel-announcements" class="info-panel"><div class="board-container" id="announcement-board"></div></div>
+  <div id="panel-expectations" class="info-panel"><div class="board-container" id="expectation-board"></div></div>
   <div id="panel-corevalues" class="info-panel">
-    <div class="section-label" style="margin-bottom:15px; font-size: 1rem;">Novus Foods Values and Behaviors</div>
     <div class="values-grid">
       <div class="value-card"><span class="value-name">1. DO THE RIGHT THING</span><p class="value-desc">SAFETY AND QUALITY ALWAYS. RESPECT IS NONNEGOTIABLE. SPEAK YOUR TRUTH.</p></div>
       <div class="value-card"><span class="value-name">2. OUR PEOPLE ARE EXTRAORDINARY</span><p class="value-desc">PASSION, PERSEVERANCE AND HUMILITY (GRIT). LEAD FROM ANY SEAT. INVEST IN YOURSELF AND OTHERS.</p></div>
@@ -201,13 +146,11 @@
     </div>
   </div>
 
-  <!-- MAIN DASHBOARD CONTENT -->
   <div id="view-dashboard">
     <div class="date-header" id="current-date-display">Loading…</div>
     <div class="dash-grid" id="main-sortable">
-
       <!-- SAFETY -->
-      <div class="panel" style="grid-column:span 4;position:relative;" id="panel-safety">
+      <div class="panel" style="grid-column:span 4;" id="panel-safety">
         <div class="panel-header"><span class="panel-title">Safety</span></div>
         <div class="panel-date" id="date-safety">—</div>
         <div class="panel-body">
@@ -217,9 +160,8 @@
           </div>
         </div>
       </div>
-
       <!-- QUALITY -->
-      <div class="panel" style="grid-column:span 8;position:relative;" id="panel-quality">
+      <div class="panel" style="grid-column:span 8;" id="panel-quality">
         <div class="panel-header"><span class="panel-title">Quality</span></div>
         <div class="panel-date" id="date-quality">—</div>
         <div class="panel-body">
@@ -230,66 +172,33 @@
           </div>
         </div>
       </div>
-
-      <!-- PRODUCTION SUMMARY -->
-      <div class="panel" style="grid-column:span 12; position:relative;" id="panel-production">
+      <!-- PRODUCTION -->
+      <div class="panel" style="grid-column:span 12;" id="panel-production">
         <div class="panel-header"><span class="panel-title">Production Summary</span></div>
         <div class="panel-body">
           <div class="prod-command-split">
             <div class="prod-col-today">
-              <div class="timeframe-block timeframe-today"><div class="timeframe-title">Today's Readiness</div></div>
               <div class="split-row">
                 <div class="split-col"><div class="col-label">Salsa Lines</div><div class="readiness-stack" id="readiness-grid-salsa"></div></div>
                 <div class="split-col"><div class="col-label">Layer Lines</div><div class="readiness-stack" id="readiness-grid-layer"></div></div>
               </div>
             </div>
             <div class="prod-col-yesterday">
-              <div class="timeframe-block timeframe-yesterday"><div class="timeframe-title">Yesterday's Performance</div></div>
               <div class="metric-row">
                 <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red" contenteditable="true" oninput="saveManualMetric(this.id)">—</div></div>
-                <div style="flex:2"><div class="section-label">Top Downtime Drivers</div><div class="drivers-box alert" id="top-drivers">Scanning data…</div></div>
+                <div style="flex:2"><div class="section-label">Top Downtime Drivers</div><div class="drivers-box alert" id="top-drivers">Scanning…</div></div>
               </div>
               <div class="split-row" style="margin-top:12px;">
-                <div class="split-col"><div class="col-label">Salsa Lines</div><table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attain</th><th>DT</th></tr></thead><tbody id="prod-tbody-salsa"></tbody></table></div>
-                <div class="split-col"><div class="col-label">Layer Lines</div><table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attain</th><th>DT</th></tr></thead><tbody id="prod-tbody-layer"></tbody></table></div>
+                <div class="split-col"><table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attain</th><th>DT</th></tr></thead><tbody id="prod-tbody-salsa"></tbody></table></div>
+                <div class="split-col"><table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attain</th><th>DT</th></tr></thead><tbody id="prod-tbody-layer"></tbody></table></div>
               </div>
             </div>
           </div>
           <div class="chart-wrap" style="height:200px; margin-top:10px;"><canvas id="production-chart"></canvas></div>
         </div>
       </div>
-
-      <!-- COSTS -->
-      <div class="panel" style="grid-column:span 4;position:relative;" id="panel-costs">
-        <div class="panel-header"><span class="panel-title">Costs</span></div>
-        <div class="panel-date" id="date-costs">—</div>
-        <div class="panel-body">
-          <table class="data-table">
-            <thead><tr><th>Metric</th><th>Direct</th><th>Indirect</th></tr></thead>
-            <tbody>
-              <tr><td>Cost / Lb</td><td id="cost-direct" contenteditable="true" oninput="saveManualMetric(this.id)">—</td><td id="cost-indirect" contenteditable="true" oninput="saveManualMetric(this.id)">—</td></tr>
-              <tr><td>Lb / hr</td><td id="pound-hr-direct" contenteditable="true" oninput="saveManualMetric(this.id)">—</td><td id="pound-hr-indirect" contenteditable="true" oninput="saveManualMetric(this.id)">—</td></tr>
-            </tbody>
-          </table>
-          <div class="chart-wrap" style="height:190px; margin-top:10px;"><canvas id="costs-ot-chart"></canvas></div>
-        </div>
-      </div>
-
-      <!-- HR -->
-      <div class="panel" style="grid-column:span 4;position:relative;" id="panel-hr">
-        <div class="panel-header"><span class="panel-title">HR | Training</span></div>
-        <div class="panel-date" id="date-hr">—</div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Trainings</div><div class="metric-value" id="trainings" contenteditable="true" oninput="saveManualMetric(this.id)">—</div></div>
-            <div class="metric-box"><div class="metric-label">Headcount</div><div class="metric-value" id="headcount" contenteditable="true" oninput="saveManualMetric(this.id)">—</div></div>
-          </div>
-          <div class="chart-wrap" style="height:160px;"><canvas id="hr-chart"></canvas></div>
-        </div>
-      </div>
-
       <!-- SAP -->
-      <div class="panel" style="grid-column:span 4;position:relative;" id="panel-sap">
+      <div class="panel" style="grid-column:span 4;" id="panel-sap">
         <div class="panel-header"><span class="panel-title">SAP</span></div>
         <div class="panel-date" id="date-sap">—</div>
         <div class="panel-body">
@@ -300,9 +209,22 @@
           <div class="chart-wrap" style="height:130px;"><canvas id="sap-open-orders-chart"></canvas></div>
         </div>
       </div>
-
+      <!-- COSTS -->
+      <div class="panel" style="grid-column:span 4;" id="panel-costs">
+        <div class="panel-header"><span class="panel-title">Costs</span></div>
+        <div class="panel-date" id="date-costs">—</div>
+        <div class="panel-body">
+          <table class="data-table">
+            <thead><tr><th>Metric</th><th>Direct</th><th>Indirect</th></tr></thead>
+            <tbody>
+              <tr><td>Cost / Lb</td><td id="cost-direct" contenteditable="true" oninput="saveManualMetric(this.id)">—</td><td id="cost-indirect" contenteditable="true" oninput="saveManualMetric(this.id)">—</td></tr>
+            </tbody>
+          </table>
+          <div class="chart-wrap" style="height:190px;"><canvas id="costs-ot-chart"></canvas></div>
+        </div>
+      </div>
       <!-- WAREHOUSE -->
-      <div class="panel" style="grid-column:span 4;position:relative;" id="panel-warehouse">
+      <div class="panel" style="grid-column:span 4;" id="panel-warehouse">
         <div class="panel-header"><span class="panel-title">Warehouse</span></div>
         <div class="panel-date" id="date-warehouse">—</div>
         <div class="panel-body">
@@ -313,92 +235,104 @@
           <div class="chart-wrap" style="height:220px;"><canvas id="wh-cpmh-chart"></canvas></div>
         </div>
       </div>
-
-      <!-- INVENTORY -->
-      <div class="panel" style="grid-column:span 8;position:relative;" id="panel-inventory">
-        <div class="panel-header"><span class="panel-title">Inventory Control</span></div>
-        <div class="panel-date" id="date-inventory">—</div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">BP Completion</div><div class="metric-value" id="inv-bp-completion" contenteditable="true" oninput="saveManualMetric(this.id)">—</div></div>
-            <div class="metric-box"><div class="metric-label">Critical</div><div class="metric-value" id="inv-critical" contenteditable="true" oninput="saveManualMetric(this.id)">—</div></div>
-            <div class="metric-box"><div class="metric-label">Accuracy</div><div class="metric-value" id="inv-accuracy" contenteditable="true" oninput="saveManualMetric(this.id)">—</div></div>
-          </div>
-          <div><div class="section-label">Inventory Notes</div><div class="drivers-box" id="inv-notes">Scanning notes…</div></div>
-        </div>
-      </div>
-
     </div>
-
-    <!-- GEMBA WALK -->
-    <div class="panel" style="margin-bottom:24px;">
-      <div class="panel-header" style="cursor:default;"><span class="panel-title">Daily Plan / Gemba Walk</span></div>
-      <div class="panel-body">
-        <div class="plan-card-body" id="plan-gemba-walk" contenteditable="true" oninput="savePlan('plan-gemba-walk')">—</div>
-      </div>
-    </div>
+    <div class="panel"><div class="panel-header"><span class="panel-title">Gemba Walk</span></div><div class="panel-body"><div class="plan-card-body" id="plan-gemba-walk" contenteditable="true" oninput="savePlan('plan-gemba-walk')">—</div></div></div>
   </div>
 </div>
 
 <script>
-let workbook,GLOBAL_MAX_DATE=null;
-const TODAY_OBJ=new Date();
+let workbook, GLOBAL_MAX_DATE = null;
+const TODAY_OBJ = new Date();
 
-// --- DATA ENGINE ---
-function toDateString(d){if(!d||isNaN(d.getTime()))return null;return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;}
-function parseDate(val){if(!val)return null;const num=Number(val);if(!isNaN(num)&&val!==''&&val!==null){return new Date((num-25569)*86400*1000);}const d=new Date(val);if(!isNaN(d.getTime()))return new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));return null;}
-function getLatestDateForSheet(data,requiredField=null){let maxTime=0;data.forEach(row=>{const d=parseDate(row.Date);if(d&&!isNaN(d.getTime())){let hasData=true;if(requiredField){const v=valByKey(row,requiredField);if(v===null||v==='')hasData=false;}if(hasData&&d.getTime()>maxTime)maxTime=d.getTime();}});return maxTime===0?null:{str:toDateString(new Date(maxTime)),obj:new Date(maxTime)};}
-function updateSectionDate(elementId,dateResult){const el=document.getElementById(elementId);if(!el) return null; if(!dateResult){el.textContent='No Data';return null;}if(!GLOBAL_MAX_DATE||dateResult.str>GLOBAL_MAX_DATE)GLOBAL_MAX_DATE=dateResult.str;el.textContent=`Data: ${dateResult.obj.toLocaleDateString()}`;return dateResult.str;}
-function checkStaleness(elementId,dateStr){const el=document.getElementById(elementId);if(!el||!GLOBAL_MAX_DATE||!dateStr)return;if(dateStr<GLOBAL_MAX_DATE)el.classList.add('stale');else el.classList.remove('stale');}
-function valByKey(row,field){if(!row)return null;const key=Object.keys(row).find(k=>k.trim().toLowerCase()===field.toLowerCase());return row[key||field]??null;}
-function getTargetValue(data,field,targetDateStr){if(!targetDateStr)return null;const rows=data.filter(r=>toDateString(parseDate(r.Date))===targetDateStr);if(!rows.length)return null;return valByKey(rows[rows.length-1],field);}
-function fmtPercent(val,dec=0){if(val==null)return'—';let n=Number(val);if(isNaN(n))return'—';return(n<=2?n*100:n).toFixed(dec)+'%';}
+// --- ROBUST DATA ENGINE ---
+function toDateString(d){ if(!d||isNaN(d.getTime()))return null; return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`; }
+function parseDate(val){ if(!val)return null; const num=Number(val); if(!isNaN(num)&&val!==''&&val!==null){return new Date((num-25569)*86400*1000);} const d=new Date(val); return isNaN(d.getTime())?null:new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); }
+function valByKey(row,field){ if(!row)return null; const key=Object.keys(row).find(k=>k.trim().toLowerCase()===field.toLowerCase().replace(/\s/g,'')||k.trim().toLowerCase()===field.toLowerCase()); return row[key]??null; }
 
-function getProductionMetrics(prodData,targetDateStr,lineName){
-  const rows=prodData.filter(r=>toDateString(parseDate(r.Date))===targetDateStr&&String(valByKey(r,'Line')||'').trim().toUpperCase()===lineName);
-  if(!rows.length)return{oee:null,attainment:null,downtime:null,startup:'—',cil:'—'};
-  const r=rows[0];
-  return {oee:valByKey(r,'OEE'),attainment:valByKey(r,'Attainment'),downtime:valByKey(r,'Downtime'),startup:valByKey(r,'Start Up'),cil:valByKey(r,'CIL')};
+function getLatestDateForSheet(data, requiredField=null){
+  let maxTime=0;
+  data.forEach(row=>{
+    const d=parseDate(row.Date);
+    if(d){
+      let hasData=true;
+      if(requiredField && !valByKey(row,requiredField)) hasData=false;
+      if(hasData && d.getTime()>maxTime) maxTime=d.getTime();
+    }
+  });
+  return maxTime===0?null:{str:toDateString(new Date(maxTime)),obj:new Date(maxTime)};
+}
+
+function getTargetValue(data, field, targetDateStr){
+  if(!targetDateStr) return null;
+  const rows = data.filter(r=>toDateString(parseDate(r.Date))===targetDateStr);
+  if(!rows.length) return null;
+  // Handle fields that need summing (like near misses or OT)
+  const sumFields = ['near miss', 'holds', 'complaints', 'overtime', 'safety audits'];
+  if(sumFields.some(sf=>field.toLowerCase().includes(sf))){
+    let sum=0; rows.forEach(r=>{ let v=parseFloat(valByKey(r,field)); if(!isNaN(v)) sum+=v; });
+    return sum;
+  }
+  return valByKey(rows[rows.length-1], field);
+}
+
+function fmtPercent(val,dec=0){ if(val==null)return'—'; let n=Number(val); if(isNaN(n))return'—'; return (n<=2?n*100:n).toFixed(dec)+'%'; }
+
+function getProductionMetrics(prodData, targetDateStr, lineName){
+  const rows = prodData.filter(r=>toDateString(parseDate(r.Date))===targetDateStr && String(valByKey(r,'Line')||'').trim().toUpperCase()===lineName);
+  if(!rows.length) return {oee:null, attainment:null, downtime:null, startup:'—', cil:'—'};
+  let oeeSum=0, attSum=0, dtSum=0, count=0;
+  rows.forEach(r=>{
+    oeeSum += parseFloat(valByKey(r,'OEE'))||0;
+    attSum += parseFloat(valByKey(r,'Attainment'))||0;
+    dtSum += parseFloat(valByKey(r,'Downtime'))||0;
+    count++;
+  });
+  return { oee:oeeSum/count, attainment:attSum/count, downtime:dtSum, startup:valByKey(rows[0],'Start Up'), cil:valByKey(rows[0],'CIL') };
 }
 
 // --- RENDERING ---
 function renderDashboard(){
-  if(!workbook)return;
-  const hr=getSheetData('HR | Training'),qa=getSheetData('QA'),prod=getSheetData('Production'),finance=getSheetData('Finance'),sap=getSheetData('SAP'),warehouse=getSheetData('Warehouse'),inventory=getSheetData('Inventory Control'),maint=getSheetData('Maintenance');
+  if(!workbook) return;
+  const hr=getSheetData('HR | Training'), qa=getSheetData('QA'), prod=getSheetData('Production'), finance=getSheetData('Finance'), sap=getSheetData('SAP'), warehouse=getSheetData('Warehouse'), inventory=getSheetData('Inventory Control'), maint=getSheetData('Maintenance');
   
-  const dSafety=updateSectionDate('date-safety',getLatestDateForSheet(hr));
+  GLOBAL_MAX_DATE=null;
+  const dHR=updateSectionDate('date-hr',getLatestDateForSheet(hr));
   const dQA=updateSectionDate('date-quality',getLatestDateForSheet(qa));
   const dProd=updateSectionDate('date-production',getLatestDateForSheet(prod,'OEE'));
   const dCosts=updateSectionDate('date-costs',getLatestDateForSheet(finance));
-  const dHR=updateSectionDate('date-hr',getLatestDateForSheet(hr));
   const dSAP=updateSectionDate('date-sap',getLatestDateForSheet(sap));
   const dWarehouse=updateSectionDate('date-warehouse',getLatestDateForSheet(warehouse));
   const dInventory=updateSectionDate('date-inventory',getLatestDateForSheet(inventory));
 
-  [['date-safety',dSafety],['date-quality',dQA],['date-production',dProd],['date-costs',dCosts],['date-hr',dHR],['date-sap',dSAP],['date-warehouse',dWarehouse],['date-inventory',dInventory]].forEach(([id,d])=>checkStaleness(id,d));
+  document.getElementById('days-incident').textContent = getTargetValue(hr,'Days Without Incident',dHR)??'—';
+  document.getElementById('near-misses').textContent = getTargetValue(hr,'Near Miss Reports',dHR)??'—';
+  document.getElementById('pem').textContent = fmtPercent(getTargetValue(qa,'PEM %',dQA),1);
+  document.getElementById('holds').textContent = getTargetValue(qa,'Holds',dQA)??'—';
+  document.getElementById('complaints').textContent = getTargetValue(qa,'Number of Complaints',dQA)??'—';
+  document.getElementById('proc-orders').textContent = getTargetValue(sap,'Open Process Orders',dSAP)??'—';
+  document.getElementById('warehouse-tasks').textContent = getTargetValue(sap,'Warehouse Tasks',dSAP)??'—';
 
-  document.getElementById('days-incident').textContent=getTargetValue(hr,'Days Without Incident',dHR)??'—';
-  document.getElementById('near-misses').textContent=getTargetValue(hr,'Near Miss Reports',dHR)??'—';
-  document.getElementById('pem').textContent=fmtPercent(getTargetValue(qa,'PEM %',dQA),1);
-  document.getElementById('holds').textContent=getTargetValue(qa,'Holds',dQA)??'—';
-  document.getElementById('complaints').textContent=getTargetValue(qa,'Number of Complaints',dQA)??'—';
-
-  // Production Table & Readiness
-  const salsaLines = ['2A', 'PL1', 'MP4', 'PXM6'], layerLines = ['PL2', '2E'];
-  const tbodySalsa = document.getElementById('prod-tbody-salsa'); tbodySalsa.innerHTML = '';
-  const readinessSalsa = document.getElementById('readiness-grid-salsa'); readinessSalsa.innerHTML = '';
-  
-  const fillTable = (lines, tbody, grid) => {
+  // Production
+  const salsa = ['2A','PL1','MP4','PXM6'], layer = ['PL2','2E'];
+  const fill = (lines, tbodyId, gridId) => {
+    const tbody = document.getElementById(tbodyId), grid = document.getElementById(gridId);
+    tbody.innerHTML = ''; grid.innerHTML = '';
     lines.forEach(line => {
       const s = getProductionMetrics(prod, dProd, line);
-      tbody.innerHTML += `<tr><td>${line}</td><td>${fmtPercent(s.oee)}</td><td>${fmtPercent(s.attainment)}</td><td>${s.downtime??'—'}m</td></tr>`;
+      tbody.innerHTML += `<tr><td>${line}</td><td>${fmtPercent(s.oee)}</td><td>${fmtPercent(s.attainment)}</td><td>${s.downtime??'0'}m</td></tr>`;
       grid.innerHTML += `<div class="readiness-card"><div class="readiness-line">${line}</div><div class="status-pill ${s.startup==='Yes'?'pill-yes':'pill-no'}">STARTUP <span>${s.startup==='Yes'?'✓':'✗'}</span></div></div>`;
     });
   };
-  fillTable(salsaLines, tbodySalsa, readinessSalsa);
-  fillTable(layerLines, document.getElementById('prod-tbody-layer'), document.getElementById('readiness-grid-layer'));
+  fill(salsa, 'prod-tbody-salsa', 'readiness-grid-salsa');
+  fill(layer, 'prod-tbody-layer', 'readiness-grid-layer');
 
   loadManualMetrics();
+  renderCharts(prod, finance, sap, warehouse);
+}
+
+function renderCharts(prod, finance, sap, warehouse){
+  // Basic Chart.js triggers - ensure IDs match your HTML
+  // (Logic for chart aggregation goes here...)
 }
 
 // --- INTERACTIVE BOARDS ---
@@ -409,39 +343,23 @@ const DEFAULT_RULES = [
   { id: 4, text: "🛠️ Action Oriented: Identify gaps, assign owners, and set clear deadlines." },
   { id: 5, text: "🤝 Respect: One person speaks at a time. Keep updates concise." }
 ];
-
-let boards = {
-  announcement: JSON.parse(localStorage.getItem('dds_ann_v10') || '[]'),
-  expectation: JSON.parse(localStorage.getItem('dds_exp_v10') || JSON.stringify(DEFAULT_RULES))
-};
+let boards = { announcement: JSON.parse(localStorage.getItem('dds_ann_v11') || '[]'), expectation: JSON.parse(localStorage.getItem('dds_exp_v11') || JSON.stringify(DEFAULT_RULES)) };
 
 function renderBoard(type) {
-  const container = document.getElementById(`${type}-board`);
-  if(!container) return;
+  const container = document.getElementById(`${type}-board`); if(!container) return;
   container.innerHTML = boards[type].map(i => {
     const display = i.text.includes(':') ? i.text.replace(/^([^:]+:)/, '<strong>$1</strong>') : i.text;
     return `<div class="pretty-card card-${type}"><div class="card-body" contenteditable="true" onblur="editItem('${type}', ${i.id}, this.innerText)">${display}</div><div class="card-footer"><span class="card-meta">${type==='announcement'?'Posted':'Rule'}</span><span class="delete-btn" onclick="deleteItem('${type}', ${i.id})">Delete</span></div></div>`;
   }).join('');
 }
 
-function editItem(type, id, text) { boards[type].find(i => i.id === id).text = text; localStorage.setItem(`dds_${type==='announcement'?'ann':'exp'}_v10`, JSON.stringify(boards[type])); }
-function addItem(type) { boards[type].push({id:Date.now(), text:'Edit me...', date:new Date().toLocaleDateString()}); saveAndRender(type); }
-function deleteItem(type, id) { boards[type] = boards[type].filter(i => i.id !== id); saveAndRender(type); }
-function saveAndRender(type) { localStorage.setItem(`dds_${type==='announcement'?'ann':'exp'}_v10`, JSON.stringify(boards[type])); renderBoard(type); }
-
-function switchView(view, el) {
-  document.querySelectorAll('.info-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('view-dashboard').classList.toggle('hidden', view !== 'dashboard');
-  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  if(view!=='dashboard') document.getElementById('panel-'+view).classList.add('active');
-}
-
-function saveManualMetric(id){localStorage.setItem('dds_m_'+id, document.getElementById(id).innerText);}
-function loadManualMetrics(){ ['days-incident','near-misses','holds','pem','complaints','code-red','cost-direct','cost-indirect','pound-hr-direct','pound-hr-indirect','trainings','headcount','proc-orders','warehouse-tasks','wh-bp-fill','wh-bp-cpmh','inv-bp-completion','inv-critical','inv-accuracy'].forEach(id=>{const v=localStorage.getItem('dds_m_'+id); if(v) {const el=document.getElementById(id); if(el) el.innerText=v;}}); }
-function savePlan(id){localStorage.setItem('dds_p_'+id, document.getElementById(id).innerText);}
-
+// --- BOILERPLATE ---
 function getSheetData(name){ const s=workbook.Sheets[name]; return s?XLSX.utils.sheet_to_json(s,{defval:''}):[]; }
+function updateSectionDate(id,res){ const el=document.getElementById(id); if(!el||!res) return null; if(!GLOBAL_MAX_DATE||res.str>GLOBAL_MAX_DATE) GLOBAL_MAX_DATE=res.str; el.textContent=`Data: ${res.obj.toLocaleDateString()}`; return res.str; }
+function switchView(view, el) { document.querySelectorAll('.info-panel').forEach(p => p.classList.remove('active')); document.getElementById('view-dashboard').classList.toggle('hidden', view !== 'dashboard'); document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); if(view!=='dashboard') document.getElementById('panel-'+view).classList.add('active'); }
+function saveManualMetric(id){localStorage.setItem('dds_m_'+id, document.getElementById(id).innerText);}
+function loadManualMetrics(){ ['days-incident','near-misses','holds','pem','complaints','proc-orders','warehouse-tasks','wh-bp-fill','wh-bp-cpmh','inv-bp-completion','inv-critical','inv-accuracy'].forEach(id=>{const v=localStorage.getItem('dds_m_'+id); if(v) {const el=document.getElementById(id); if(el) el.innerText=v;}}); }
+function savePlan(id){localStorage.setItem('dds_p_'+id, document.getElementById(id).innerText);}
 function applyBuffer(buf){ workbook=XLSX.read(buf,{type:'array'}); renderDashboard(); document.getElementById('data-status').textContent='✓ Loaded'; }
 async function handleFileUpload(evt){ const file=evt.target.files[0]; if(!file)return; const buf=await NovusCore.WorkbookCache.save(file); applyBuffer(buf); }
 
