@@ -34,12 +34,6 @@
     .page{max-width:1760px;margin:0 auto;padding:0 20px 60px;}
     .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);margin-bottom:24px;}
     
-    .logo{display:flex;align-items:center;gap:10px;}
-    .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--blue-l));border-radius:8px;display:flex;align-items:center;justify-content:center;}
-    .logo-icon svg{width:16px;height:16px;fill:white;}
-    .logo-text{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;}
-    .logo-text span{color:var(--blue);}
-    
     .nav-tabs{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;}
     .nav-tab{color:var(--ink3);text-decoration:none;font-weight:500;font-size:.82rem;padding:6px 14px;border-radius:7px;transition:all .15s;}
     .nav-tab.active{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
@@ -64,12 +58,14 @@
     .metric-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 10px;flex:1;text-align:center;}
     .metric-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:5px;}
     .metric-value{font-size:1.6rem;font-weight:700;letter-spacing:-.03em;color:var(--ink);}
+    
     .data-table{width:100%;border-collapse:collapse;font-size:.8rem;}
     .data-table th{background:var(--blue-ll);color:var(--blue);font-weight:700;font-size:.68rem;text-transform:uppercase;padding:7px 8px;text-align:center;border-bottom:2px solid var(--blue-l);}
     .data-table td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--border);color:var(--ink2);}
 
     .timeframe-block{padding:10px 14px;border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:10px 0;}
     .timeframe-yesterday{background:var(--ink);color:white;}
+    .timeframe-today{background:var(--blue);color:white;}
     .timeframe-title{font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;}
     .timeframe-date{font-family:'DM Mono',monospace;font-size:0.7rem;opacity:0.85;}
     
@@ -77,6 +73,11 @@
     .split-col{flex:1;display:flex;flex-direction:column;gap:8px;}
     .col-label{background:var(--surface2);padding:4px;border-radius:var(--radius-xs);border:1px solid var(--border);text-align:center;font-weight:800;font-size:0.68rem;color:var(--ink3);text-transform:uppercase;}
     
+    .readiness-stack{background:rgba(37,99,235,.04);border:1px dashed var(--blue-ll);border-radius:var(--radius-sm);padding:10px;display:flex;flex-direction:column;gap:8px;}
+    .status-pill{font-size:0.65rem;font-weight:700;padding:3px 6px;border-radius:4px;display:flex;justify-content:space-between;margin-top:3px;}
+    .pill-yes{background:rgba(16,185,129,.1);color:var(--green);}
+    .pill-no{background:rgba(239,68,68,.1);color:var(--red-l);}
+
     .plan-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
     .plan-card{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
     .plan-card-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;padding:8px 12px;font-weight:700;font-size:.78rem;text-transform:uppercase;text-align:center;}
@@ -188,6 +189,20 @@
               <table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attainment</th></tr></thead><tbody id="prod-tbody-layer"></tbody></table>
             </div>
           </div>
+          <div class="timeframe-block timeframe-today">
+            <div class="timeframe-title">Today's Operational Status</div>
+            <div class="timeframe-date" id="today-date-label">...</div>
+          </div>
+          <div class="split-row">
+            <div class="split-col">
+              <div class="col-label">Salsa Lines</div>
+              <div class="readiness-stack" id="readiness-grid-salsa"></div>
+            </div>
+            <div class="split-col">
+              <div class="col-label">Layer Lines</div>
+              <div class="readiness-stack" id="readiness-grid-layer"></div>
+            </div>
+          </div>
           <div style="margin-top:16px;">
             <div style="font-size:.72rem; font-weight:700; color:var(--blue-l); text-transform:uppercase; margin-bottom:4px;">Top Downtime Drivers</div>
             <div class="drivers-box alert" id="top-drivers">—</div>
@@ -206,9 +221,26 @@
             <tbody>
               <tr><td>Cost / Lb</td><td id="cost-direct">—</td><td id="cost-indirect">—</td></tr>
               <tr><td>Lb / hr</td><td id="pound-hr-direct">—</td><td id="pound-hr-indirect">—</td></tr>
+              <tr><td>Proj. Conversion</td><td colspan="2" id="conversion-costs">—</td></tr>
             </tbody>
           </table>
           <div class="chart-wrap" style="height:160px; margin-top:10px;"><canvas id="costs-ot-chart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- HR | TRAINING -->
+      <div class="panel" style="grid-column:span 4;">
+        <div class="panel-header"><span class="panel-title">HR | Training</span></div>
+        <div class="panel-date" id="date-hr">—</div>
+        <div class="panel-body">
+          <div class="metric-row">
+            <div class="metric-box"><div class="metric-label">Trainings Complete</div><div class="metric-value" id="trainings">—</div></div>
+            <div class="metric-box"><div class="metric-label">Headcount Total</div><div class="metric-value" id="headcount">—</div></div>
+          </div>
+          <div class="metric-row">
+            <div class="metric-box"><div class="metric-label">Safety Audits</div><div class="metric-value" id="safety-audits">—</div></div>
+            <div class="metric-box"><div class="metric-label">Meal Penalties</div><div class="metric-value" id="meal-penalties">—</div></div>
+          </div>
         </div>
       </div>
 
@@ -224,9 +256,33 @@
           <div class="chart-wrap" style="height:130px; margin-top:10px;"><canvas id="sap-open-orders-chart"></canvas></div>
         </div>
       </div>
+
+      <!-- WAREHOUSE -->
+      <div class="panel" style="grid-column:span 4;">
+        <div class="panel-header"><span class="panel-title">Warehouse</span></div>
+        <div class="panel-date" id="date-warehouse">—</div>
+        <div class="panel-body">
+          <div class="metric-row">
+            <div class="metric-box"><div class="metric-label">Fill Rate %</div><div class="metric-value" id="wh-fill">—</div></div>
+            <div class="metric-box"><div class="metric-label">CPMH</div><div class="metric-value" id="wh-cpmh">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVENTORY -->
+      <div class="panel" style="grid-column:span 4;">
+        <div class="panel-header"><span class="panel-title">Inventory Control</span></div>
+        <div class="panel-date" id="date-inventory">—</div>
+        <div class="panel-body">
+          <div class="metric-row">
+            <div class="metric-box"><div class="metric-label">Completion %</div><div class="metric-value" id="inv-completion">—</div></div>
+            <div class="metric-box"><div class="metric-label">Bin Accuracy</div><div class="metric-value" id="inv-accuracy">—</div></div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- ACTION PLAN -->
+    <!-- DAILY ACTION PLAN -->
     <div class="panel" style="margin-top:24px;">
       <div class="panel-header"><span class="panel-title" style="font-size:1rem;">Daily Action Plan</span><button class="btn" onclick="clearPlans()" style="background:rgba(255,255,255,0.1); color:white; font-size:0.7rem;">Clear All</button></div>
       <div class="panel-body">
@@ -267,7 +323,7 @@
 let workbook;
 const TODAY_OBJ = new Date();
 
-// --- DATA PROCESSING LOGIC (THE FIX) ---
+// --- DATA SCANNING HELPERS ---
 function toDateString(d){if(!d||isNaN(d.getTime()))return null;return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;}
 function parseDate(val){if(!val)return null;const num=Number(val);if(!isNaN(num)&&val!==''&&val!==null){return new Date((num-25569)*86400*1000);}const d=new Date(val);if(!isNaN(d.getTime()))return new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));return null;}
 function valByKey(row,field){if(!row)return null;const key=Object.keys(row).find(k=>k.trim().toLowerCase()===field.toLowerCase()||k.trim().toLowerCase().replace(/\s/g,'')===field.toLowerCase().replace(/\s/g,''));return row[key||field];}
@@ -281,29 +337,20 @@ function getLatestDateForSheet(data){
 
 function getTargetValue(data,field,targetDateStr){
   if(!targetDateStr) return null;
-  const rows=data.filter(r=>toDateString(parseDate(r.Date))===targetDateStr);
+  const rows = data.filter(r => toDateString(parseDate(r.Date)) === targetDateStr);
   if(!rows.length) return null;
-  // Sum logic for metrics that might have multiple lines per day
-  const sumFields=['Near Miss Reports','Holds','Number of Complaints','Open Process Orders','Warehouse Tasks'];
-  if(sumFields.includes(field)){
+  // Aggregate sum for specific fields
+  const sumFields=['Near Miss Reports','Holds','Number of Complaints','Open Process Orders','Warehouse Tasks','Safety Audits','Meal Penalties'];
+  if(sumFields.some(sf => field.includes(sf))){
     let t=0; rows.forEach(r=>{const v=Number(valByKey(r,field)); if(!isNaN(v)) t+=v;});
     return t;
   }
   return valByKey(rows[rows.length-1], field);
 }
 
-function getHistoricalData(data,field,maxPoints=14,limitDate){
-  const m=new Map();
-  data.forEach(row=>{
-    const d=parseDate(row.Date); if(!d)return;
-    const ds=toDateString(d); if(limitDate&&ds>limitDate)return;
-    m.set(ds, Number(valByKey(row,field))||0);
-  });
-  const keys=Array.from(m.keys()).sort().slice(-maxPoints);
-  return {labels: keys.map(k=>k.split('-').slice(1).join('/')), values: keys.map(k=>m.get(k))};
-}
+function getSheetData(name){ const s=workbook.Sheets[name]; return s?XLSX.utils.sheet_to_json(s,{defval:'',raw:true}):[]; }
 
-// --- CORE HANDLERS ---
+// --- FILE UPLOAD HANDLER ---
 async function handleFileUpload(evt){
   const file = evt.target.files[0]; if(!file) return;
   const data = await file.arrayBuffer();
@@ -312,81 +359,93 @@ async function handleFileUpload(evt){
   renderDashboard();
 }
 
+// --- MAIN RENDER ---
 function renderDashboard(){
   if(!workbook) return;
   document.getElementById('current-date-display').textContent = `Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`;
 
-  const hrData = getSheetData('HR | Training'), qaData = getSheetData('QA'), prodData = getSheetData('Production');
-  const financeData = getSheetData('Finance'), sapData = getSheetData('SAP'), maintData = getSheetData('Maintenance');
+  const sheets = {
+    hr: getSheetData('HR | Training'), qa: getSheetData('QA'), prod: getSheetData('Production'),
+    fin: getSheetData('Finance'), sap: getSheetData('SAP'), maint: getSheetData('Maintenance'),
+    wh: getSheetData('Warehouse'), inv: getSheetData('Inventory Control')
+  };
 
-  const dH = getLatestDateForSheet(hrData), dQ = getLatestDateForSheet(qaData), dP = getLatestDateForSheet(prodData);
-  const dF = getLatestDateForSheet(financeData), dS = getLatestDateForSheet(sapData), dM = getLatestDateForSheet(maintData);
+  const dates = {
+    hr: getLatestDateForSheet(sheets.hr), qa: getLatestDateForSheet(sheets.qa),
+    prod: getLatestDateForSheet(sheets.prod), fin: getLatestDateForSheet(sheets.fin),
+    sap: getLatestDateForSheet(sheets.sap), maint: getLatestDateForSheet(sheets.maint),
+    wh: getLatestDateForSheet(sheets.wh), inv: getLatestDateForSheet(sheets.inv)
+  };
 
-  if(dH) document.getElementById('date-safety').textContent = `Data: ${dH.obj.toLocaleDateString()}`;
-  if(dQ) document.getElementById('date-quality').textContent = `Data: ${dQ.obj.toLocaleDateString()}`;
-  if(dF) document.getElementById('date-costs').textContent = `Data: ${dF.obj.toLocaleDateString()}`;
-  if(dS) document.getElementById('date-sap').textContent = `Data: ${dS.obj.toLocaleDateString()}`;
+  // Update Section Dates
+  if(dates.hr) document.getElementById('date-safety').textContent = `Data: ${dates.hr.obj.toLocaleDateString()}`;
+  if(dates.qa) document.getElementById('date-quality').textContent = `Data: ${dates.qa.obj.toLocaleDateString()}`;
+  if(dates.fin) document.getElementById('date-costs').textContent = `Data: ${dates.fin.obj.toLocaleDateString()}`;
+  if(dates.hr) document.getElementById('date-hr').textContent = `Data: ${dates.hr.obj.toLocaleDateString()}`;
+  if(dates.wh) document.getElementById('date-warehouse').textContent = `Data: ${dates.wh.obj.toLocaleDateString()}`;
+  if(dates.inv) document.getElementById('date-inventory').textContent = `Data: ${dates.inv.obj.toLocaleDateString()}`;
 
-  // Metrics
-  document.getElementById('days-incident').textContent = getTargetValue(hrData, 'Days Without Incident', dH?.str) || '—';
-  document.getElementById('near-misses').textContent = getTargetValue(hrData, 'Near Miss Reports', dH?.str) || '0';
-  document.getElementById('holds').textContent = getTargetValue(qaData, 'Holds', dQ?.str) || '0';
-  document.getElementById('holds-coa').textContent = getTargetValue(qaData, 'Holds/COA', dQ?.str) || '—';
-  document.getElementById('pem').textContent = fmtPercent(getTargetValue(qaData, 'PEM %', dQ?.str), 1);
-  document.getElementById('complaints').textContent = getTargetValue(qaData, 'Number of Complaints', dQ?.str) || '0';
-  document.getElementById('code-red').textContent = getTargetValue(maintData, 'Code Red', dM?.str) || '0';
-  document.getElementById('code-yellow').textContent = getTargetValue(maintData, 'Code Yellow', dM?.str) || '0';
-  document.getElementById('cost-direct').textContent = getTargetValue(financeData, 'Cost / Lb - Direct', dF?.str) || '—';
-  document.getElementById('cost-indirect').textContent = getTargetValue(financeData, 'Cost / Lb - Indirect', dF?.str) || '—';
-  document.getElementById('proc-orders').textContent = getTargetValue(sapData, 'Open Process Orders', dS?.str) || '—';
-  document.getElementById('warehouse-tasks').textContent = getTargetValue(sapData, 'Warehouse Tasks', dS?.str) || '—';
+  // Safety & Quality
+  document.getElementById('days-incident').textContent = getTargetValue(sheets.hr, 'Days Without Incident', dates.hr?.str) || '—';
+  document.getElementById('near-misses').textContent = getTargetValue(sheets.hr, 'Near Miss Reports', dates.hr?.str) || '0';
+  document.getElementById('holds').textContent = getTargetValue(sheets.qa, 'Holds', dates.qa?.str) || '0';
+  document.getElementById('holds-coa').textContent = getTargetValue(sheets.qa, 'Holds/COA', dates.qa?.str) || '—';
+  document.getElementById('pem').textContent = fmtPercent(getTargetValue(sheets.qa, 'PEM %', dates.qa?.str), 1);
+  document.getElementById('complaints').textContent = getTargetValue(sheets.qa, 'Number of Complaints', dates.qa?.str) || '0';
 
-  // Production Table
-  if(dP){
-    document.getElementById('yesterday-date-label').textContent = dP.obj.toLocaleDateString();
+  // Production Summary
+  document.getElementById('code-red').textContent = getTargetValue(sheets.maint, 'Code Red', dates.maint?.str) || '0';
+  document.getElementById('code-yellow').textContent = getTargetValue(sheets.maint, 'Code Yellow', dates.maint?.str) || '0';
+  
+  if(dates.prod){
+    document.getElementById('yesterday-date-label').textContent = dates.prod.obj.toLocaleDateString();
     const salsa = ['2A','PL1','MP4'], layers = ['PXM6','PL2','2E'];
-    const fill = (lines, tid) => {
+    const fillTable = (lines, tid) => {
       document.getElementById(tid).innerHTML = lines.map(l => {
-        const rows = prodData.filter(r => toDateString(parseDate(r.Date))===dP.str && String(valByKey(r,'Line')).trim()===l);
+        const rows = sheets.prod.filter(r => toDateString(parseDate(r.Date))===dates.prod.str && String(valByKey(r,'Line')).trim().toUpperCase()===l);
         return `<tr><td>${l}</td><td>${rows.length?fmtPercent(valByKey(rows[0],'OEE'),1):'—'}</td><td>${rows.length?fmtPercent(valByKey(rows[0],'Attainment'),1):'—'}</td></tr>`;
       }).join('');
     };
-    fill(salsa, 'prod-tbody-salsa'); fill(layers, 'prod-tbody-layer');
+    fillTable(salsa, 'prod-tbody-salsa'); fillTable(layers, 'prod-tbody-layer');
+
+    // Readiness Status
+    const fillReadiness = (lines, rid) => {
+      document.getElementById(rid).innerHTML = lines.map(l => {
+        const rows = sheets.prod.filter(r => toDateString(parseDate(r.Date))===dates.prod.str && String(valByKey(r,'Line')).trim().toUpperCase()===l);
+        const startup = rows.length ? (String(valByKey(rows[0],'Start Up')).toUpperCase()==='YES'?'Yes':'No') : '—';
+        const cil = rows.length ? (String(valByKey(rows[0],'CIL')).toUpperCase()==='YES'?'Yes':'No') : '—';
+        return `<div class="status-pill ${startup==='Yes'?'pill-yes':'pill-no'}"><span>${l} Startup</span><span>${startup}</span></div>
+                <div class="status-pill ${cil==='Yes'?'pill-yes':'pill-no'}"><span>${l} CIL</span><span>${cil}</span></div>`;
+      }).join('');
+    };
+    fillReadiness(salsa, 'readiness-grid-salsa'); fillReadiness(layers, 'readiness-grid-layer');
   }
 
-  // Downtime Drivers
-  if(dP){
-    const drivers = [];
-    prodData.filter(r => toDateString(parseDate(r.Date))===dP.str).forEach(r => {
-      ['Mechanical Downtime Drivers','Material Downtime Drivers'].forEach(k => {
-        const v = valByKey(r,k); if(v && v!=='None') drivers.push(v);
-      });
-    });
-    document.getElementById('top-drivers').textContent = drivers.length ? drivers.join(', ') : 'No downtime reported.';
-  }
+  // Costs, HR, SAP
+  document.getElementById('cost-direct').textContent = getTargetValue(sheets.fin, 'Cost / Lb - Direct', dates.fin?.str) || '—';
+  document.getElementById('cost-indirect').textContent = getTargetValue(sheets.fin, 'Cost / Lb - Indirect', dates.fin?.str) || '—';
+  document.getElementById('conversion-costs').textContent = getTargetValue(sheets.fin, 'Projected Conversion', dates.fin?.str) || '—';
+  document.getElementById('trainings').textContent = fmtPercent(getTargetValue(sheets.hr, 'Trainings Complete', dates.hr?.str), 0);
+  document.getElementById('headcount').textContent = getTargetValue(sheets.hr, 'Head Count Total', dates.hr?.str) || '—';
+  document.getElementById('safety-audits').textContent = getTargetValue(sheets.hr, 'Safety Audits', dates.hr?.str) || '0';
+  document.getElementById('meal-penalties').textContent = getTargetValue(sheets.hr, 'Meal Penalties', dates.hr?.str) || '0';
+  document.getElementById('proc-orders').textContent = getTargetValue(sheets.sap, 'Open Process Orders', dates.sap?.str) || '—';
+  document.getElementById('warehouse-tasks').textContent = getTargetValue(sheets.sap, 'Warehouse Tasks', dates.sap?.str) || '—';
 
-  // Charts
-  renderCharts(prodData, financeData, sapData, dP?.str, dF?.str, dS?.str);
-}
-
-function renderCharts(prod, fin, sap, dP, dF, dS){
-  const ot = getHistoricalData(fin, 'Total Overtime', 14, dF);
-  mkChart('costs-ot-chart', 'bar', ot.labels, [{label:'OT Hours', data:ot.values, backgroundColor:'#2563eb'}]);
+  // Warehouse & Inventory
+  const bpWH = sheets.wh.filter(r => String(valByKey(r,'City')).toLowerCase().trim()==='buena park');
+  const dW = getLatestDateForSheet(bpWH);
+  document.getElementById('wh-fill').textContent = fmtPercent(getTargetValue(bpWH, 'Fill Rate %', dW?.str), 1);
+  document.getElementById('wh-cpmh').textContent = Number(getTargetValue(bpWH, 'CPMH', dW?.str) || 0).toFixed(1);
   
-  const orders = getHistoricalData(sap, 'Open Process Orders', 14, dS);
-  mkChart('sap-open-orders-chart', 'line', orders.labels, [{label:'Open Orders', data:orders.values, borderColor:'#7c3aed', fill:false}]);
+  const bpInv = sheets.inv.filter(r => String(valByKey(r,'City')).toLowerCase().trim()==='buena park');
+  const dI = getLatestDateForSheet(bpInv);
+  document.getElementById('inv-completion').textContent = fmtPercent(getTargetValue(bpInv, 'Completion %', dI?.str), 1);
+  document.getElementById('inv-accuracy').textContent = fmtPercent(getTargetValue(bpInv, 'Bin Accuracy', dI?.str), 2);
 }
 
-function mkChart(id, type, labels, datasets){
-  const ctx = document.getElementById(id).getContext('2d');
-  const exist = Chart.getChart(id); if(exist) exist.destroy();
-  new Chart(ctx, {type, data:{labels, datasets}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}}});
-}
-
-function getSheetData(name){ const s=workbook.Sheets[name]; return s?XLSX.utils.sheet_to_json(s,{defval:'',raw:true}):[]; }
-
-// --- PERSISTENCE & UI ---
-const DEFAULT_RULES = [{id:1, text:"🚀 Punctuality: Start on time."}, {id:2, text:"📊 Preparation: Metrics ready."}];
+// --- BOARDS & PERSISTENCE ---
+const DEFAULT_RULES = [{id:1, text:"🚀 Punctuality: Be present 2m early."}, {id:2, text:"📊 Preparation: Metrics ready."}];
 let boards = { announcement: JSON.parse(localStorage.getItem('dds_ann_v9')||'[]'), expectation: JSON.parse(localStorage.getItem('dds_exp_v9')||JSON.stringify(DEFAULT_RULES)) };
 function addItem(t){ boards[t].push({id:Date.now(), text:'Edit...', date:new Date().toLocaleDateString()}); saveBoard(t); }
 function deleteItem(t,id){ boards[t]=boards[t].filter(i=>i.id!==id); saveBoard(t); }
