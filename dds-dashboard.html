@@ -6,7 +6,6 @@
   <title>DDS Dashboard – Novus Foods Ops Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- UI Fonts + Permanent Marker for the Plaque Look -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Permanent+Marker&display=swap" rel="stylesheet">
   
   <script>
@@ -24,7 +23,7 @@
       --ink:#0f172a;--ink2:#334155;--ink3:#64748b;--ink4:#94a3b8;
       --blue:#2563eb;--blue-l:#3b82f6;--blue-ll:#dbeafe;--blue-glow:rgba(37,99,235,.12);
       --teal:#0d9488;--teal-ll:#ccfbf1;--green:#059669;--green-bright:#4ade80;
-      --red:#dc2626;--red-l:#ef4444;--amber:#d97706;--purple:#7c3aed;
+      --red:#dc2626;--red-l:#ef4444;--amber:#d97706;
       --plaque-bg:#000000;
       --radius:14px;--radius-sm:8px;--radius-xs:5px;--nav-h:58px;
       --ease:cubic-bezier(.4,0,.2,1);--ease-out:cubic-bezier(0,0,.2,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);
@@ -41,10 +40,10 @@
     .logo-text{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;}
     .logo-text span{color:var(--blue);}
     
-    /* NAV & SUBTABS */
     .nav-tabs{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;}
     .nav-tab{color:var(--ink3);text-decoration:none;font-weight:500;font-size:.82rem;padding:6px 14px;border-radius:7px;transition:all .15s;}
     .nav-tab.active{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+    
     .sub-tab-container { display: flex; gap: 8px; margin-bottom: 20px; background: rgba(0,0,0,0.03); padding: 4px; border-radius: 12px; width: fit-content; }
     .sub-tab { cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--ink3); padding: 8px 18px; border-radius: 9px; transition: all 0.2s; }
     .sub-tab.active { background: var(--surface); color: var(--blue); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
@@ -53,7 +52,6 @@
     .info-panel.active { display: block; }
     .hidden { display: none !important; }
 
-    /* DASHBOARD GRID & PANELS */
     .dash-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-bottom:16px;}
     .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;animation:fadeUp .28s var(--ease-out) both;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -61,9 +59,7 @@
     .panel-title{color:white;font-weight:700;font-size:.9rem;}
     .panel-body{padding:14px 16px 16px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
     .panel-date{font-size:.68rem;font-family:'DM Mono',monospace;color:var(--ink4);text-align:center;padding:6px 16px 0;}
-    .panel-date.stale{color:var(--red-l);font-weight:700;}
 
-    /* METRICS & TABLES */
     .metric-row{display:flex;gap:10px;}
     .metric-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 10px;flex:1;text-align:center;}
     .metric-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:5px;}
@@ -71,36 +67,22 @@
     .data-table{width:100%;border-collapse:collapse;font-size:.8rem;}
     .data-table th{background:var(--blue-ll);color:var(--blue);font-weight:700;font-size:.68rem;text-transform:uppercase;padding:7px 8px;text-align:center;border-bottom:2px solid var(--blue-l);}
     .data-table td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--border);color:var(--ink2);}
-    .td-green{background:rgba(16,185,129,.12)!important;color:var(--green)!important;font-weight:600;}
-    .td-amber{background:rgba(245,158,11,.12)!important;color:var(--amber)!important;font-weight:600;}
-    .td-red{background:rgba(239,68,68,.12)!important;color:var(--red-l)!important;font-weight:600;}
 
-    /* PRODUCTION SPECIFIC */
     .timeframe-block{padding:10px 14px;border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:10px 0;}
     .timeframe-yesterday{background:var(--ink);color:white;}
     .timeframe-today{background:var(--blue);color:white;}
     .timeframe-title{font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;}
     .timeframe-date{font-family:'DM Mono',monospace;font-size:0.7rem;opacity:0.85;}
+    
     .split-row{display:flex;gap:16px;width:100%;}
     .split-col{flex:1;display:flex;flex-direction:column;gap:8px;}
     .col-label{background:var(--surface2);padding:4px;border-radius:var(--radius-xs);border:1px solid var(--border);text-align:center;font-weight:800;font-size:0.68rem;color:var(--ink3);text-transform:uppercase;}
-    .readiness-stack{background:rgba(37,99,235,.04);border:1px dashed var(--blue-ll);border-radius:var(--radius-sm);padding:10px;display:flex;flex-direction:column;gap:8px;}
-    .status-pill{font-size:0.65rem;font-weight:700;padding:3px 6px;border-radius:4px;display:flex;justify-content:space-between;margin-top:3px;}
-    .pill-yes{background:rgba(16,185,129,.1);color:var(--green);}
-    .pill-no{background:rgba(239,68,68,.1);color:var(--red-l);}
-    .drivers-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:.82rem;font-family:'DM Mono',monospace;white-space:pre-wrap;min-height:40px;}
-    .drivers-box.alert{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25);color:var(--red);}
-
-    /* AI CO-PILOT */
-    .btn-ai{background:linear-gradient(135deg,var(--purple),#6d28d9);color:white;border:none;box-shadow:0 2px 8px rgba(124,58,237,.22);}
-    .ai-dot{width:6px;height:6px;border-radius:50%;background:var(--ink4);}
-    .ai-dot.on{background:var(--green-bright);box-shadow: 0 0 8px var(--green-bright);}
+    
     .plan-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
     .plan-card{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
     .plan-card-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;padding:8px 12px;font-weight:700;font-size:.78rem;text-transform:uppercase;text-align:center;}
-    .plan-card-body{padding:10px 12px;min-height:80px;outline:none;white-space:pre-wrap;color:var(--ink2);font-size:.82rem;background:var(--surface2);}
+    .plan-card-body{padding:10px 12px;min-height:100px;outline:none;white-space:pre-wrap;color:var(--ink2);font-size:.82rem;background:var(--surface2);}
 
-    /* OTHER INTERNAL PAGES (PLAQUES & BOARDS) */
     .values-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
     .value-card { background: var(--plaque-bg); border-radius: var(--radius); padding: 40px 25px; text-align: center; border: 1px solid #222; }
     .value-name { font-family: 'Permanent Marker', cursive; font-size: 1.3rem; color: var(--green-bright); margin-bottom: 15px; display: block; }
@@ -149,7 +131,7 @@
     <div class="sub-tab" onclick="switchView('corevalues', this)">Core Values</div>
   </div>
 
-  <!-- INTERNAL VIEW: MAIN DASHBOARD -->
+  <!-- MAIN DASHBOARD -->
   <div id="view-dashboard">
     <div class="date-header" id="current-date-display" style="text-align:center; margin-bottom:20px; font-family:'DM Mono'; font-weight:bold;">Loading…</div>
     
@@ -202,23 +184,9 @@
               <table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attainment</th></tr></thead><tbody id="prod-tbody-layer"></tbody></table>
             </div>
           </div>
-          <div class="timeframe-block timeframe-today">
-            <div class="timeframe-title">Today's Operational Status</div>
-            <div class="timeframe-date" id="today-date-label">...</div>
-          </div>
-          <div class="split-row">
-            <div class="split-col">
-              <div class="col-label">Salsa Lines</div>
-              <div class="readiness-stack" id="readiness-grid-salsa"></div>
-            </div>
-            <div class="split-col">
-              <div class="col-label">Layer Lines</div>
-              <div class="readiness-stack" id="readiness-grid-layer"></div>
-            </div>
-          </div>
           <div style="margin-top:16px;">
-            <div style="font-size:.72rem; font-weight:700; color:var(--blue-l); text-transform:uppercase; margin-bottom:4px;">Top Downtime Drivers (Yesterday)</div>
-            <div class="drivers-box alert" id="top-drivers">Scanning data…</div>
+            <div style="font-size:.72rem; font-weight:700; color:var(--blue-l); text-transform:uppercase; margin-bottom:4px;">Top Downtime Drivers</div>
+            <div class="drivers-box alert" id="top-drivers">—</div>
           </div>
           <div class="chart-wrap" style="height:200px; margin-top:10px;"><canvas id="production-chart"></canvas></div>
         </div>
@@ -234,7 +202,6 @@
             <tbody>
               <tr><td>Cost / Lb</td><td id="cost-direct">—</td><td id="cost-indirect">—</td></tr>
               <tr><td>Lb / hr</td><td id="pound-hr-direct">—</td><td id="pound-hr-indirect">—</td></tr>
-              <tr><td>Proj. Conversion</td><td colspan="2" id="conversion-costs">—</td></tr>
             </tbody>
           </table>
           <div class="chart-wrap" style="height:160px; margin-top:10px;"><canvas id="costs-ot-chart"></canvas></div>
@@ -250,57 +217,30 @@
             <div class="metric-box"><div class="metric-label">Open Process Orders</div><div class="metric-value" id="proc-orders">—</div></div>
             <div class="metric-box"><div class="metric-label">Warehouse Tasks</div><div class="metric-value" id="warehouse-tasks">—</div></div>
           </div>
-          <div class="chart-wrap" style="height:130px;"><canvas id="sap-open-orders-chart"></canvas></div>
         </div>
       </div>
-
-      <!-- WAREHOUSE -->
-      <div class="panel" style="grid-column:span 4;">
-        <div class="panel-header"><span class="panel-title">Warehouse</span></div>
-        <div class="panel-date" id="date-warehouse">—</div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Fill Rate %</div><div class="metric-value" id="wh-bp-fill">—</div></div>
-            <div class="metric-box"><div class="metric-label">CPMH</div><div class="metric-value" id="wh-bp-cpmh">—</div></div>
-          </div>
-          <div class="chart-wrap" style="height:130px;"><canvas id="wh-bp-chart"></canvas></div>
-        </div>
-      </div>
-
     </div>
 
-    <!-- AI CO-PILOT DAILY PLAN -->
-    <div class="panel" style="margin-top:24px; border-color:rgba(124,58,237,.2);">
-      <div class="panel-header" style="background:linear-gradient(135deg,#1e1148,#3b1494,#5b21b6);">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="panel-title" style="font-size:1rem;">Daily Plan</span>
-          <span style="background:rgba(255,255,255,.15); border-radius:20px; padding:2px 9px; font-size:.62rem; color:white; text-transform:uppercase;">AI Co-Pilot</span>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span id="ai-status-txt" style="font-size:.65rem; color:rgba(255,255,255,.5);"></span>
-          <div class="ai-dot" id="ai-dot"></div>
-          <button class="btn" onclick="resetChat()" style="background:rgba(255,255,255,.12); color:white; font-size:.75rem;">New Chat</button>
-        </div>
-      </div>
-      <div id="ai-chat-window" style="height:180px; overflow-y:auto; padding:16px 20px; background:var(--surface2); border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:10px;"></div>
-      <div style="display:flex; gap:8px; padding:12px 20px; background:var(--surface); border-bottom:1px solid var(--border);">
-        <textarea id="ai-chat-input" rows="1" placeholder="Type your reply..." style="flex:1; resize:none; border:1.5px solid rgba(124,58,237,.25); border-radius:8px; padding:8px 12px; outline:none;" disabled></textarea>
-        <button id="ai-send-btn" class="btn btn-ai" onclick="sendChatReply()" disabled>Send</button>
+    <!-- DAILY PLAN (Manual Entry) -->
+    <div class="panel" style="margin-top:24px;">
+      <div class="panel-header">
+        <span class="panel-title" style="font-size:1rem;">Daily Action Plan</span>
+        <button class="btn" onclick="clearPlans()" style="background:rgba(255,255,255,0.1); color:white; font-size:0.7rem;">Clear All</button>
       </div>
       <div class="panel-body">
         <div class="plan-grid">
-          <div class="plan-card"><div class="plan-card-header">Production</div><div class="plan-card-body" id="plan-production" contenteditable="true" oninput="savePlan('plan-production')">—</div></div>
-          <div class="plan-card"><div class="plan-card-header">Maintenance</div><div class="plan-card-body" id="plan-maintenance" contenteditable="true" oninput="savePlan('plan-maintenance')">—</div></div>
-          <div class="plan-card"><div class="plan-card-header">Quality</div><div class="plan-card-body" id="plan-quality" contenteditable="true" oninput="savePlan('plan-quality')">—</div></div>
-          <div class="plan-card"><div class="plan-card-header">Warehouse</div><div class="plan-card-body" id="plan-warehouse" contenteditable="true" oninput="savePlan('plan-warehouse')">—</div></div>
-          <div class="plan-card"><div class="plan-card-header">Inventory</div><div class="plan-card-body" id="plan-inventory-control" contenteditable="true" oninput="savePlan('plan-inventory-control')">—</div></div>
-          <div class="plan-card"><div class="plan-card-header">SAP</div><div class="plan-card-body" id="plan-sap" contenteditable="true" oninput="savePlan('plan-sap')">—</div></div>
+          <div class="plan-card"><div class="plan-card-header">Production</div><div class="plan-card-body" id="plan-production" contenteditable="true" oninput="savePlan('plan-production')"></div></div>
+          <div class="plan-card"><div class="plan-card-header">Maintenance</div><div class="plan-card-body" id="plan-maintenance" contenteditable="true" oninput="savePlan('plan-maintenance')"></div></div>
+          <div class="plan-card"><div class="plan-card-header">Quality</div><div class="plan-card-body" id="plan-quality" contenteditable="true" oninput="savePlan('plan-quality')"></div></div>
+          <div class="plan-card"><div class="plan-card-header">Warehouse</div><div class="plan-card-body" id="plan-warehouse" contenteditable="true" oninput="savePlan('plan-warehouse')"></div></div>
+          <div class="plan-card"><div class="plan-card-header">Inventory</div><div class="plan-card-body" id="plan-inventory" contenteditable="true" oninput="savePlan('plan-inventory')"></div></div>
+          <div class="plan-card"><div class="plan-card-header">SAP</div><div class="plan-card-body" id="plan-sap" contenteditable="true" oninput="savePlan('plan-sap')"></div></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- INTERNAL VIEW: ANNOUNCEMENTS -->
+  <!-- ANNOUNCEMENTS -->
   <div id="panel-announcements" class="info-panel">
     <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
       <h2 style="font-weight: 800;">Announcement Board</h2>
@@ -309,7 +249,7 @@
     <div class="board-container" id="announcement-board"></div>
   </div>
 
-  <!-- INTERNAL VIEW: RULES OF ENGAGEMENT -->
+  <!-- RULES -->
   <div id="panel-expectations" class="info-panel">
     <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
       <h2 style="font-weight: 800;">Meeting Rules of Engagement</h2>
@@ -318,7 +258,7 @@
     <div class="board-container" id="expectation-board"></div>
   </div>
 
-  <!-- INTERNAL VIEW: CORE VALUES -->
+  <!-- CORE VALUES -->
   <div id="panel-corevalues" class="info-panel">
     <div class="values-grid">
       <div class="value-card"><span class="value-name">1. DO THE RIGHT THING</span><p class="value-desc">SAFETY AND QUALITY ALWAYS. RESPECT IS NONNEGOTIABLE. SPEAK YOUR TRUTH.</p></div>
@@ -329,20 +269,18 @@
       <div class="value-card"><span class="value-name">6. RELENTLESS GROWTH</span><p class="value-desc">SET AMBITIOUS GOALS. STAY HUNGRY AND EMBRACE NEW CHALLENGES. CELEBRATE THE WINS.</p></div>
     </div>
   </div>
-
 </div>
 
 <script>
-// --- CONFIG & GLOBAL ---
 const DATA_FILE = 'data/all_department_data_2026.xlsx';
-let workbook, GLOBAL_MAX_DATE = null;
+let workbook;
 const TODAY_OBJ = new Date();
 
-// --- BOARD LOGIC (Announcements/Rules) ---
+// --- BOARD LOGIC ---
 const DEFAULT_RULES = [
   { id: 1, text: "🚀 Punctuality: Meeting starts exactly on time. Be present 2 minutes early." },
   { id: 2, text: "📊 Preparation: Have your specific department metrics ready to discuss." },
-  { id: 3, text: "🧠 Focus: No side conversations. Stay focused on the data and the 'Why'." }
+  { id: 3, text: "🧠 Focus: No side conversations. Stay focused on the data." }
 ];
 let boards = {
   announcement: JSON.parse(localStorage.getItem('dds_ann_v9') || '[]'),
@@ -380,7 +318,7 @@ function renderBoard(type) {
   }).join('');
 }
 
-// --- NAVIGATION ---
+// --- UI NAVIGATION ---
 function switchView(view, el) {
   document.querySelectorAll('.info-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('view-dashboard').classList.toggle('hidden', view !== 'dashboard');
@@ -389,52 +327,37 @@ function switchView(view, el) {
   if(view !== 'dashboard') document.getElementById('panel-' + view).classList.add('active');
 }
 
-// --- DATA PROCESSING UTILS ---
-function toDateString(d){if(!d||isNaN(d.getTime()))return null;return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;}
-function parseDate(val){if(!val)return null;const num=Number(val);if(!isNaN(num)&&val!==''&&val!==null){return new Date((num-25569)*86400*1000);}const d=new Date(val);if(!isNaN(d.getTime()))return new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));return null;}
-function getSheetData(name){const s=workbook.Sheets[name];return s?XLSX.utils.sheet_to_json(s,{defval:'',raw:true,blankrows:false}):[];}
-function valByKey(row,field){if(!row)return null;const key=Object.keys(row).find(k=>k.trim().toLowerCase()===field.toLowerCase()||k.trim().toLowerCase().replace(/\s/g,'')===field.toLowerCase().replace(/\s/g,''));return row[key||field];}
-
-// --- DASHBOARD RENDERING ---
-function renderDashboard() {
-  if(!workbook) return;
-  document.getElementById('current-date-display').textContent = `Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`;
-  
-  // Logic from your second file would go here to populate charts and tables
-  // For brevity, assuming NovusCore handles the heavy lifting or standard JS functions
-  console.log("Dashboard data populating...");
+// --- PLAN PERSISTENCE ---
+function savePlan(id){ localStorage.setItem('dds_plan_'+id, document.getElementById(id).innerText); }
+function loadPlans(){ 
+  ['production','maintenance','quality','warehouse','inventory','sap'].forEach(id => {
+    const val = localStorage.getItem('dds_plan_plan-'+id);
+    if(val) document.getElementById('plan-'+id).innerText = val;
+  });
+}
+function clearPlans(){
+  if(confirm('Clear all action plans?')){
+    ['production','maintenance','quality','warehouse','inventory','sap'].forEach(id => {
+      localStorage.removeItem('dds_plan_plan-'+id);
+      document.getElementById('plan-'+id).innerText = '';
+    });
+  }
 }
 
-// --- AI CO-PILOT ---
-function startChat(){
-  const dot = document.getElementById('ai-dot');
-  if(dot) dot.classList.add('on');
-  document.getElementById('ai-status-txt').textContent = 'Ready';
-  document.getElementById('ai-chat-input').disabled = false;
-  document.getElementById('ai-send-btn').disabled = false;
-  // Initialize chat messages...
-}
-
-function resetChat(){
-  localStorage.removeItem('dds_chat');
-  document.getElementById('ai-chat-window').innerHTML = '';
-  startChat();
-}
-
-function savePlan(id){ localStorage.setItem('dds_'+id, document.getElementById(id).innerText); }
-
-// --- BOOTSTRAP ---
+// --- DATA BOOTSTRAP ---
 window.__libsCallback = async () => {
   renderBoard('announcement');
   renderBoard('expectation');
+  loadPlans();
   
   const st = document.getElementById('data-status');
+  document.getElementById('current-date-display').textContent = `Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`;
+  
   try {
     const buf = await NovusCore.fetchWithCache(DATA_FILE);
     workbook = XLSX.read(buf, {type:'array'});
     st.textContent = '✓ Data Loaded';
-    renderDashboard();
-    startChat();
+    // Data populating logic (renderDashboard) would be triggered here
   } catch(e) {
     st.textContent = '⚠ Load Error';
     console.error(e);
@@ -444,6 +367,5 @@ window.__libsCallback = async () => {
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _checkLibsReady);
 else _checkLibsReady();
 </script>
-
 </body>
 </html>
