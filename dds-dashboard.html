@@ -6,7 +6,6 @@
   <title>DDS Dashboard – Novus Foods Ops Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- UI Fonts + Permanent Marker for the Plaque Look -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Permanent+Marker&display=swap" rel="stylesheet">
   
   <script>
@@ -71,7 +70,6 @@
 
     .timeframe-block{padding:10px 14px;border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:10px 0;}
     .timeframe-yesterday{background:var(--ink);color:white;}
-    .timeframe-today{background:var(--blue);color:white;}
     .timeframe-title{font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;}
     .timeframe-date{font-family:'DM Mono',monospace;font-size:0.7rem;opacity:0.85;}
     
@@ -101,6 +99,8 @@
     .btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--ink2);}
     .btn-danger{background:var(--red-l);color:white;}
     .chart-wrap{position:relative;width:100%;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--border);padding:10px;}
+    .drivers-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:.82rem;font-family:'DM Mono',monospace;white-space:pre-wrap;min-height:40px;}
+    .drivers-box.alert{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25);color:var(--red);}
   </style>
 </head>
 <body>
@@ -135,12 +135,10 @@
     <div class="sub-tab" onclick="switchView('corevalues', this)">Core Values</div>
   </div>
 
-  <!-- MAIN DASHBOARD -->
   <div id="view-dashboard">
     <div class="date-header" id="current-date-display" style="text-align:center; margin-bottom:20px; font-family:'DM Mono'; font-weight:bold;">Loading…</div>
     
     <div class="dash-grid">
-      <!-- SAFETY -->
       <div class="panel" style="grid-column:span 4;">
         <div class="panel-header"><span class="panel-title">Safety</span></div>
         <div class="panel-date" id="date-safety">—</div>
@@ -152,7 +150,6 @@
         </div>
       </div>
 
-      <!-- QUALITY -->
       <div class="panel" style="grid-column:span 8;">
         <div class="panel-header"><span class="panel-title">Quality</span></div>
         <div class="panel-date" id="date-quality">—</div>
@@ -166,7 +163,6 @@
         </div>
       </div>
 
-      <!-- PRODUCTION SUMMARY -->
       <div class="panel" style="grid-column:span 8; grid-row:span 2;">
         <div class="panel-header"><span class="panel-title">Production Summary</span></div>
         <div class="panel-body">
@@ -196,7 +192,6 @@
         </div>
       </div>
 
-      <!-- COSTS -->
       <div class="panel" style="grid-column:span 4;">
         <div class="panel-header"><span class="panel-title">Costs</span></div>
         <div class="panel-date" id="date-costs">—</div>
@@ -212,7 +207,6 @@
         </div>
       </div>
 
-      <!-- SAP -->
       <div class="panel" style="grid-column:span 4;">
         <div class="panel-header"><span class="panel-title">SAP</span></div>
         <div class="panel-date" id="date-sap">—</div>
@@ -221,16 +215,13 @@
             <div class="metric-box"><div class="metric-label">Open Process Orders</div><div class="metric-value" id="proc-orders">—</div></div>
             <div class="metric-box"><div class="metric-label">Warehouse Tasks</div><div class="metric-value" id="warehouse-tasks">—</div></div>
           </div>
+          <div class="chart-wrap" style="height:130px; margin-top:10px;"><canvas id="sap-open-orders-chart"></canvas></div>
         </div>
       </div>
     </div>
 
-    <!-- DAILY PLAN -->
     <div class="panel" style="margin-top:24px;">
-      <div class="panel-header">
-        <span class="panel-title" style="font-size:1rem;">Daily Action Plan</span>
-        <button class="btn" onclick="clearPlans()" style="background:rgba(255,255,255,0.1); color:white; font-size:0.7rem;">Clear All</button>
-      </div>
+      <div class="panel-header"><span class="panel-title" style="font-size:1rem;">Daily Action Plan</span><button class="btn" onclick="clearPlans()" style="background:rgba(255,255,255,0.1); color:white; font-size:0.7rem;">Clear All</button></div>
       <div class="panel-body">
         <div class="plan-grid">
           <div class="plan-card"><div class="plan-card-header">Production</div><div class="plan-card-body" id="plan-production" contenteditable="true" oninput="savePlan('plan-production')"></div></div>
@@ -244,25 +235,16 @@
     </div>
   </div>
 
-  <!-- ANNOUNCEMENTS -->
   <div id="panel-announcements" class="info-panel">
-    <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
-      <h2 style="font-weight: 800;">Announcement Board</h2>
-      <button class="btn" style="background:var(--blue); color:white;" onclick="addItem('announcement')">+ New Note</button>
-    </div>
+    <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;"><h2 style="font-weight: 800;">Announcement Board</h2><button class="btn" style="background:var(--blue); color:white;" onclick="addItem('announcement')">+ New Note</button></div>
     <div class="board-container" id="announcement-board"></div>
   </div>
 
-  <!-- RULES -->
   <div id="panel-expectations" class="info-panel">
-    <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
-      <h2 style="font-weight: 800;">Meeting Rules of Engagement</h2>
-      <button class="btn" style="background:var(--teal); color:white;" onclick="addItem('expectation')">+ Add Rule</button>
-    </div>
+    <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;"><h2 style="font-weight: 800;">Meeting Rules of Engagement</h2><button class="btn" style="background:var(--teal); color:white;" onclick="addItem('expectation')">+ Add Rule</button></div>
     <div class="board-container" id="expectation-board"></div>
   </div>
 
-  <!-- CORE VALUES -->
   <div id="panel-corevalues" class="info-panel">
     <div class="values-grid">
       <div class="value-card"><span class="value-name">1. DO THE RIGHT THING</span><p class="value-desc">SAFETY AND QUALITY ALWAYS. RESPECT IS NONNEGOTIABLE. SPEAK YOUR TRUTH.</p></div>
@@ -279,58 +261,26 @@
 let workbook;
 const TODAY_OBJ = new Date();
 
-// --- BOARD LOGIC ---
-const DEFAULT_RULES = [
-  { id: 1, text: "🚀 Punctuality: Meeting starts exactly on time. Be present 2 minutes early." },
-  { id: 2, text: "📊 Preparation: Have your specific department metrics ready to discuss." },
-  { id: 3, text: "🧠 Focus: No side conversations. Stay focused on the data." }
-];
-let boards = {
-  announcement: JSON.parse(localStorage.getItem('dds_ann_v9') || '[]'),
-  expectation: JSON.parse(localStorage.getItem('dds_exp_v9') || JSON.stringify(DEFAULT_RULES))
-};
+// --- DATA PROCESSING UTILS ---
+function toDateString(d){if(!d||isNaN(d.getTime()))return null;return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;}
+function parseDate(val){if(!val)return null;const num=Number(val);if(!isNaN(num)&&val!==''&&val!==null){return new Date((num-25569)*86400*1000);}const d=new Date(val);if(!isNaN(d.getTime()))return new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));return null;}
+function getSheetData(name){const s=workbook.Sheets[name];return s?XLSX.utils.sheet_to_json(s,{defval:'',raw:true,blankrows:false}):[];}
+function valByKey(row,field){if(!row)return null;const key=Object.keys(row).find(k=>k.trim().toLowerCase()===field.toLowerCase()||k.trim().toLowerCase().replace(/\s/g,'')===field.toLowerCase().replace(/\s/g,''));return row[key||field];}
+function fmtPercent(val,dec=0){if(val===''||val==null)return'—';let n=Number(val);if(isNaN(n))return'—';return(n<=2?n*100:n).toFixed(dec)+'%';}
 
-function addItem(type) {
-  boards[type].push({ id: Date.now(), text: 'New Item: Edit me...', date: new Date().toLocaleDateString() });
-  saveBoard(type);
-}
-function deleteItem(type, id) {
-  boards[type] = boards[type].filter(i => i.id !== id);
-  saveBoard(type);
-}
-function editItem(type, id, text) {
-  const item = boards[type].find(i => i.id === id);
-  if(item) { item.text = text; localStorage.setItem(`dds_${type === 'announcement' ? 'ann' : 'exp'}_v9`, JSON.stringify(boards[type])); }
-}
-function saveBoard(type) {
-  localStorage.setItem(`dds_${type === 'announcement' ? 'ann' : 'exp'}_v9`, JSON.stringify(boards[type]));
-  renderBoard(type);
-}
-function renderBoard(type) {
-  const container = document.getElementById(`${type}-board`);
-  if(!container) return;
-  container.innerHTML = boards[type].map(i => {
-    const display = i.text.includes(':') ? i.text.replace(/^([^:]+:)/, '<strong>$1</strong>') : i.text;
-    return `<div class="pretty-card card-${type}">
-      <div class="card-body" contenteditable="true" onblur="editItem('${type}', ${i.id}, this.innerText)">${display}</div>
-      <div class="card-footer">
-        <span>${type === 'announcement' ? i.date : 'Meeting Rule'}</span>
-        <span style="cursor:pointer" onclick="deleteItem('${type}', ${i.id})">Delete</span>
-      </div>
-    </div>`;
-  }).join('');
+function getLatestDateForSheet(data){
+  let maxTime=0;
+  data.forEach(row=>{const d=parseDate(row.Date); if(d&&d.getTime()>maxTime) maxTime=d.getTime();});
+  return maxTime===0 ? null : {str:toDateString(new Date(maxTime)), obj:new Date(maxTime)};
 }
 
-// --- UI NAVIGATION ---
-function switchView(view, el) {
-  document.querySelectorAll('.info-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('view-dashboard').classList.toggle('hidden', view !== 'dashboard');
-  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  if(view !== 'dashboard') document.getElementById('panel-' + view).classList.add('active');
+function getTargetValue(data,field,targetDateStr){
+  const rows=data.filter(r=>toDateString(parseDate(r.Date))===targetDateStr);
+  if(!rows.length) return null;
+  return valByKey(rows[rows.length-1], field);
 }
 
-// --- FILE UPLOAD LOGIC ---
+// --- CORE RENDER LOGIC ---
 async function handleFileUpload(evt){
   const file = evt.target.files[0]; if(!file) return;
   const data = await file.arrayBuffer();
@@ -342,36 +292,79 @@ async function handleFileUpload(evt){
 function renderDashboard(){
   if(!workbook) return;
   document.getElementById('current-date-display').textContent = `Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`;
-  // Data processing logic would populate panels here
-}
 
-// --- PLAN PERSISTENCE ---
-function savePlan(id){ localStorage.setItem('dds_plan_'+id, document.getElementById(id).innerText); }
-function loadPlans(){ 
-  ['production','maintenance','quality','warehouse','inventory','sap'].forEach(id => {
-    const val = localStorage.getItem('dds_plan_plan-'+id);
-    if(val) document.getElementById('plan-'+id).innerText = val;
-  });
-}
-function clearPlans(){
-  if(confirm('Clear all action plans?')){
-    ['production','maintenance','quality','warehouse','inventory','sap'].forEach(id => {
-      localStorage.removeItem('dds_plan_plan-'+id);
-      document.getElementById('plan-'+id).innerText = '';
-    });
+  const hrData = getSheetData('HR | Training');
+  const qaData = getSheetData('QA');
+  const prodData = getSheetData('Production');
+  const financeData = getSheetData('Finance');
+  const sapData = getSheetData('SAP');
+  const maintData = getSheetData('Maintenance');
+
+  // Dates
+  const dH = getLatestDateForSheet(hrData);
+  const dQ = getLatestDateForSheet(qaData);
+  const dP = getLatestDateForSheet(prodData);
+  const dF = getLatestDateForSheet(financeData);
+  const dS = getLatestDateForSheet(sapData);
+  const dM = getLatestDateForSheet(maintData);
+
+  if(dH) document.getElementById('date-safety').textContent = `Data: ${dH.obj.toLocaleDateString()}`;
+  if(dQ) document.getElementById('date-quality').textContent = `Data: ${dQ.obj.toLocaleDateString()}`;
+  if(dF) document.getElementById('date-costs').textContent = `Data: ${dF.obj.toLocaleDateString()}`;
+  if(dS) document.getElementById('date-sap').textContent = `Data: ${dS.obj.toLocaleDateString()}`;
+
+  // Safety
+  document.getElementById('days-incident').textContent = getTargetValue(hrData, 'Days Without Incident', dH?.str) || '—';
+  document.getElementById('near-misses').textContent = getTargetValue(hrData, 'Near Miss Reports', dH?.str) || '—';
+
+  // Quality
+  document.getElementById('holds').textContent = getTargetValue(qaData, 'Holds', dQ?.str) || '—';
+  document.getElementById('holds-coa').textContent = getTargetValue(qaData, 'Holds/COA', dQ?.str) || '—';
+  document.getElementById('pem').textContent = fmtPercent(getTargetValue(qaData, 'PEM %', dQ?.str), 1);
+  document.getElementById('complaints').textContent = getTargetValue(qaData, 'Number of Complaints', dQ?.str) || '—';
+
+  // Maintenance
+  document.getElementById('code-red').textContent = getTargetValue(maintData, 'Code Red', dM?.str) || '0';
+  document.getElementById('code-yellow').textContent = getTargetValue(maintData, 'Code Yellow', dM?.str) || '0';
+
+  // Production Table
+  const salsa = ['2A','PL1','MP4'], layers = ['PXM6','PL2','2E'];
+  const fillTable = (ids, targetId) => {
+    document.getElementById(targetId).innerHTML = ids.map(line => {
+      const rows = prodData.filter(r => toDateString(parseDate(r.Date))===dP?.str && String(valByKey(r,'Line')).trim()===line);
+      const oee = rows.length ? fmtPercent(valByKey(rows[0],'OEE'),1) : '—';
+      const att = rows.length ? fmtPercent(valByKey(rows[0],'Attainment'),1) : '—';
+      return `<tr><td>${line}</td><td>${oee}</td><td>${att}</td></tr>`;
+    }).join('');
+  };
+  if(dP){
+    document.getElementById('yesterday-date-label').textContent = dP.obj.toLocaleDateString();
+    fillTable(salsa, 'prod-tbody-salsa');
+    fillTable(layers, 'prod-tbody-layer');
   }
+
+  // Costs & SAP
+  document.getElementById('cost-direct').textContent = getTargetValue(financeData, 'Cost / Lb - Direct', dF?.str) || '—';
+  document.getElementById('cost-indirect').textContent = getTargetValue(financeData, 'Cost / Lb - Indirect', dF?.str) || '—';
+  document.getElementById('proc-orders').textContent = getTargetValue(sapData, 'Open Process Orders', dS?.str) || '—';
+  document.getElementById('warehouse-tasks').textContent = getTargetValue(sapData, 'Warehouse Tasks', dS?.str) || '—';
 }
 
-// --- BOOTSTRAP ---
-window.__libsCallback = () => {
-  renderBoard('announcement');
-  renderBoard('expectation');
-  loadPlans();
-  document.getElementById('current-date-display').textContent = `Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`;
-};
+// --- BOARD & PLAN LOGIC ---
+const DEFAULT_RULES = [{id:1, text:"🚀 Punctuality: Meeting starts on time."}, {id:2, text:"📊 Preparation: Metrics ready."}, {id:3, text:"🧠 Focus: No side talks."}];
+let boards = { announcement: JSON.parse(localStorage.getItem('dds_ann_v9') || '[]'), expectation: JSON.parse(localStorage.getItem('dds_exp_v9') || JSON.stringify(DEFAULT_RULES)) };
+function addItem(type){ boards[type].push({id:Date.now(), text:'Edit me...', date:new Date().toLocaleDateString()}); saveBoard(type); }
+function deleteItem(type, id){ boards[type] = boards[type].filter(i=>i.id!==id); saveBoard(type); }
+function editItem(type, id, text){ const item=boards[type].find(i=>i.id===id); if(item){item.text=text; localStorage.setItem(`dds_${type==='announcement'?'ann':'exp'}_v9`, JSON.stringify(boards[type]));}}
+function saveBoard(type){ localStorage.setItem(`dds_${type==='announcement'?'ann':'exp'}_v9`, JSON.stringify(boards[type])); renderBoard(type); }
+function renderBoard(type){ const container=document.getElementById(`${type}-board`); if(!container)return; container.innerHTML=boards[type].map(i=>`<div class="pretty-card card-${type}"><div class="card-body" contenteditable="true" onblur="editItem('${type}', ${i.id}, this.innerText)">${i.text}</div><div class="card-footer"><span>${type==='announcement'?i.date:'Rule'}</span><span style="cursor:pointer" onclick="deleteItem('${type}', ${i.id})">Delete</span></div></div>`).join(''); }
+function switchView(view, el){ document.querySelectorAll('.info-panel').forEach(p=>p.classList.remove('active')); document.getElementById('view-dashboard').classList.toggle('hidden', view!=='dashboard'); document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); if(view!=='dashboard') document.getElementById('panel-'+view).classList.add('active'); }
+function savePlan(id){ localStorage.setItem('dds_plan_'+id, document.getElementById(id).innerText); }
+function loadPlans(){ ['production','maintenance','quality','warehouse','inventory','sap'].forEach(id=>{ const v=localStorage.getItem('dds_plan_plan-'+id); if(v)document.getElementById('plan-'+id).innerText=v; }); }
+function clearPlans(){ if(confirm('Clear plans?')){ ['production','maintenance','quality','warehouse','inventory','sap'].forEach(id=>{ localStorage.removeItem('dds_plan_plan-'+id); document.getElementById('plan-'+id).innerText=''; }); } }
 
-if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _checkLibsReady);
-else _checkLibsReady();
+window.__libsCallback = () => { renderBoard('announcement'); renderBoard('expectation'); loadPlans(); document.getElementById('current-date-display').textContent = `Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`; };
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _checkLibsReady); else _checkLibsReady();
 </script>
 </body>
 </html>
