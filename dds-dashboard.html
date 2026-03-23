@@ -6,6 +6,7 @@
   <title>DDS Dashboard – Novus Foods Ops Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- UI Fonts + Permanent Marker for the Plaque Look -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Permanent+Marker&display=swap" rel="stylesheet">
   
   <script>
@@ -117,8 +118,11 @@
     <a class="nav-tab" href="inventory-control.html">Inventory Control</a>
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
-    <span id="data-status" style="font-size:0.7rem;font-family:'DM Mono';color:var(--ink3);">Loading data…</span>
-    <button class="btn btn-ghost" onclick="location.reload()">Refresh</button>
+    <span id="data-status" style="font-size:0.7rem;font-family:'DM Mono';color:var(--ink3);">Upload workbook to load</span>
+    <label id="upload-label" class="btn btn-ghost" style="cursor:pointer;">
+      Upload Data
+      <input type="file" id="main-file-upload" accept=".xlsx,.xls" style="display:none;" onchange="handleFileUpload(event)">
+    </label>
     <button class="btn btn-danger" onclick="NovusCore.navigateTo('index.html')">Logout</button>
   </div>
 </div>
@@ -221,7 +225,7 @@
       </div>
     </div>
 
-    <!-- DAILY PLAN (Manual Entry) -->
+    <!-- DAILY PLAN -->
     <div class="panel" style="margin-top:24px;">
       <div class="panel-header">
         <span class="panel-title" style="font-size:1rem;">Daily Action Plan</span>
@@ -272,7 +276,6 @@
 </div>
 
 <script>
-const DATA_FILE = 'data/all_department_data_2026.xlsx';
 let workbook;
 const TODAY_OBJ = new Date();
 
@@ -327,6 +330,21 @@ function switchView(view, el) {
   if(view !== 'dashboard') document.getElementById('panel-' + view).classList.add('active');
 }
 
+// --- FILE UPLOAD LOGIC ---
+async function handleFileUpload(evt){
+  const file = evt.target.files[0]; if(!file) return;
+  const data = await file.arrayBuffer();
+  workbook = XLSX.read(data, {type:'array'});
+  document.getElementById('data-status').textContent = '✓ Loaded';
+  renderDashboard();
+}
+
+function renderDashboard(){
+  if(!workbook) return;
+  document.getElementById('current-date-display').textContent = `Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`;
+  // Data processing logic would populate panels here
+}
+
 // --- PLAN PERSISTENCE ---
 function savePlan(id){ localStorage.setItem('dds_plan_'+id, document.getElementById(id).innerText); }
 function loadPlans(){ 
@@ -344,24 +362,12 @@ function clearPlans(){
   }
 }
 
-// --- DATA BOOTSTRAP ---
-window.__libsCallback = async () => {
+// --- BOOTSTRAP ---
+window.__libsCallback = () => {
   renderBoard('announcement');
   renderBoard('expectation');
   loadPlans();
-  
-  const st = document.getElementById('data-status');
   document.getElementById('current-date-display').textContent = `Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`;
-  
-  try {
-    const buf = await NovusCore.fetchWithCache(DATA_FILE);
-    workbook = XLSX.read(buf, {type:'array'});
-    st.textContent = '✓ Data Loaded';
-    // Data populating logic (renderDashboard) would be triggered here
-  } catch(e) {
-    st.textContent = '⚠ Load Error';
-    console.error(e);
-  }
 };
 
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _checkLibsReady);
