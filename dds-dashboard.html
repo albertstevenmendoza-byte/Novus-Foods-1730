@@ -43,7 +43,6 @@
       --green:#059669;--green-l:#10b981;--green-bright:#4ade80;
       --red:#dc2626;--red-l:#ef4444;
       --amber:#d97706;--amber-ll:#fef3c7;
-      --purple:#7c3aed;--purple-d:#5b21b6;
       --plaque-bg:#000000;
       --radius:14px;--radius-sm:8px;--radius-xs:5px;--nav-h:58px;
       --ease:cubic-bezier(.4,0,.2,1);--ease-out:cubic-bezier(0,0,.2,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);
@@ -54,8 +53,6 @@
 
     @keyframes fadeUp  {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
     @keyframes pulse   {0%,100%{opacity:1}50%{opacity:.6}}
-    @keyframes think   {0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
-
     .page{max-width:1760px;margin:0 auto;padding:0 20px 60px;}
     .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);margin-bottom:24px;will-change:transform;transform:translateZ(0);}
     .logo{display:flex;align-items:center;gap:10px;}
@@ -81,9 +78,6 @@
     .btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--ink2);}
     .btn-ghost:hover{background:var(--bg);}
     .btn-danger{background:var(--red-l);color:white;padding:5px 11px;font-size:.75rem;}
-    .btn-ai{background:linear-gradient(135deg,var(--purple),var(--purple-d));color:white;border:none;box-shadow:0 2px 8px rgba(124,58,237,.22);}
-    .btn-ai:hover{filter:brightness(1.08);}
-    .btn-ai:disabled{opacity:.5;cursor:not-allowed;transform:none;}
 
     .date-header{text-align:center;font-size:.9rem;font-weight:600;font-family:'DM Mono',monospace;color:var(--ink3);margin-bottom:20px;}
     .dash-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-bottom:16px;}
@@ -157,9 +151,6 @@
     .value-name{font-family:'Permanent Marker',cursive;font-size:1.3rem;color:var(--green-bright);margin-bottom:15px;display:block;}
     .value-desc{color:#ffffff;font-size:.8rem;text-transform:uppercase;font-weight:600;opacity:.9;}
 
-    .ai-dot{width:6px;height:6px;border-radius:50%;background:var(--ink4);flex-shrink:0;}
-    .ai-dot.on{background:var(--green);animation:pulse 2s ease-in-out infinite;}
-    .ai-dot.err{background:var(--red-l);}
 
     #data-status{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--ink3);}
     #data-status.ok{color:var(--green);}
@@ -225,10 +216,6 @@
           <div class="metric-row">
             <div class="metric-box"><div class="metric-label">Days Without Incident</div><div class="metric-value" id="days-incident">—</div></div>
             <div class="metric-box"><div class="metric-label">Near Misses</div><div class="metric-value" id="near-misses">—</div></div>
-          </div>
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Safety Audits</div><div class="metric-value" id="safety-audits">—</div></div>
-            <div class="metric-box"><div class="metric-label">Meal Penalties</div><div class="metric-value" id="meal-penalties">—</div></div>
           </div>
         </div>
         <div class="resizer"></div>
@@ -329,6 +316,10 @@
             <div class="metric-box"><div class="metric-label">Trainings Complete</div><div class="metric-value" id="trainings">—</div></div>
             <div class="metric-box"><div class="metric-label">Headcount Total</div><div class="metric-value" id="headcount">—</div></div>
           </div>
+          <div class="metric-row">
+            <div class="metric-box"><div class="metric-label">Safety Audits</div><div class="metric-value" id="safety-audits">—</div></div>
+            <div class="metric-box"><div class="metric-label">Meal Penalties</div><div class="metric-value" id="meal-penalties">—</div></div>
+          </div>
           <div class="chart-wrap" style="height:160px;"><canvas id="hr-chart"></canvas></div>
         </div>
         <div class="resizer"></div>
@@ -396,40 +387,20 @@
 
     </div><!-- /dash-grid -->
 
-    <!-- DAILY PLAN + AI CO-PILOT -->
-    <div class="panel" style="margin-bottom:24px;border-color:rgba(124,58,237,.2);box-shadow:0 0 0 1px rgba(124,58,237,.06),0 4px 24px rgba(124,58,237,.07);">
-      <div class="panel-header" style="cursor:default;background:linear-gradient(135deg,#1e1148,#3b1494,#5b21b6);">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="panel-title" style="font-size:1rem;">Daily Plan</span>
-          <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:2px 9px;font-size:.62rem;font-weight:700;color:rgba(255,255,255,.9);text-transform:uppercase;letter-spacing:.08em;">AI Co-Pilot</span>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span id="ai-status-txt" style="font-size:.65rem;font-family:'DM Mono',monospace;color:rgba(255,255,255,.5);"></span>
-          <div class="ai-dot" id="ai-dot"></div>
-          <button class="btn" onclick="resetChat()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:white;font-size:.75rem;padding:5px 12px;">New Chat</button>
-        </div>
-      </div>
-      <div id="ai-chat-window" style="height:220px;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;background:var(--surface2);border-bottom:1px solid var(--border);"></div>
-      <div style="display:flex;gap:8px;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--border);">
-        <textarea id="ai-chat-input" rows="2"
-          placeholder="Type your reply and press Enter…"
-          style="flex:1;resize:none;border:1.5px solid rgba(124,58,237,.25);border-radius:8px;padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--ink);outline:none;transition:border-color .15s;background:white;"
-          onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='rgba(124,58,237,.25)'"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatReply();}"
-          disabled></textarea>
-        <button id="ai-send-btn" class="btn btn-ai" onclick="sendChatReply()" disabled style="padding:8px 16px;align-self:flex-end;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          Send
-        </button>
+    <!-- DAILY ACTION PLAN -->
+    <div class="panel" style="margin-bottom:24px;">
+      <div class="panel-header">
+        <span class="panel-title" style="font-size:1rem;">Daily Action Plan</span>
+        <button class="btn" onclick="clearPlans()" style="background:rgba(255,255,255,.1);color:white;font-size:.7rem;padding:5px 12px;">Clear All</button>
       </div>
       <div class="panel-body">
         <div class="plan-grid">
-          <div class="plan-card"><div class="plan-card-header">Production</div><div class="plan-card-body" id="plan-production" contenteditable="true" oninput="savePlan('plan-production')">—</div></div>
-          <div class="plan-card"><div class="plan-card-header">Maintenance</div><div class="plan-card-body" id="plan-maintenance" contenteditable="true" oninput="savePlan('plan-maintenance')">—</div></div>
-          <div class="plan-card"><div class="plan-card-header">Quality</div><div class="plan-card-body" id="plan-quality" contenteditable="true" oninput="savePlan('plan-quality')">—</div></div>
-          <div class="plan-card"><div class="plan-card-header">Warehouse</div><div class="plan-card-body" id="plan-warehouse" contenteditable="true" oninput="savePlan('plan-warehouse')">—</div></div>
-          <div class="plan-card"><div class="plan-card-header">Inventory</div><div class="plan-card-body" id="plan-inventory-control" contenteditable="true" oninput="savePlan('plan-inventory-control')">—</div></div>
-          <div class="plan-card"><div class="plan-card-header">SAP</div><div class="plan-card-body" id="plan-sap" contenteditable="true" oninput="savePlan('plan-sap')">—</div></div>
+          <div class="plan-card"><div class="plan-card-header">Production</div><div class="plan-card-body" id="plan-production" contenteditable="true" oninput="savePlan('plan-production')"></div></div>
+          <div class="plan-card"><div class="plan-card-header">Maintenance</div><div class="plan-card-body" id="plan-maintenance" contenteditable="true" oninput="savePlan('plan-maintenance')"></div></div>
+          <div class="plan-card"><div class="plan-card-header">Quality</div><div class="plan-card-body" id="plan-quality" contenteditable="true" oninput="savePlan('plan-quality')"></div></div>
+          <div class="plan-card"><div class="plan-card-header">Warehouse</div><div class="plan-card-body" id="plan-warehouse" contenteditable="true" oninput="savePlan('plan-warehouse')"></div></div>
+          <div class="plan-card"><div class="plan-card-header">Inventory</div><div class="plan-card-body" id="plan-inventory-control" contenteditable="true" oninput="savePlan('plan-inventory-control')"></div></div>
+          <div class="plan-card"><div class="plan-card-header">SAP</div><div class="plan-card-body" id="plan-sap" contenteditable="true" oninput="savePlan('plan-sap')"></div></div>
         </div>
       </div>
     </div>
@@ -649,7 +620,7 @@ async function handleUpload(evt){
     workbook=XLSX.read(buf,{type:'array',cellDates:false,raw:true});
     st.className='ok';st.textContent=`✓ ${file.name}`;
     NovusCore.Toast.success(`Loaded: ${file.name}`);
-    renderDashboard();startChat();
+    renderDashboard();
   }catch(e){
     st.className='error';st.textContent=`⚠ ${e.message}`;
     NovusCore.Toast.error('Upload failed: '+e.message);
@@ -871,153 +842,17 @@ function renderDashboard(){
   })();
 }
 
-// ── AI CO-PILOT ───────────────────────────────────────────────────────────────
-function buildSnapshot(){
-  if(!workbook)return null;
-  try{
-    const hr=getSheetData('HR | Training'),qa=getSheetData('QA'),prod=getSheetData('Production'),
-          finance=getSheetData('Finance'),sap=getSheetData('SAP'),wh=getSheetData('Warehouse'),
-          inv=getSheetData('Inventory Control'),maint=getSheetData('Maintenance');
-    const isBP=r=>String(valByKey(r,'City')||'').toLowerCase().trim()==='buena park';
-    const bpWH=wh.filter(isBP);
-    const dP=getLatestDateForSheet(prod,'OEE')?.str,dH=getLatestDateForSheet(hr)?.str,
-          dQ=getLatestDateForSheet(qa)?.str,dW=getLatestDateForSheet(bpWH)?.str,
-          dI=getLatestDateForSheet(inv)?.str,dS=getLatestDateForSheet(sap)?.str,
-          dM=getLatestDateForSheet(maint)?.str;
-    const lines=['2A','PL1','MP4','PXM6','PL2','2E'],lm={};
-    lines.forEach(l=>{
-      const m=getProductionMetrics(prod,dP,l);
-      const o=m.oee!=null?(m.oee<=2?m.oee*100:m.oee):null;
-      const a=m.attainment!=null?(m.attainment<=2?m.attainment*100:m.attainment):null;
-      lm[l]={oee:o!=null?o.toFixed(1)+'%':'N/A',attainment:a!=null?a.toFixed(1)+'%':'N/A',downtime_hrs:(m.downtime??0).toFixed(1),startup:m.startup,cil:m.cil};
-    });
-    const dc={};prod.filter(r=>toDateString(parseDate(r.Date))===dP).forEach(r=>{
-      ['Mechanical Downtime Drivers','Material Downtime Drivers'].forEach(col=>{
-        const v=r[col];if(v&&v!=='DNR'&&v!=='None'&&v!=='')String(v).split(/[;,]/).forEach(d=>{const cv=d.trim();if(cv.length>2)dc[cv]=(dc[cv]||0)+1;});
-      });
-    });
-    const whR=bpWH.find(r=>toDateString(parseDate(r.Date))===dW);
-    const invBP=inv.find(r=>toDateString(parseDate(r.Date))===dI&&isBP(r));
-    const oeeVals=lines.map(l=>lm[l].oee).filter(v=>v!=='N/A').map(v=>parseFloat(v));
-    const hcd=Number(getTargetValue(hr,'Head Count - Direct',dH)||0);
-    const hci=Number(getTargetValue(hr,'Head Count - Indirect',dH)||0);
-    return{
-      today:TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}),
-      production:{date:dP,avg_oee_pct:oeeVals.length?(oeeVals.reduce((a,b)=>a+b)/oeeVals.length).toFixed(1):'N/A',
-        top_downtime_drivers:Object.entries(dc).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,cv])=>`${n} (x${cv})`),
-        code_red:getTargetValue(maint,'Code Red',dM)??'0',code_yellow:getTargetValue(maint,'Code Yellow',dM)??'0',line_metrics:lm},
-      safety:{date:dH,days_without_incident:getTargetValue(hr,'Days Without Incident',dH)??'N/A',
-        near_misses:getTargetValue(hr,'Near Miss Reports',dH)??'0',safety_audits:getTargetValue(hr,'Safety Audits',dH)??'0'},
-      quality:{date:dQ,holds:getTargetValue(qa,'Holds',dQ)??'0',holds_coa:getTargetValue(qa,'Holds/COA',dQ)??'0',
-        pem_pct:fmtPercent(getTargetValue(qa,'PEM %',dQ),1),complaints:getTargetValue(qa,'Number of Complaints',dQ)??'0'},
-      maintenance:{date:dM,code_red:getTargetValue(maint,'Code Red',dM)??'0',code_yellow:getTargetValue(maint,'Code Yellow',dM)??'0'},
-      hr:{date:dH,headcount_direct:hcd,headcount_indirect:hci,headcount_total:(hcd+hci)||'N/A',
-        trainings_pct:fmtPercent(getTargetValue(hr,'Trainings Complete',dH)??0),meal_penalties:getTargetValue(hr,'Number of Meal Penalties',dH)??'0'},
-      warehouse:{date:dW,fill_rate_pct:fmtPercent(whR?valByKey(whR,'Fill Rate %'):null,1),
-        cases_scheduled:whR?(valByKey(whR,'Number of cases scheduled to ship')??'N/A'):'N/A',
-        cases_shipped:whR?(valByKey(whR,'Number of cases shipped')??'N/A'):'N/A',
-        cpmh:whR?Number(valByKey(whR,'CPMH')||0).toFixed(2):'N/A',cpmh_target:450},
-      inventory:{date:dI,bp_completion_pct:fmtPercent(invBP?valByKey(invBP,'Completion %'):null,1),
-        critical_items:invBP?(valByKey(invBP,'Critical Items')??'0'):'N/A',
-        bin_accuracy_pct:fmtPercent(invBP?valByKey(invBP,'Bin Accuracy'):null,2),
-        notes:(invBP?valByKey(invBP,'Notes'):null)??''},
-      sap:{date:dS,open_process_orders:getTargetValue(sap,'Open Process Orders',dS)??'N/A',warehouse_tasks:getTargetValue(sap,'Warehouse Tasks',dS)??'N/A'}
-    };
-  }catch(e){console.error('Snapshot err',e);return null;}
-}
-
-function setDot(s){const d=document.getElementById('ai-dot');if(d)d.className='ai-dot'+(s==='on'?' on':s==='err'?' err':'');}
-function setSub(t){const el=document.getElementById('ai-status-txt');if(el)el.textContent=t;}
-
-function addChatMsg(role,text,typing=false){
-  const win=document.getElementById('ai-chat-window');if(!win)return;
-  const isAI=role==='ai';
-  const wrap=document.createElement('div');
-  wrap.style.cssText=`display:flex;gap:8px;align-items:flex-start;justify-content:${isAI?'flex-start':'flex-end'};`;
-  if(isAI){
-    const icon=document.createElement('div');
-    icon.style.cssText='width:26px;height:26px;flex-shrink:0;background:linear-gradient(135deg,#7c3aed,#6d28d9);border-radius:6px;display:flex;align-items:center;justify-content:center;margin-top:2px;';
-    icon.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2L3.5 14h5.5v8l7-10h-5.5L12 2z"/></svg>';
-    wrap.appendChild(icon);
-  }
-  const bubble=document.createElement('div');
-  const base='max-width:78%;padding:9px 13px;border-radius:12px;font-size:.84rem;line-height:1.5;white-space:pre-wrap;';
-  bubble.style.cssText=isAI?base+'background:white;border:1px solid rgba(124,58,237,.15);color:#1e293b;border-top-left-radius:3px;'
-                           :base+'background:linear-gradient(135deg,#7c3aed,#5b21b6);color:white;border-top-right-radius:3px;';
-  if(typing){
-    bubble.innerHTML=['','',''].map((_,i)=>`<span style="width:6px;height:6px;border-radius:50%;background:#7c3aed;animation:think 1.2s infinite ${i*0.2}s;display:inline-block;margin:0 2px;"></span>`).join('');
-    bubble.id='ai-typing-bubble';
-  }else{bubble.textContent=text;}
-  wrap.appendChild(bubble);
-  win.appendChild(wrap);
-  win.scrollTop=win.scrollHeight;
-  return bubble;
-}
-function removeTyping(){const b=document.getElementById('ai-typing-bubble');if(b)b.closest('div[style*="flex"]').remove();}
-function enableChatInput(on){
-  const inp=document.getElementById('ai-chat-input'),btn=document.getElementById('ai-send-btn');
-  if(inp)inp.disabled=!on;if(btn)btn.disabled=!on;
-  if(on&&inp)setTimeout(()=>inp.focus(),50);
-}
-function writePlanCard(id,lines){const el=document.getElementById(id);if(!el)return;const text=lines.join('\n');el.innerText=text;localStorage.setItem('dds_'+id,text);}
-function showPlanThinking(){['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerText='Generating…';});}
-
-function startChat(){
-  if(!workbook){setSub('Waiting for data…');return;}
-  const win=document.getElementById('ai-chat-window');if(win)win.innerHTML='';
-  enableChatInput(false);
-  const snap=buildSnapshot();
-  const oee=snap?.production?.avg_oee_pct??'?';
-  const cr=snap?.production?.code_red??'0',cy=snap?.production?.code_yellow??'0';
-  setTimeout(()=>{
-    addChatMsg('ai',`I've loaded today's data (${snap?.today||'today'}). Plant is running at ${oee}% avg OEE, ${cr} Code Red${Number(cr)!==1?'s':''}, ${cy} Code Yellow${Number(cy)!==1?'s':''}.`);
-    setTimeout(()=>{addChatMsg('ai','What does Production need to do to win the day?');enableChatInput(true);setSub('Ready');setDot('on');},600);
-  },300);
-}
-
-async function sendChatReply(){
-  const inp=document.getElementById('ai-chat-input');if(!inp)return;
-  const userText=inp.value.trim();if(!userText)return;
-  inp.value='';enableChatInput(false);
-  addChatMsg('user',userText);setDot('on');setSub('Generating plan…');
-  addChatMsg('ai','',true);showPlanThinking();
-  const snap=buildSnapshot();
-  const SYS=`You are the AI Operations Co-Pilot for Novus Foods Plant 1730, Buena Park, CA — a salsa and layered products food manufacturing facility.\nThe Production supervisor has just answered the question "What does Production need to do to win the day?"\nYour job:\n1. Reply with ONE short conversational sentence acknowledging their goal (max 20 words, plain language, no hype).\n2. Generate a specific action plan for each of the 6 departments to support Production in hitting that goal today. Use live dashboard data — name lines, cite numbers.\nKPI targets: OEE >=65% good / 60-64% watch / <60% critical. CPMH target 450. Fill rate >=95%. Bin accuracy >=99.9%.\nRespond ONLY with this JSON — no markdown, no preamble:\n{"reply":"One short sentence.","production":["Action 1","Action 2","Action 3"],"maintenance":["Action 1","Action 2","Action 3"],"quality":["Action 1","Action 2","Action 3"],"warehouse":["Action 1","Action 2","Action 3"],"inventory":["Action 1","Action 2","Action 3"],"sap":["Action 1","Action 2"]}\nPlain strings only — no bullet symbols, numbering, or markdown inside strings.`;
-  const userMsg=`Today is ${snap?.today||new Date().toDateString()}.\nSupervisor's answer: "${userText}"\nLive dashboard data:\n${JSON.stringify(snap,null,2)}\nReturn the JSON only.`;
-  try{
-    const res=await fetch('http://localhost:5005/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,system:SYS,messages:[{role:'user',content:userMsg}]})});
-    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${res.status}`);}
-    const data=await res.json();
-    const raw=data.content?.find(b=>b.type==='text')?.text||'';
-    let parsed;try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch{throw new Error('Could not parse AI response.');}
-    removeTyping();addChatMsg('ai',parsed.reply||'Got it — filling out the department plans now.');
-    const map={'plan-production':parsed.production,'plan-maintenance':parsed.maintenance,'plan-quality':parsed.quality,
-               'plan-warehouse':parsed.warehouse,'plan-inventory-control':parsed.inventory,'plan-sap':parsed.sap};
-    Object.entries(map).forEach(([id,bullets])=>{if(Array.isArray(bullets)&&bullets.length)writePlanCard(id,bullets.map((b,i)=>`${i+1}. ${b}`));});
-    setSub('Done · '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}));setDot('on');
-    setTimeout(()=>{addChatMsg('ai','Plans are filled in below. You can edit any card directly.');enableChatInput(true);},400);
-  }catch(err){
-    console.error(err);removeTyping();
-    addChatMsg('ai','Sorry — could not reach the AI server: '+err.message+'\n\nYou can fill in the daily plan cards manually below.');
-    setDot('err');setSub('AI offline');enableChatInput(true);
-    ['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap']
-      .forEach(id=>{const el=document.getElementById(id);if(el&&el.innerText.includes('Generating'))el.innerText='—';});
-  }
-}
-
-function resetChat(){
-  if(!confirm('Start a new chat? This will clear the current conversation.'))return;
-  const win=document.getElementById('ai-chat-window');if(win)win.innerHTML='';
-  enableChatInput(false);setDot('');setSub('');
-  if(workbook)startChat();
-}
 
 // ── PLAN SAVE / LOAD ──────────────────────────────────────────────────────────
 function savePlan(id){localStorage.setItem('dds_'+id,document.getElementById(id).innerText);}
 function loadSavedPlans(){
   ['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap']
     .forEach(id=>{const s=localStorage.getItem('dds_'+id);if(s)document.getElementById(id).innerText=s;});
+}
+function clearPlans(){
+  if(!confirm('Clear all daily action plans?'))return;
+  ['plan-production','plan-maintenance','plan-quality','plan-warehouse','plan-inventory-control','plan-sap']
+    .forEach(id=>{localStorage.removeItem('dds_'+id);document.getElementById(id).innerText='';});
 }
 
 // ── BOARDS ────────────────────────────────────────────────────────────────────
@@ -1076,7 +911,7 @@ window.__libsCallback=async()=>{
       if(!buf)throw new Error('Cache read returned null.');
       workbook=XLSX.read(buf,{type:'array',cellDates:false,raw:true});
       st.className='ok';st.textContent=`✓ ${NovusCore.WorkbookCache.fileName()}`;
-      renderDashboard();initDraggable();initResizable();startChat();
+      renderDashboard();initDraggable();initResizable();
     }catch(err){
       console.error(err);
       NovusCore.WorkbookCache.clear();
