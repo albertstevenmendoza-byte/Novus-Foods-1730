@@ -34,6 +34,12 @@
     .page{max-width:1760px;margin:0 auto;padding:0 20px 60px;}
     .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);margin-bottom:24px;}
     
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--blue-l));border-radius:8px;display:flex;align-items:center;justify-content:center;}
+    .logo-icon svg{width:16px;height:16px;fill:white;}
+    .logo-text{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;}
+    .logo-text span{color:var(--blue);}
+    
     .nav-tabs{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;}
     .nav-tab{color:var(--ink3);text-decoration:none;font-weight:500;font-size:.82rem;padding:6px 14px;border-radius:7px;transition:all .15s;}
     .nav-tab.active{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
@@ -58,14 +64,12 @@
     .metric-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 10px;flex:1;text-align:center;}
     .metric-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:5px;}
     .metric-value{font-size:1.6rem;font-weight:700;letter-spacing:-.03em;color:var(--ink);}
-    
     .data-table{width:100%;border-collapse:collapse;font-size:.8rem;}
     .data-table th{background:var(--blue-ll);color:var(--blue);font-weight:700;font-size:.68rem;text-transform:uppercase;padding:7px 8px;text-align:center;border-bottom:2px solid var(--blue-l);}
     .data-table td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--border);color:var(--ink2);}
 
     .timeframe-block{padding:10px 14px;border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:10px 0;}
     .timeframe-yesterday{background:var(--ink);color:white;}
-    .timeframe-today{background:var(--blue);color:white;}
     .timeframe-title{font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;}
     .timeframe-date{font-family:'DM Mono',monospace;font-size:0.7rem;opacity:0.85;}
     
@@ -73,11 +77,6 @@
     .split-col{flex:1;display:flex;flex-direction:column;gap:8px;}
     .col-label{background:var(--surface2);padding:4px;border-radius:var(--radius-xs);border:1px solid var(--border);text-align:center;font-weight:800;font-size:0.68rem;color:var(--ink3);text-transform:uppercase;}
     
-    .readiness-stack{background:rgba(37,99,235,.04);border:1px dashed var(--blue-ll);border-radius:var(--radius-sm);padding:10px;display:flex;flex-direction:column;gap:8px;}
-    .status-pill{font-size:0.65rem;font-weight:700;padding:3px 6px;border-radius:4px;display:flex;justify-content:space-between;margin-top:3px;}
-    .pill-yes{background:rgba(16,185,129,.1);color:var(--green);}
-    .pill-no{background:rgba(239,68,68,.1);color:var(--red-l);}
-
     .plan-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
     .plan-card{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
     .plan-card-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;padding:8px 12px;font-weight:700;font-size:.78rem;text-transform:uppercase;text-align:center;}
@@ -136,12 +135,10 @@
     <div class="sub-tab" onclick="switchView('corevalues', this)">Core Values</div>
   </div>
 
-  <!-- MAIN DASHBOARD -->
   <div id="view-dashboard">
     <div class="date-header" id="current-date-display" style="text-align:center; margin-bottom:20px; font-family:'DM Mono'; font-weight:bold;">Loading…</div>
     
     <div class="dash-grid">
-      <!-- SAFETY -->
       <div class="panel" style="grid-column:span 4;">
         <div class="panel-header"><span class="panel-title">Safety</span></div>
         <div class="panel-date" id="date-safety">—</div>
@@ -153,7 +150,6 @@
         </div>
       </div>
 
-      <!-- QUALITY -->
       <div class="panel" style="grid-column:span 8;">
         <div class="panel-header"><span class="panel-title">Quality</span></div>
         <div class="panel-date" id="date-quality">—</div>
@@ -167,7 +163,6 @@
         </div>
       </div>
 
-      <!-- PRODUCTION SUMMARY -->
       <div class="panel" style="grid-column:span 8; grid-row:span 2;">
         <div class="panel-header"><span class="panel-title">Production Summary</span></div>
         <div class="panel-body">
@@ -189,20 +184,6 @@
               <table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attainment</th></tr></thead><tbody id="prod-tbody-layer"></tbody></table>
             </div>
           </div>
-          <div class="timeframe-block timeframe-today">
-            <div class="timeframe-title">Today's Operational Status</div>
-            <div class="timeframe-date" id="today-date-label">...</div>
-          </div>
-          <div class="split-row">
-            <div class="split-col">
-              <div class="col-label">Salsa Lines</div>
-              <div class="readiness-stack" id="readiness-grid-salsa"></div>
-            </div>
-            <div class="split-col">
-              <div class="col-label">Layer Lines</div>
-              <div class="readiness-stack" id="readiness-grid-layer"></div>
-            </div>
-          </div>
           <div style="margin-top:16px;">
             <div style="font-size:.72rem; font-weight:700; color:var(--blue-l); text-transform:uppercase; margin-bottom:4px;">Top Downtime Drivers</div>
             <div class="drivers-box alert" id="top-drivers">—</div>
@@ -211,7 +192,6 @@
         </div>
       </div>
 
-      <!-- COSTS -->
       <div class="panel" style="grid-column:span 4;">
         <div class="panel-header"><span class="panel-title">Costs</span></div>
         <div class="panel-date" id="date-costs">—</div>
@@ -221,30 +201,12 @@
             <tbody>
               <tr><td>Cost / Lb</td><td id="cost-direct">—</td><td id="cost-indirect">—</td></tr>
               <tr><td>Lb / hr</td><td id="pound-hr-direct">—</td><td id="pound-hr-indirect">—</td></tr>
-              <tr><td>Proj. Conversion</td><td colspan="2" id="conversion-costs">—</td></tr>
             </tbody>
           </table>
           <div class="chart-wrap" style="height:160px; margin-top:10px;"><canvas id="costs-ot-chart"></canvas></div>
         </div>
       </div>
 
-      <!-- HR | TRAINING -->
-      <div class="panel" style="grid-column:span 4;">
-        <div class="panel-header"><span class="panel-title">HR | Training</span></div>
-        <div class="panel-date" id="date-hr">—</div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Trainings Complete</div><div class="metric-value" id="trainings">—</div></div>
-            <div class="metric-box"><div class="metric-label">Headcount Total</div><div class="metric-value" id="headcount">—</div></div>
-          </div>
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Safety Audits</div><div class="metric-value" id="safety-audits">—</div></div>
-            <div class="metric-box"><div class="metric-label">Meal Penalties</div><div class="metric-value" id="meal-penalties">—</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SAP -->
       <div class="panel" style="grid-column:span 4;">
         <div class="panel-header"><span class="panel-title">SAP</span></div>
         <div class="panel-date" id="date-sap">—</div>
@@ -256,33 +218,8 @@
           <div class="chart-wrap" style="height:130px; margin-top:10px;"><canvas id="sap-open-orders-chart"></canvas></div>
         </div>
       </div>
-
-      <!-- WAREHOUSE -->
-      <div class="panel" style="grid-column:span 4;">
-        <div class="panel-header"><span class="panel-title">Warehouse</span></div>
-        <div class="panel-date" id="date-warehouse">—</div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Fill Rate %</div><div class="metric-value" id="wh-fill">—</div></div>
-            <div class="metric-box"><div class="metric-label">CPMH</div><div class="metric-value" id="wh-cpmh">—</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- INVENTORY -->
-      <div class="panel" style="grid-column:span 4;">
-        <div class="panel-header"><span class="panel-title">Inventory Control</span></div>
-        <div class="panel-date" id="date-inventory">—</div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Completion %</div><div class="metric-value" id="inv-completion">—</div></div>
-            <div class="metric-box"><div class="metric-label">Bin Accuracy</div><div class="metric-value" id="inv-accuracy">—</div></div>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- DAILY ACTION PLAN -->
     <div class="panel" style="margin-top:24px;">
       <div class="panel-header"><span class="panel-title" style="font-size:1rem;">Daily Action Plan</span><button class="btn" onclick="clearPlans()" style="background:rgba(255,255,255,0.1); color:white; font-size:0.7rem;">Clear All</button></div>
       <div class="panel-body">
@@ -298,15 +235,16 @@
     </div>
   </div>
 
-  <!-- OTHER PANELS -->
   <div id="panel-announcements" class="info-panel">
     <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;"><h2 style="font-weight: 800;">Announcement Board</h2><button class="btn" style="background:var(--blue); color:white;" onclick="addItem('announcement')">+ New Note</button></div>
     <div class="board-container" id="announcement-board"></div>
   </div>
+
   <div id="panel-expectations" class="info-panel">
     <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;"><h2 style="font-weight: 800;">Meeting Rules of Engagement</h2><button class="btn" style="background:var(--teal); color:white;" onclick="addItem('expectation')">+ Add Rule</button></div>
     <div class="board-container" id="expectation-board"></div>
   </div>
+
   <div id="panel-corevalues" class="info-panel">
     <div class="values-grid">
       <div class="value-card"><span class="value-name">1. DO THE RIGHT THING</span><p class="value-desc">SAFETY AND QUALITY ALWAYS. RESPECT IS NONNEGOTIABLE. SPEAK YOUR TRUTH.</p></div>
@@ -323,9 +261,10 @@
 let workbook;
 const TODAY_OBJ = new Date();
 
-// --- DATA SCANNING HELPERS ---
+// --- DATA PROCESSING UTILS ---
 function toDateString(d){if(!d||isNaN(d.getTime()))return null;return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;}
 function parseDate(val){if(!val)return null;const num=Number(val);if(!isNaN(num)&&val!==''&&val!==null){return new Date((num-25569)*86400*1000);}const d=new Date(val);if(!isNaN(d.getTime()))return new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));return null;}
+function getSheetData(name){const s=workbook.Sheets[name];return s?XLSX.utils.sheet_to_json(s,{defval:'',raw:true,blankrows:false}):[];}
 function valByKey(row,field){if(!row)return null;const key=Object.keys(row).find(k=>k.trim().toLowerCase()===field.toLowerCase()||k.trim().toLowerCase().replace(/\s/g,'')===field.toLowerCase().replace(/\s/g,''));return row[key||field];}
 function fmtPercent(val,dec=0){if(val===''||val==null)return'—';let n=Number(val);if(isNaN(n))return'—';return(n<=2?n*100:n).toFixed(dec)+'%';}
 
@@ -336,21 +275,12 @@ function getLatestDateForSheet(data){
 }
 
 function getTargetValue(data,field,targetDateStr){
-  if(!targetDateStr) return null;
-  const rows = data.filter(r => toDateString(parseDate(r.Date)) === targetDateStr);
+  const rows=data.filter(r=>toDateString(parseDate(r.Date))===targetDateStr);
   if(!rows.length) return null;
-  // Aggregate sum for specific fields
-  const sumFields=['Near Miss Reports','Holds','Number of Complaints','Open Process Orders','Warehouse Tasks','Safety Audits','Meal Penalties'];
-  if(sumFields.some(sf => field.includes(sf))){
-    let t=0; rows.forEach(r=>{const v=Number(valByKey(r,field)); if(!isNaN(v)) t+=v;});
-    return t;
-  }
   return valByKey(rows[rows.length-1], field);
 }
 
-function getSheetData(name){ const s=workbook.Sheets[name]; return s?XLSX.utils.sheet_to_json(s,{defval:'',raw:true}):[]; }
-
-// --- FILE UPLOAD HANDLER ---
+// --- CORE RENDER LOGIC ---
 async function handleFileUpload(evt){
   const file = evt.target.files[0]; if(!file) return;
   const data = await file.arrayBuffer();
@@ -359,100 +289,76 @@ async function handleFileUpload(evt){
   renderDashboard();
 }
 
-// --- MAIN RENDER ---
 function renderDashboard(){
   if(!workbook) return;
   document.getElementById('current-date-display').textContent = `Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}`;
 
-  const sheets = {
-    hr: getSheetData('HR | Training'), qa: getSheetData('QA'), prod: getSheetData('Production'),
-    fin: getSheetData('Finance'), sap: getSheetData('SAP'), maint: getSheetData('Maintenance'),
-    wh: getSheetData('Warehouse'), inv: getSheetData('Inventory Control')
+  const hrData = getSheetData('HR | Training');
+  const qaData = getSheetData('QA');
+  const prodData = getSheetData('Production');
+  const financeData = getSheetData('Finance');
+  const sapData = getSheetData('SAP');
+  const maintData = getSheetData('Maintenance');
+
+  // Dates
+  const dH = getLatestDateForSheet(hrData);
+  const dQ = getLatestDateForSheet(qaData);
+  const dP = getLatestDateForSheet(prodData);
+  const dF = getLatestDateForSheet(financeData);
+  const dS = getLatestDateForSheet(sapData);
+  const dM = getLatestDateForSheet(maintData);
+
+  if(dH) document.getElementById('date-safety').textContent = `Data: ${dH.obj.toLocaleDateString()}`;
+  if(dQ) document.getElementById('date-quality').textContent = `Data: ${dQ.obj.toLocaleDateString()}`;
+  if(dF) document.getElementById('date-costs').textContent = `Data: ${dF.obj.toLocaleDateString()}`;
+  if(dS) document.getElementById('date-sap').textContent = `Data: ${dS.obj.toLocaleDateString()}`;
+
+  // Safety
+  document.getElementById('days-incident').textContent = getTargetValue(hrData, 'Days Without Incident', dH?.str) || '—';
+  document.getElementById('near-misses').textContent = getTargetValue(hrData, 'Near Miss Reports', dH?.str) || '—';
+
+  // Quality
+  document.getElementById('holds').textContent = getTargetValue(qaData, 'Holds', dQ?.str) || '—';
+  document.getElementById('holds-coa').textContent = getTargetValue(qaData, 'Holds/COA', dQ?.str) || '—';
+  document.getElementById('pem').textContent = fmtPercent(getTargetValue(qaData, 'PEM %', dQ?.str), 1);
+  document.getElementById('complaints').textContent = getTargetValue(qaData, 'Number of Complaints', dQ?.str) || '—';
+
+  // Maintenance
+  document.getElementById('code-red').textContent = getTargetValue(maintData, 'Code Red', dM?.str) || '0';
+  document.getElementById('code-yellow').textContent = getTargetValue(maintData, 'Code Yellow', dM?.str) || '0';
+
+  // Production Table
+  const salsa = ['2A','PL1','MP4'], layers = ['PXM6','PL2','2E'];
+  const fillTable = (ids, targetId) => {
+    document.getElementById(targetId).innerHTML = ids.map(line => {
+      const rows = prodData.filter(r => toDateString(parseDate(r.Date))===dP?.str && String(valByKey(r,'Line')).trim()===line);
+      const oee = rows.length ? fmtPercent(valByKey(rows[0],'OEE'),1) : '—';
+      const att = rows.length ? fmtPercent(valByKey(rows[0],'Attainment'),1) : '—';
+      return `<tr><td>${line}</td><td>${oee}</td><td>${att}</td></tr>`;
+    }).join('');
   };
-
-  const dates = {
-    hr: getLatestDateForSheet(sheets.hr), qa: getLatestDateForSheet(sheets.qa),
-    prod: getLatestDateForSheet(sheets.prod), fin: getLatestDateForSheet(sheets.fin),
-    sap: getLatestDateForSheet(sheets.sap), maint: getLatestDateForSheet(sheets.maint),
-    wh: getLatestDateForSheet(sheets.wh), inv: getLatestDateForSheet(sheets.inv)
-  };
-
-  // Update Section Dates
-  if(dates.hr) document.getElementById('date-safety').textContent = `Data: ${dates.hr.obj.toLocaleDateString()}`;
-  if(dates.qa) document.getElementById('date-quality').textContent = `Data: ${dates.qa.obj.toLocaleDateString()}`;
-  if(dates.fin) document.getElementById('date-costs').textContent = `Data: ${dates.fin.obj.toLocaleDateString()}`;
-  if(dates.hr) document.getElementById('date-hr').textContent = `Data: ${dates.hr.obj.toLocaleDateString()}`;
-  if(dates.wh) document.getElementById('date-warehouse').textContent = `Data: ${dates.wh.obj.toLocaleDateString()}`;
-  if(dates.inv) document.getElementById('date-inventory').textContent = `Data: ${dates.inv.obj.toLocaleDateString()}`;
-
-  // Safety & Quality
-  document.getElementById('days-incident').textContent = getTargetValue(sheets.hr, 'Days Without Incident', dates.hr?.str) || '—';
-  document.getElementById('near-misses').textContent = getTargetValue(sheets.hr, 'Near Miss Reports', dates.hr?.str) || '0';
-  document.getElementById('holds').textContent = getTargetValue(sheets.qa, 'Holds', dates.qa?.str) || '0';
-  document.getElementById('holds-coa').textContent = getTargetValue(sheets.qa, 'Holds/COA', dates.qa?.str) || '—';
-  document.getElementById('pem').textContent = fmtPercent(getTargetValue(sheets.qa, 'PEM %', dates.qa?.str), 1);
-  document.getElementById('complaints').textContent = getTargetValue(sheets.qa, 'Number of Complaints', dates.qa?.str) || '0';
-
-  // Production Summary
-  document.getElementById('code-red').textContent = getTargetValue(sheets.maint, 'Code Red', dates.maint?.str) || '0';
-  document.getElementById('code-yellow').textContent = getTargetValue(sheets.maint, 'Code Yellow', dates.maint?.str) || '0';
-  
-  if(dates.prod){
-    document.getElementById('yesterday-date-label').textContent = dates.prod.obj.toLocaleDateString();
-    const salsa = ['2A','PL1','MP4'], layers = ['PXM6','PL2','2E'];
-    const fillTable = (lines, tid) => {
-      document.getElementById(tid).innerHTML = lines.map(l => {
-        const rows = sheets.prod.filter(r => toDateString(parseDate(r.Date))===dates.prod.str && String(valByKey(r,'Line')).trim().toUpperCase()===l);
-        return `<tr><td>${l}</td><td>${rows.length?fmtPercent(valByKey(rows[0],'OEE'),1):'—'}</td><td>${rows.length?fmtPercent(valByKey(rows[0],'Attainment'),1):'—'}</td></tr>`;
-      }).join('');
-    };
-    fillTable(salsa, 'prod-tbody-salsa'); fillTable(layers, 'prod-tbody-layer');
-
-    // Readiness Status
-    const fillReadiness = (lines, rid) => {
-      document.getElementById(rid).innerHTML = lines.map(l => {
-        const rows = sheets.prod.filter(r => toDateString(parseDate(r.Date))===dates.prod.str && String(valByKey(r,'Line')).trim().toUpperCase()===l);
-        const startup = rows.length ? (String(valByKey(rows[0],'Start Up')).toUpperCase()==='YES'?'Yes':'No') : '—';
-        const cil = rows.length ? (String(valByKey(rows[0],'CIL')).toUpperCase()==='YES'?'Yes':'No') : '—';
-        return `<div class="status-pill ${startup==='Yes'?'pill-yes':'pill-no'}"><span>${l} Startup</span><span>${startup}</span></div>
-                <div class="status-pill ${cil==='Yes'?'pill-yes':'pill-no'}"><span>${l} CIL</span><span>${cil}</span></div>`;
-      }).join('');
-    };
-    fillReadiness(salsa, 'readiness-grid-salsa'); fillReadiness(layers, 'readiness-grid-layer');
+  if(dP){
+    document.getElementById('yesterday-date-label').textContent = dP.obj.toLocaleDateString();
+    fillTable(salsa, 'prod-tbody-salsa');
+    fillTable(layers, 'prod-tbody-layer');
   }
 
-  // Costs, HR, SAP
-  document.getElementById('cost-direct').textContent = getTargetValue(sheets.fin, 'Cost / Lb - Direct', dates.fin?.str) || '—';
-  document.getElementById('cost-indirect').textContent = getTargetValue(sheets.fin, 'Cost / Lb - Indirect', dates.fin?.str) || '—';
-  document.getElementById('conversion-costs').textContent = getTargetValue(sheets.fin, 'Projected Conversion', dates.fin?.str) || '—';
-  document.getElementById('trainings').textContent = fmtPercent(getTargetValue(sheets.hr, 'Trainings Complete', dates.hr?.str), 0);
-  document.getElementById('headcount').textContent = getTargetValue(sheets.hr, 'Head Count Total', dates.hr?.str) || '—';
-  document.getElementById('safety-audits').textContent = getTargetValue(sheets.hr, 'Safety Audits', dates.hr?.str) || '0';
-  document.getElementById('meal-penalties').textContent = getTargetValue(sheets.hr, 'Meal Penalties', dates.hr?.str) || '0';
-  document.getElementById('proc-orders').textContent = getTargetValue(sheets.sap, 'Open Process Orders', dates.sap?.str) || '—';
-  document.getElementById('warehouse-tasks').textContent = getTargetValue(sheets.sap, 'Warehouse Tasks', dates.sap?.str) || '—';
-
-  // Warehouse & Inventory
-  const bpWH = sheets.wh.filter(r => String(valByKey(r,'City')).toLowerCase().trim()==='buena park');
-  const dW = getLatestDateForSheet(bpWH);
-  document.getElementById('wh-fill').textContent = fmtPercent(getTargetValue(bpWH, 'Fill Rate %', dW?.str), 1);
-  document.getElementById('wh-cpmh').textContent = Number(getTargetValue(bpWH, 'CPMH', dW?.str) || 0).toFixed(1);
-  
-  const bpInv = sheets.inv.filter(r => String(valByKey(r,'City')).toLowerCase().trim()==='buena park');
-  const dI = getLatestDateForSheet(bpInv);
-  document.getElementById('inv-completion').textContent = fmtPercent(getTargetValue(bpInv, 'Completion %', dI?.str), 1);
-  document.getElementById('inv-accuracy').textContent = fmtPercent(getTargetValue(bpInv, 'Bin Accuracy', dI?.str), 2);
+  // Costs & SAP
+  document.getElementById('cost-direct').textContent = getTargetValue(financeData, 'Cost / Lb - Direct', dF?.str) || '—';
+  document.getElementById('cost-indirect').textContent = getTargetValue(financeData, 'Cost / Lb - Indirect', dF?.str) || '—';
+  document.getElementById('proc-orders').textContent = getTargetValue(sapData, 'Open Process Orders', dS?.str) || '—';
+  document.getElementById('warehouse-tasks').textContent = getTargetValue(sapData, 'Warehouse Tasks', dS?.str) || '—';
 }
 
-// --- BOARDS & PERSISTENCE ---
-const DEFAULT_RULES = [{id:1, text:"🚀 Punctuality: Be present 2m early."}, {id:2, text:"📊 Preparation: Metrics ready."}];
-let boards = { announcement: JSON.parse(localStorage.getItem('dds_ann_v9')||'[]'), expectation: JSON.parse(localStorage.getItem('dds_exp_v9')||JSON.stringify(DEFAULT_RULES)) };
-function addItem(t){ boards[t].push({id:Date.now(), text:'Edit...', date:new Date().toLocaleDateString()}); saveBoard(t); }
-function deleteItem(t,id){ boards[t]=boards[t].filter(i=>i.id!==id); saveBoard(t); }
-function editItem(t,id,txt){ const i=boards[t].find(x=>x.id===id); if(i){i.text=txt; localStorage.setItem(`dds_${t==='announcement'?'ann':'exp'}_v9`, JSON.stringify(boards[t]));}}
-function saveBoard(t){ localStorage.setItem(`dds_${t==='announcement'?'ann':'exp'}_v9`, JSON.stringify(boards[t])); renderBoard(t); }
-function renderBoard(t){ const c=document.getElementById(`${t}-board`); if(!c)return; c.innerHTML=boards[t].map(i=>`<div class="pretty-card card-${t}"><div class="card-body" contenteditable="true" onblur="editItem('${t}',${i.id},this.innerText)">${i.text}</div><div class="card-footer"><span>${t==='announcement'?i.date:'Rule'}</span><span onclick="deleteItem('${t}',${i.id})" style="cursor:pointer">Delete</span></div></div>`).join(''); }
-function switchView(v,el){ document.querySelectorAll('.info-panel').forEach(p=>p.classList.remove('active')); document.getElementById('view-dashboard').classList.toggle('hidden',v!=='dashboard'); document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); if(v!=='dashboard') document.getElementById('panel-'+v).classList.add('active'); }
+// --- BOARD & PLAN LOGIC ---
+const DEFAULT_RULES = [{id:1, text:"🚀 Punctuality: Meeting starts on time."}, {id:2, text:"📊 Preparation: Metrics ready."}, {id:3, text:"🧠 Focus: No side talks."}];
+let boards = { announcement: JSON.parse(localStorage.getItem('dds_ann_v9') || '[]'), expectation: JSON.parse(localStorage.getItem('dds_exp_v9') || JSON.stringify(DEFAULT_RULES)) };
+function addItem(type){ boards[type].push({id:Date.now(), text:'Edit me...', date:new Date().toLocaleDateString()}); saveBoard(type); }
+function deleteItem(type, id){ boards[type] = boards[type].filter(i=>i.id!==id); saveBoard(type); }
+function editItem(type, id, text){ const item=boards[type].find(i=>i.id===id); if(item){item.text=text; localStorage.setItem(`dds_${type==='announcement'?'ann':'exp'}_v9`, JSON.stringify(boards[type]));}}
+function saveBoard(type){ localStorage.setItem(`dds_${type==='announcement'?'ann':'exp'}_v9`, JSON.stringify(boards[type])); renderBoard(type); }
+function renderBoard(type){ const container=document.getElementById(`${type}-board`); if(!container)return; container.innerHTML=boards[type].map(i=>`<div class="pretty-card card-${type}"><div class="card-body" contenteditable="true" onblur="editItem('${type}', ${i.id}, this.innerText)">${i.text}</div><div class="card-footer"><span>${type==='announcement'?i.date:'Rule'}</span><span style="cursor:pointer" onclick="deleteItem('${type}', ${i.id})">Delete</span></div></div>`).join(''); }
+function switchView(view, el){ document.querySelectorAll('.info-panel').forEach(p=>p.classList.remove('active')); document.getElementById('view-dashboard').classList.toggle('hidden', view!=='dashboard'); document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); if(view!=='dashboard') document.getElementById('panel-'+view).classList.add('active'); }
 function savePlan(id){ localStorage.setItem('dds_plan_'+id, document.getElementById(id).innerText); }
 function loadPlans(){ ['production','maintenance','quality','warehouse','inventory','sap'].forEach(id=>{ const v=localStorage.getItem('dds_plan_plan-'+id); if(v)document.getElementById('plan-'+id).innerText=v; }); }
 function clearPlans(){ if(confirm('Clear plans?')){ ['production','maintenance','quality','warehouse','inventory','sap'].forEach(id=>{ localStorage.removeItem('dds_plan_plan-'+id); document.getElementById('plan-'+id).innerText=''; }); } }
