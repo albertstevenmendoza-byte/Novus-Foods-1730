@@ -29,7 +29,7 @@
       overflow-x:hidden;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");
     }
-    
+
     .page { max-width:1760px; margin:0 auto; padding:0 20px 60px; }
     .top-nav {
       height:var(--nav-h); background:var(--surface); border-bottom:1px solid var(--border);
@@ -61,50 +61,19 @@
       box-shadow:0 1px 4px rgba(0,0,0,.08);
     }
 
+    /* DDS sub-nav */
     .sub-tab-container {
       display: flex; gap: 8px; margin-bottom: 20px;
       background: rgba(0,0,0,0.03); padding: 4px; border-radius: 12px; width: fit-content;
     }
     .sub-tab {
+      text-decoration: none; display: inline-block;
       cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--ink3);
       padding: 8px 18px; border-radius: 9px; transition: all 0.2s var(--ease);
     }
     .sub-tab.active {
       background: var(--surface); color: var(--blue); box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    .info-panel { display: none; animation: fadeUp 0.3s var(--ease-out); }
-    .info-panel.active { display: block; }
-
-    /* CORE VALUES */
-    .values-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 10px; }
-    .value-card {
-      background: #000000; border-radius: var(--radius); padding: 40px 25px;
-      text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 1px solid #222;
-      transition: transform 0.3s var(--ease);
-    }
-    .value-card:hover { transform: translateY(-5px); border-color: var(--novus-green); }
-    .value-name {
-      font-family: 'Permanent Marker', cursive; font-size: 1.35rem; display: block;
-      margin-bottom: 15px; color: var(--novus-green); font-style: italic; letter-spacing: 0.05em;
-    }
-    .value-desc { color: #ffffff; font-size: 0.82rem; line-height: 1.6; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.95; }
-
-    /* BOARDS */
-    .board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 10px; }
-    .pretty-card {
-      background: var(--surface); border-radius: var(--radius); padding: 24px;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); position: relative; border: 1px solid var(--border);
-      transition: transform 0.2s var(--ease); overflow: hidden;
-    }
-    .pretty-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
-    .card-announcement::before { background: linear-gradient(90deg, var(--blue), var(--blue-l)); }
-    .card-expectation::before { background: linear-gradient(90deg, var(--teal), var(--green-l)); }
-    .card-body { font-size: 1rem; color: var(--ink2); min-height: 80px; outline: none; white-space: pre-wrap; line-height: 1.6; }
-    .card-body strong { color: var(--ink); font-weight: 800; }
-    .card-footer { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--surface2); display: flex; justify-content: space-between; align-items: center; }
-    .card-meta { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--ink4); text-transform: uppercase; }
-    .delete-btn { cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--ink4); transition: all 0.2s; }
-    .delete-btn:hover { background: var(--red-l); color: white; }
 
     /* DASHBOARD */
     .btn {
@@ -217,12 +186,13 @@
     <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm0 11h7v7H3zm11-11h7v7h-7zm0 11h7v7h-7z"/></svg></div>
     <span class="logo-text">Novus <span>Foods</span> Ops</span>
   </div>
+
   <nav class="nav-tabs">
-    <a class="nav-tab"         href="staff-meeting-dashboard.html">Meeting Dashboard</a>
-    <a class="nav-tab active"  href="dds-dashboard.html">DDS Dashboard</a>
-    <a class="nav-tab"         href="needs-action.html">Needs Action</a>
-    <a class="nav-tab"         href="sap-audit.html">SAP Audit</a>
-    <a class="nav-tab"         href="Inventory-control.html">Inventory Control</a>
+    <a class="nav-tab"        href="dds-announcements.html">DDS Announcements</a>
+    <a class="nav-tab active" href="dds-dashboard.html">DDS Dashboard</a>
+    <a class="nav-tab"        href="dds-rules.html">Rules of Engagement</a>
+    <a class="nav-tab"        href="dds-corevalues.html">Core Values</a>
+    <a class="nav-tab"        href="staff-meeting-dashboard.html">Customizable Dashboard</a>
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
     <span id="data-status">Upload workbook to load</span>
@@ -230,220 +200,165 @@
       Upload Data
       <input type="file" id="main-file-upload" accept=".xlsx,.xls" style="display:none;" onchange="handleFile(event)">
     </label>
-    <button class="btn btn-danger" onclick="NovusCore?.navigateTo?.('index.html') || window.location='index.html'">Logout</button>
+    <button class="btn btn-danger" onclick="NovusCore.navigateTo('index.html')">Logout</button>
   </div>
 </div>
 
 <div class="page">
 
-  <div class="sub-tab-container">
-    <div class="sub-tab active"  onclick="switchView('dashboard', this)">Main Dashboard</div>
-    <div class="sub-tab"         onclick="switchView('announcements', this)">Announcements</div>
-    <div class="sub-tab"         onclick="switchView('expectations', this)">Rules of Engagement</div>
-    <div class="sub-tab"         onclick="switchView('corevalues', this)">Core Values</div>
-  </div>
+  <!-- DDS Sub-navigation (now page links instead of JS view-switcher) -->
 
-  <!-- Announcements -->
-  <div id="panel-announcements" class="info-panel">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <h2 style="font-size:1.2rem; font-weight:700; color:var(--ink);">Internal Announcements</h2>
-      <button class="btn btn-primary" onclick="addItem('announcement')">+ Post Announcement</button>
-    </div>
-    <div class="board-container" id="announcement-board"></div>
-  </div>
+  <!-- ── MAIN DASHBOARD ─────────────────────────────────── -->
+  <div class="date-header" id="current-date-display">Loading…</div>
 
-  <!-- Rules of Engagement -->
-  <div id="panel-expectations" class="info-panel">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <h2 style="font-size:1.2rem; font-weight:700; color:var(--ink);">Rules of Engagement</h2>
-      <button class="btn btn-primary" style="background:var(--teal);" onclick="addItem('expectation')">+ Add Rule</button>
-    </div>
-    <div class="board-container" id="expectation-board"></div>
-  </div>
+  <div class="dash-grid">
 
-  <!-- Core Values -->
-  <div id="panel-corevalues" class="info-panel">
-    <div class="values-grid">
-      <div class="value-card"><span class="value-name">1. DO THE RIGHT THING</span><p class="value-desc">SAFETY AND QUALITY ALWAYS. RESPECT IS NONNEGOTIABLE. SPEAK YOUR TRUTH.</p></div>
-      <div class="value-card"><span class="value-name">2. OUR PEOPLE ARE EXTRAORDINARY</span><p class="value-desc">PASSION, PERSEVERANCE AND HUMILITY (GRIT). LEAD FROM ANY SEAT. INVEST IN YOURSELF AND OTHERS.</p></div>
-      <div class="value-card"><span class="value-name">3. ACHIEVE MORE TOGETHER</span><p class="value-desc">ASSUME POSITIVE INTENT AND BUILD TRUST. COLLABORATE. RALLY TOGETHER IN ADVERSITY.</p></div>
-      <div class="value-card"><span class="value-name">4. BE AN OWNER</span><p class="value-desc">TAKE INITIATIVE. BE ACCOUNTABLE. LEAVE IT BETTER THAN YOU FOUND IT.</p></div>
-      <div class="value-card"><span class="value-name">5. CUSTOMER OBSESSED, CONSUMER DRIVEN</span><p class="value-desc">ACT WITH URGENCY. DELIVER SOLUTIONS, BE OPPORTUNISTIC. INSIGHTS TO ACTION. SEE AROUND CORNERS.</p></div>
-      <div class="value-card"><span class="value-name">6. RELENTLESS GROWTH</span><p class="value-desc">SET AMBITIOUS GOALS. STAY HUNGRY AND EMBRACE NEW CHALLENGES. CELEBRATE THE WINS.</p></div>
-    </div>
-  </div>
-
-  <div id="view-dashboard">
-
-    <div class="date-header" id="current-date-display">Loading…</div>
-
-    <div class="dash-grid">
-
-      <!-- Safety -->
-      <div class="panel" style="grid-column:span 4;">
-        <div class="panel-header"><span class="panel-title">Safety</span></div>
-        <div class="panel-date" id="date-safety">—</div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Days W/O Incident</div><div class="metric-value" id="days-incident" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-            <div class="metric-box"><div class="metric-label">Near Misses</div><div class="metric-value" id="near-misses" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quality -->
-      <div class="panel" style="grid-column:span 8;">
-        <div class="panel-header"><span class="panel-title">Quality</span></div>
-        <div class="panel-date" id="date-quality">—</div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Holds</div><div class="metric-value" id="holds" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-            <div class="metric-box"><div class="metric-label">Holds/COA</div><div class="metric-value" id="holds-coa" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-            <div class="metric-box"><div class="metric-label">PEM %</div><div class="metric-value" id="pem" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-            <div class="metric-box"><div class="metric-label">Complaints</div><div class="metric-value" id="complaints" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Production -->
-      <div class="panel" style="grid-column:span 12;" id="panel-production">
-        <div class="panel-header"><span class="panel-title">Production Summary</span></div>
-        <div class="panel-body">
-          <div class="prod-command-split">
-            <div>
-              <div class="timeframe-block timeframe-today">
-                <div class="timeframe-title">Today's Operational Status</div>
-                <div class="timeframe-date" id="today-date-label">—</div>
-              </div>
-              <div class="split-row">
-                <div class="split-col"><div class="col-label">Salsa Lines</div><div class="readiness-stack" id="readiness-grid-salsa"></div></div>
-                <div class="split-col"><div class="col-label">Layer Lines</div><div class="readiness-stack" id="readiness-grid-layer"></div></div>
-              </div>
-            </div>
-            <div>
-              <div class="timeframe-block timeframe-yesterday">
-                <div class="timeframe-title">Yesterday's Performance</div>
-                <div class="timeframe-date" id="yesterday-date-label">—</div>
-              </div>
-              <div class="metric-row">
-                <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-                <div class="metric-box"><div class="metric-label">Code Yellow</div><div class="metric-value" id="code-yellow" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-                <div style="flex:2">
-                  <div class="section-label">Top Downtime Drivers</div>
-                  <div class="drivers-box alert" id="top-drivers">No data</div>
-                </div>
-              </div>
-              <div class="split-row" style="margin-top:12px;">
-                <div class="split-col">
-                  <div class="col-label">Salsa Lines</div>
-                  <table class="data-table">
-                    <thead><tr><th>Line</th><th>OEE</th><th>Attain</th><th>DT</th></tr></thead>
-                    <tbody id="prod-tbody-salsa"></tbody>
-                  </table>
-                </div>
-                <div class="split-col">
-                  <div class="col-label">Layer Lines</div>
-                  <table class="data-table">
-                    <thead><tr><th>Line</th><th>OEE</th><th>Attain</th><th>DT</th></tr></thead>
-                    <tbody id="prod-tbody-layer"></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="chart-wrap" style="height:200px; margin-top:16px;">
-            <canvas id="production-chart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Costs -->
-      <div class="panel" style="grid-column:span 4;">
-        <div class="panel-header"><span class="panel-title">Costs</span></div>
-        <div class="panel-date" id="date-costs">—</div>
-        <div class="panel-body">
-          <table class="data-table">
-            <thead><tr><th>Metric</th><th>Direct</th><th>Indirect</th></tr></thead>
-            <tbody>
-              <tr><td>Cost / Lb</td><td id="cost-direct" contenteditable="true" oninput="saveManual(this.id)">—</td><td id="cost-indirect" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
-              <tr><td>Lb / hr</td><td id="pound-hr-direct" contenteditable="true" oninput="saveManual(this.id)">—</td><td id="pound-hr-indirect" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
-              <tr><td>Proj. Conversion</td><td colspan="2" id="conversion-costs" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
-              <tr><td>Lbs Produced</td><td colspan="2" id="pounds-prod" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
-            </tbody>
-          </table>
-          <div style="margin-top:16px;">
-            <div class="section-label">OT Trend by Dept</div>
-            <div class="chart-wrap" style="height:190px;"><canvas id="costs-ot-chart"></canvas></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- HR / Training -->
-      <div class="panel" style="grid-column:span 4;">
-        <div class="panel-header"><span class="panel-title">HR | Training</span></div>
-        <div class="panel-date" id="date-hr">—</div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Trainings Complete</div><div class="metric-value" id="trainings" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-            <div class="metric-box"><div class="metric-label">Headcount Total</div><div class="metric-value" id="headcount" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-          </div>
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Safety Audits</div><div class="metric-value" id="safety-audits" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-            <div class="metric-box"><div class="metric-label">Meal Penalties</div><div class="metric-value" id="meal-penalties" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-          </div>
-          <div class="chart-wrap" style="height:160px; margin-top:12px;"><canvas id="hr-chart"></canvas></div>
-        </div>
-      </div>
-
-      <!-- SAP -->
-      <div class="panel" style="grid-column:span 4;">
-        <div class="panel-header"><span class="panel-title">SAP</span></div>
-        <div class="panel-date" id="date-sap">—</div>
-        <div class="panel-body">
-          <div class="metric-row">
-            <div class="metric-box"><div class="metric-label">Open Orders</div><div class="metric-value" id="proc-orders" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-            <div class="metric-box"><div class="metric-label">WH Tasks</div><div class="metric-value" id="warehouse-tasks" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-          </div>
-          <div class="chart-wrap" style="height:130px; margin-top:12px;"><canvas id="sap-open-orders-chart"></canvas></div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="panel" style="margin-bottom:32px;">
-      <div class="panel-header"><span class="panel-title">Daily Plan / Gemba Walk Notes</span></div>
+    <!-- Safety -->
+    <div class="panel" style="grid-column:span 4;">
+      <div class="panel-header"><span class="panel-title">Safety</span></div>
+      <div class="panel-date" id="date-safety">—</div>
       <div class="panel-body">
-        <div class="plan-card-body" id="plan-gemba-walk" contenteditable="true" oninput="savePlan('plan-gemba-walk')">—</div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Days W/O Incident</div><div class="metric-value" id="days-incident" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Near Misses</div><div class="metric-value" id="near-misses" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quality -->
+    <div class="panel" style="grid-column:span 8;">
+      <div class="panel-header"><span class="panel-title">Quality</span></div>
+      <div class="panel-date" id="date-quality">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Holds</div><div class="metric-value" id="holds" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Holds/COA</div><div class="metric-value" id="holds-coa" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">PEM %</div><div class="metric-value" id="pem" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Complaints</div><div class="metric-value" id="complaints" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Production -->
+    <div class="panel" style="grid-column:span 12;" id="panel-production">
+      <div class="panel-header"><span class="panel-title">Production Summary</span></div>
+      <div class="panel-body">
+        <div class="prod-command-split">
+          <div>
+            <div class="timeframe-block timeframe-today">
+              <div class="timeframe-title">Today's Operational Status</div>
+              <div class="timeframe-date" id="today-date-label">—</div>
+            </div>
+            <div class="split-row">
+              <div class="split-col"><div class="col-label">Salsa Lines</div><div class="readiness-stack" id="readiness-grid-salsa"></div></div>
+              <div class="split-col"><div class="col-label">Layer Lines</div><div class="readiness-stack" id="readiness-grid-layer"></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="timeframe-block timeframe-yesterday">
+              <div class="timeframe-title">Yesterday's Performance</div>
+              <div class="timeframe-date" id="yesterday-date-label">—</div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+              <div class="metric-box"><div class="metric-label">Code Yellow</div><div class="metric-value" id="code-yellow" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+              <div style="flex:2">
+                <div class="section-label">Top Downtime Drivers</div>
+                <div class="drivers-box alert" id="top-drivers">No data</div>
+              </div>
+            </div>
+            <div class="split-row" style="margin-top:12px;">
+              <div class="split-col">
+                <div class="col-label">Salsa Lines</div>
+                <table class="data-table">
+                  <thead><tr><th>Line</th><th>OEE</th><th>Attain</th><th>DT</th></tr></thead>
+                  <tbody id="prod-tbody-salsa"></tbody>
+                </table>
+              </div>
+              <div class="split-col">
+                <div class="col-label">Layer Lines</div>
+                <table class="data-table">
+                  <thead><tr><th>Line</th><th>OEE</th><th>Attain</th><th>DT</th></tr></thead>
+                  <tbody id="prod-tbody-layer"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-wrap" style="height:200px; margin-top:16px;">
+          <canvas id="production-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Costs -->
+    <div class="panel" style="grid-column:span 4;">
+      <div class="panel-header"><span class="panel-title">Costs</span></div>
+      <div class="panel-date" id="date-costs">—</div>
+      <div class="panel-body">
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>Direct</th><th>Indirect</th></tr></thead>
+          <tbody>
+            <tr><td>Cost / Lb</td><td id="cost-direct" contenteditable="true" oninput="saveManual(this.id)">—</td><td id="cost-indirect" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+            <tr><td>Lb / hr</td><td id="pound-hr-direct" contenteditable="true" oninput="saveManual(this.id)">—</td><td id="pound-hr-indirect" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+            <tr><td>Proj. Conversion</td><td colspan="2" id="conversion-costs" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+            <tr><td>Lbs Produced</td><td colspan="2" id="pounds-prod" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:16px;">
+          <div class="section-label">OT Trend by Dept</div>
+          <div class="chart-wrap" style="height:190px;"><canvas id="costs-ot-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HR / Training -->
+    <div class="panel" style="grid-column:span 4;">
+      <div class="panel-header"><span class="panel-title">HR | Training</span></div>
+      <div class="panel-date" id="date-hr">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Trainings Complete</div><div class="metric-value" id="trainings" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Headcount Total</div><div class="metric-value" id="headcount" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Safety Audits</div><div class="metric-value" id="safety-audits" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Meal Penalties</div><div class="metric-value" id="meal-penalties" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="chart-wrap" style="height:160px; margin-top:12px;"><canvas id="hr-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- SAP -->
+    <div class="panel" style="grid-column:span 4;">
+      <div class="panel-header"><span class="panel-title">SAP</span></div>
+      <div class="panel-date" id="date-sap">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Open Orders</div><div class="metric-value" id="proc-orders" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">WH Tasks</div><div class="metric-value" id="warehouse-tasks" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="chart-wrap" style="height:130px; margin-top:12px;"><canvas id="sap-open-orders-chart"></canvas></div>
       </div>
     </div>
 
   </div>
-</div>
+
+  <div class="panel" style="margin-bottom:32px;">
+    <div class="panel-header"><span class="panel-title">Daily Plan / Gemba Walk Notes</span></div>
+    <div class="panel-body">
+      <div class="plan-card-body" id="plan-gemba-walk" contenteditable="true" oninput="savePlan('plan-gemba-walk')">—</div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
 
 <script>
 // ────────────────────────────────────────────────
 let workbook = null;
 const TODAY = new Date();
 const charts = {};
-
-// ─── Storage keys ───────────────────────────────────────
-const STORAGE_ANN = 'dds_ann_v16';
-const STORAGE_EXP = 'dds_exp_v16';
-
-// ─── Default rules ──────────────────────────────────────
-const DEFAULT_RULES = [
-  { id: 1, text: "🚀 Punctuality: Meeting starts exactly on time. Be present 2 minutes early.", date: "System" },
-  { id: 2, text: "📊 Preparation: Have your specific department metrics ready to discuss.", date: "System" },
-  { id: 3, text: "🧠 Focus: No side conversations. Stay focused on the data and the 'Why' behind the numbers.", date: "System" },
-  { id: 4, text: "🛠️ Action Oriented: Identify gaps, assign owners, and set clear deadlines for recovery.", date: "System" },
-  { id: 5, text: "🤝 Respect: One person speaks at a time. Keep updates concise (under 60 seconds).", date: "System" }
-];
-
-let boards = {
-  announcement: JSON.parse(localStorage.getItem(STORAGE_ANN) || '[]'),
-  expectation:  JSON.parse(localStorage.getItem(STORAGE_EXP)  || JSON.stringify(DEFAULT_RULES))
-};
 
 // ─── Date helpers ───────────────────────────────────────
 function toDateStr(d) {
@@ -638,7 +553,7 @@ function renderProductionLines(prodRows, targetDate) {
   document.getElementById('yesterday-date-label').textContent = targetDate ? new Date(targetDate).toLocaleDateString() : '—';
 }
 
-// ─── Charts (minimal) ───────────────────────────────────
+// ─── Charts ─────────────────────────────────────────────
 function initCharts(prod, hr, sap) {
   Object.values(charts).forEach(c => c?.destroy?.());
 
@@ -675,85 +590,16 @@ function initCharts(prod, hr, sap) {
     });
   }
 
-  // You can add the other charts similarly (hr-chart, costs-ot-chart, etc.)
-  // Currently left as placeholders
-}
-
-// ─── Boards ─────────────────────────────────────────────
-function renderBoard(type) {
-  const container = document.getElementById(type + '-board');
-  if (!container) return;
-
-  container.innerHTML = boards[type].map(item => {
-    const displayText = item.text.replace(/^([^:]+:)/, '<strong>$1</strong>');
-    return `
-      <div class="pretty-card card-${type}">
-        <div class="card-body" contenteditable="true" onblur="editItem('${type}', ${item.id}, this.innerText.trim())">
-          ${displayText || ' '}
-        </div>
-        <div class="card-footer">
-          <span class="card-meta">${type.toUpperCase()} • ${item.date || '—'}</span>
-          <span class="delete-btn" onclick="deleteItem('${type}', ${item.id})">🗑</span>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function editItem(type, id, text) {
-  const item = boards[type].find(i => i.id === id);
-  if (item) {
-    item.text = text;
-    localStorage.setItem(type === 'announcement' ? STORAGE_ANN : STORAGE_EXP, JSON.stringify(boards[type]));
-  }
-}
-
-function addItem(type) {
-  boards[type].unshift({
-    id: Date.now(),
-    text: 'New item – click to edit',
-    date: new Date().toLocaleDateString()
-  });
-  localStorage.setItem(type === 'announcement' ? STORAGE_ANN : STORAGE_EXP, JSON.stringify(boards[type]));
-  renderBoard(type);
-}
-
-function deleteItem(type, id) {
-  if (!confirm('Delete this item?')) return;
-  boards[type] = boards[type].filter(i => i.id !== id);
-  localStorage.setItem(type === 'announcement' ? STORAGE_ANN : STORAGE_EXP, JSON.stringify(boards[type]));
-  renderBoard(type);
+  // Additional charts (hr-chart, costs-ot-chart, sap-open-orders-chart) left as placeholders
 }
 
 // ─── Save manual edits ──────────────────────────────────
 function saveManual(id) {
-  // You can implement localStorage / sync here if desired
   console.debug(`Manual edit on ${id}`);
 }
 
 function savePlan(id) {
-  // Same – can be extended to persist plan/gemba text
   console.debug(`Plan edit on ${id}`);
-}
-
-// ─── View switching ─────────────────────────────────────
-function switchView(view, clicked) {
-  document.querySelectorAll('.info-panel, #view-dashboard').forEach(el => {
-    el.style.display = 'none';
-    el.classList.remove('active');
-  });
-
-  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-  clicked.classList.add('active');
-
-  if (view === 'dashboard') {
-    document.getElementById('view-dashboard').style.display = 'block';
-  } else {
-    const panel = document.getElementById('panel-' + view);
-    if (panel) {
-      panel.style.display = 'block';
-      panel.classList.add('active');
-    }
-  }
 }
 
 // ─── File handling ──────────────────────────────────────
@@ -778,9 +624,7 @@ function handleFile(e) {
 
 // ─── Init ───────────────────────────────────────────────
 window.addEventListener('load', () => {
-  renderBoard('announcement');
-  renderBoard('expectation');
-
+  NovusCore.requireAuth();
   // Optional: try to load cached workbook from novus-core.js
   if (NovusCore?.WorkbookCache?.load) {
     const cached = NovusCore.WorkbookCache.load();
