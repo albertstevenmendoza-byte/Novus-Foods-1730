@@ -59,24 +59,24 @@
     
     .card-body { font-size: 1.15rem; min-height: 90px; outline: none; white-space: pre-wrap; margin-bottom: 25px; font-weight: 500; line-height: 1.6; color: #334155; }
     
-    .card-controls { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 18px; }
+    .card-controls { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 18px; }
     .color-dots { display: flex; gap: 10px; align-items: center; }
-    
-    /* UPDATED COLOR DOTS WITH BORDERS */
+
+    /* COLOR DOTS WITH BORDERS */
     .dot { 
       width: 22px; 
       height: 22px; 
       border-radius: 50%; 
       cursor: pointer; 
-      border: 1.5px solid rgba(0, 0, 0, 0.15); /* Visible border for pastels */
+      border: 1.5px solid rgba(0, 0, 0, 0.15); /* Permanent visible border */
       transition: 0.2s; 
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    .dot:hover { transform: scale(1.2); border-color: rgba(0, 0, 0, 0.3); }
+    .dot:hover { transform: scale(1.2); border-color: rgba(0, 0, 0, 0.4); }
     .dot.active { 
-      border: 3px solid var(--blue); /* Stronger border for selected choice */
+      border: 3px solid var(--blue); /* Thick blue border for selected color */
       transform: scale(1.1); 
-      box-shadow: 0 0 0 2px white; /* Inset effect */
+      box-shadow: 0 0 0 2px white; 
     }
 
     .delete-btn { cursor: pointer; color: #cbd5e1; font-size: 1.1rem; transition: 0.2s; }
@@ -84,6 +84,7 @@
     
     .card-footer { padding: 14px 30px; font-size: 0.72rem; color: #94a3b8; font-weight: 600; border-top: 1px solid rgba(0,0,0,0.02); }
 
+    /* MODAL */
     .gallery-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); display: none; place-items: center; z-index: 2000; padding: 20px; }
     .gallery-overlay.active { display: grid; }
     .gallery-window { background: white; width: 100%; max-width: 850px; padding: 35px; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
@@ -173,11 +174,7 @@
 
   function parseStyle(styleStr) {
     const parts = (styleStr || "").split('|');
-    return {
-      bg: parts[0] || '#ffffff',
-      align: parts[1] || 'left',
-      theme: parts[2] || 'light'
-    };
+    return { bg: parts[0] || '#ffffff', align: parts[1] || 'left', theme: parts[2] || 'light' };
   }
 
   async function loadData() {
@@ -208,8 +205,8 @@
           <div class="card-controls">
             <div class="color-dots admin-only">
               ${THEME_COLORS.map(c => {
-                const isActive = style.bg.toLowerCase() === c.toLowerCase();
-                return `<div class="dot ${isActive ? 'active' : ''}" style="background:${c}" onclick="updateStyle('${item.id}', 'bg', '${c}')"></div>`;
+                const isCurrent = style.bg.toLowerCase() === c.toLowerCase();
+                return `<div class="dot ${isCurrent ? 'active' : ''}" style="background:${c}" onclick="updateStyle('${item.id}', 'bg', '${c}')"></div>`;
               }).join('')}
             </div>
             ${isAdmin ? `<span class="delete-btn" onclick="deleteItem('${item.id}')">🗑️</span>` : ''}
@@ -223,23 +220,15 @@
   async function updateStyle(id, prop, val) {
     if (!isAdmin) return;
     const card = document.getElementById(`card-${id}`);
-    const body = document.getElementById(`body-${id}`);
-    
-    const currentStyle = parseStyle(card.getAttribute('data-raw-style'));
-    currentStyle[prop] = val;
-    
-    if (prop === 'bg') card.style.backgroundColor = val;
-    if (prop === 'align') body.style.textAlign = val;
-    if (prop === 'theme') {
-        card.classList.remove('theme-light', 'theme-dark');
-        card.classList.add(`theme-${val}`);
-    }
+    const styleData = card.getAttribute('data-raw-style');
+    const style = parseStyle(styleData);
+    style[prop] = val;
 
-    const newStyleStr = `${currentStyle.bg}|${currentStyle.align}|${currentStyle.theme}`;
+    const newStyleStr = `${style.bg}|${style.align}|${style.theme}`;
     card.setAttribute('data-raw-style', newStyleStr);
     
     await updateField(id, 'color', newStyleStr);
-    loadData(); // Reload to update the 'active' class on dots
+    loadData(); // Re-render to update the 'active' dots and alignment
   }
 
   async function updateField(id, field, value) {
@@ -257,6 +246,7 @@
     if (!isAdmin) return;
     showSync();
     
+    // NO POP-UP: Just push default placeholder
     const newItem = {
       sheet: "Announcements", action: "add", id: Date.now().toString(),
       number: document.querySelectorAll('.pretty-card').length + 1,
@@ -279,18 +269,18 @@
 
   function closeGallery() { document.getElementById('galleryOverlay').classList.remove('active'); }
   async function selectPreset(url) { 
-    document.getElementById(`img-${activeCardId}`).src = url;
     await updateField(activeCardId, 'image', url); 
     closeGallery(); 
+    loadData();
   }
 
   function handleFileUpload(e) {
     const file = e.target.files[0];
     const reader = new FileReader();
     reader.onload = async (event) => { 
-        document.getElementById(`img-${activeCardId}`).src = event.target.result;
         await updateField(activeCardId, 'image', event.target.result); 
         closeGallery(); 
+        loadData();
     };
     reader.readAsDataURL(file);
   }
