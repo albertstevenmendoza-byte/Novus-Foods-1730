@@ -119,7 +119,11 @@
       const password = document.getElementById('password').value.trim();
 
       errEl.style.display = 'none';
-      if (!username || !password) { errEl.textContent = 'Please enter both username and password.'; errEl.style.display = 'block'; return; }
+      if (!username || !password) {
+        errEl.textContent = 'Please enter both username and password.';
+        errEl.style.display = 'block';
+        return;
+      }
 
       const user = ALLOWED_USERS[username];
       if (!user || user.password !== password || user.plant !== '1730') {
@@ -129,9 +133,18 @@
         return;
       }
 
-      btn.classList.add('is-loading');
-      try { sessionStorage.setItem('novus1730_user', JSON.stringify({ username, plant: user.plant, role: user.role, loginTime: new Date().toISOString() })); } catch (_) {}
-      setTimeout(() => { window.location.href = 'staff-meeting-dashboard.html'; }, 300);
+      NovusCore.BtnLoader.start(btn);
+      try {
+        sessionStorage.setItem('novus1730_user', JSON.stringify({
+          username,
+          plant: user.plant,
+          role:  user.role,
+          loginTime: new Date().toISOString()
+        }));
+      } catch (_) {}
+
+      // Land on the first tab — DDS Announcements
+      setTimeout(() => { window.location.href = 'dds-announcements.html'; }, 300);
     }
   </script>
 </body>
