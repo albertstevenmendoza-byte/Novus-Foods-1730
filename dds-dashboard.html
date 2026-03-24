@@ -3,405 +3,639 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Needs Action – Novus Foods Ops Hub</title>
+  <title>DDS Dashboard – Novus Foods Ops Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"></noscript>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Permanent+Marker&display=swap" rel="stylesheet">
   <script src="novus-core.js"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
-    :root{--bg:#f4f6fb;--surface:#fff;--surface2:#f8fafc;--border:#e2e8f0;--border2:#cbd5e1;--ink:#0f172a;--ink2:#334155;--ink3:#64748b;--ink4:#94a3b8;--blue:#2563eb;--blue-l:#3b82f6;--blue-ll:#dbeafe;--blue-glow:rgba(37,99,235,.12);--green:#059669;--green-l:#10b981;--red:#dc2626;--red-l:#ef4444;--amber:#d97706;--radius:14px;--radius-sm:8px;--nav-h:58px;--ease:cubic-bezier(.4,0,.2,1);}
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'DM Sans',system-ui,sans-serif;font-size:13.5px;line-height:1.55;background:var(--bg);color:var(--ink);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");}
-    .page{max-width:1600px;margin:0 auto;padding:0 20px 60px;}
-    .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);margin-bottom:24px;will-change:transform;transform:translateZ(0);}
-    .logo{display:flex;align-items:center;gap:10px;}
-    .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--blue-l));border-radius:8px;display:flex;align-items:center;justify-content:center;}
-    .logo-icon svg{width:16px;height:16px;fill:white;}
-    .logo-text{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;}
-    .logo-text span{color:var(--blue);}
-    .nav-tabs{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;overflow-x:auto;scrollbar-width:none;}
-    .nav-tabs::-webkit-scrollbar{display:none;}
-    .nav-tab{color:var(--ink3);text-decoration:none;font-weight:500;font-size:.82rem;padding:6px 14px;border-radius:7px;transition:all .15s;}
-    .nav-tab:hover{background:var(--surface);color:var(--ink2);}
-    .nav-tab.active{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:transform .1s,filter .1s;position:relative;overflow:hidden;}
-    .btn:active{transform:scale(.97);}
-    .btn-brand{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;box-shadow:0 2px 8px rgba(37,99,235,.25);}
-    .btn-brand:hover{filter:brightness(1.07);}
-    .btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--ink2);}
-    .btn-danger{background:var(--red-l);color:white;}
-    .btn-complete{background:var(--green);color:white;padding:5px 10px;font-size:.75rem;border-radius:6px;border:none;cursor:pointer;}
-    .header-section{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding:0 4px;}
-    .page-title{font-size:1.5rem;font-weight:800;color:var(--ink);letter-spacing:-.02em;}
-    .page-subtitle{color:var(--ink3);font-size:.9rem;}
-    .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.02);}
-    .panel-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));padding:10px 16px;display:flex;align-items:center;justify-content:space-between;}
-    .panel-title{color:white;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.02em;}
-    .panel-body{padding:16px;}
-    .filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;}
-    .form-group label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;}
-    select, input[type="text"], input[type="date"]{width:100%;padding:9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:.85rem;outline:none;}
-    select:focus, input:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px var(--blue-glow);}
-    .metric-row{display:flex;gap:12px;margin-bottom:4px;}
-    .metric-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;flex:1;text-align:center;}
-    .metric-label{font-size:.65rem;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;}
-    .metric-value{font-size:1.6rem;font-weight:800;color:var(--ink);line-height:1;}
-    .table-container{overflow-x:auto;}
-    .data-table{width:100%;border-collapse:collapse;font-size:.82rem;}
-    .data-table th{background:var(--blue-ll);color:var(--blue);font-weight:700;font-size:.68rem;text-transform:uppercase;padding:10px;text-align:left;border-bottom:2px solid var(--blue-l);}
-    .data-table td{padding:12px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
-    .data-table tr:hover td{background:var(--surface2);}
-    .na-text-cell{min-width:300px;max-width:500px;line-height:1.5;color:var(--ink2);}
-    .date-mono{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--ink3);}
-    .date-input-sm{padding:5px;border:1px solid var(--border2);border-radius:5px;font-family:'DM Mono',monospace;font-size:.75rem;margin-right:6px;}
-    #save-msg{font-family:'DM Mono',monospace;font-weight:600;}
-    
-    .checkbox-wrapper { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    .checkbox-wrapper input { display: none; }
-    .checkmark { width: 20px; height: 20px; border: 2px solid var(--border2); border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-    .checkbox-wrapper input:checked + .checkmark { background: var(--green); border-color: var(--green); }
-    .checkmark svg { width: 12px; height: 12px; fill: white; display: none; }
-    .checkbox-wrapper input:checked + .checkmark svg { display: block; }
+    :root {
+      --bg:#f4f6fb;--surface:#ffffff;--surface2:#f8fafc;--border:#e2e8f0;--border2:#cbd5e1;
+      --ink:#0f172a;--ink2:#334155;--ink3:#64748b;--ink4:#94a3b8;
+      --blue:#2563eb;--blue-l:#3b82f6;--blue-ll:#dbeafe;--blue-glow:rgba(37,99,235,.12);
+      --teal:#0d9488;--teal-ll:#ccfbf1;--green:#059669;--green-l:#10b981;
+      --novus-green: #22c55e;
+      --red:#dc2626;--red-l:#ef4444;--amber:#d97706;--amber-ll:#fef3c7;
+      --radius:14px;--radius-sm:8px;--radius-xs:5px;--nav-h:58px;
+      --ease:cubic-bezier(.4,0,.2,1);--ease-out:cubic-bezier(0,0,.2,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);
+    }
+    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'DM Sans',system-ui,sans-serif;
+      font-size:13.5px; line-height:1.55;
+      background:var(--bg); color:var(--ink);
+      overflow-x:hidden;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");
+    }
 
-    ::-webkit-scrollbar{width:7px;height:7px;}
-    ::-webkit-scrollbar-track{background:transparent;}
-    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+    .page { max-width:1760px; margin:0 auto; padding:0 20px 60px; }
+    .top-nav {
+      height:var(--nav-h); background:var(--surface); border-bottom:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:center; padding:0 28px;
+      position:sticky; top:0; z-index:200; box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+      margin-bottom:24px;
+    }
+    .logo { display:flex; align-items:center; gap:10px; }
+    .logo-icon {
+      width:30px; height:30px;
+      background:linear-gradient(135deg,var(--blue),var(--blue-l));
+      border-radius:8px; display:flex; align-items:center; justify-content:center;
+    }
+    .logo-icon svg { width:16px; height:16px; fill:white; }
+    .logo-text { font-size:1.05rem; font-weight:700; color:var(--ink); letter-spacing:-.02em; }
+    .logo-text span { color:var(--blue); }
+
+    .nav-tabs {
+      display:flex; gap:2px; background:var(--bg); border:1px solid var(--border);
+      border-radius:10px; padding:3px; overflow-x:auto; scrollbar-width:none;
+    }
+    .nav-tab {
+      color:var(--ink3); text-decoration:none; font-weight:500; font-size:.82rem;
+      padding:6px 14px; border-radius:7px; transition:background .15s,color .15s;
+      white-space:nowrap;
+    }
+    .nav-tab.active {
+      background:var(--surface); color:var(--blue); font-weight:600;
+      box-shadow:0 1px 4px rgba(0,0,0,.08);
+    }
+
+    /* DDS sub-nav */
+    .sub-tab-container {
+      display: flex; gap: 8px; margin-bottom: 20px;
+      background: rgba(0,0,0,0.03); padding: 4px; border-radius: 12px; width: fit-content;
+    }
+    .sub-tab {
+      text-decoration: none; display: inline-block;
+      cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--ink3);
+      padding: 8px 18px; border-radius: 9px; transition: all 0.2s var(--ease);
+    }
+    .sub-tab.active {
+      background: var(--surface); color: var(--blue); box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    /* DASHBOARD */
+    .btn {
+      display:inline-flex; align-items:center; gap:6px; padding:8px 16px;
+      border-radius:var(--radius-sm); font-size:.82rem; font-weight:600; cursor:pointer;
+      border:none; transition:all .12s;
+    }
+    .btn-ghost { background:transparent; border:1px solid var(--border2); color:var(--ink2); }
+    .btn-primary { background:var(--blue); color:white; }
+    .btn-danger { background:var(--red-l); color:white; }
+
+    .date-header { text-align:center; font-size:.9rem; font-weight:600; font-family:'DM Mono',monospace; color:var(--ink3); margin-bottom:20px; }
+    .dash-grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px; margin-bottom:16px; }
+    .panel {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      overflow:hidden; display:flex; flex-direction:column; transition:box-shadow .2s,border-color .2s;
+      animation:fadeUp .28s var(--ease-out) both;
+    }
+    .panel:hover { box-shadow:0 4px 18px rgba(0,0,0,.07); border-color:var(--border2); }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+    .panel-header {
+      background:linear-gradient(135deg,var(--blue),var(--blue-l)); padding:11px 16px;
+      display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+    }
+    .panel-title { color:white; font-weight:700; font-size:.9rem; }
+    .panel-date {
+      font-size:.68rem; font-family:'DM Mono',monospace; color:var(--ink4);
+      text-align:center; padding:6px 16px 0; flex-shrink:0;
+    }
+    .panel-date.stale { color:var(--red-l); font-weight:700; animation:pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+
+    .panel-body { padding:14px 16px 16px; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
+    .metric-row { display:flex; gap:10px; }
+    .metric-box {
+      background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm);
+      padding:12px 10px; flex:1; text-align:center;
+    }
+    .metric-label { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3); margin-bottom:5px; }
+    .metric-value { font-size:1.6rem; font-weight:700; letter-spacing:-.03em; color:var(--ink); line-height:1.1; outline:none; }
+    .metric-value[contenteditable="true"]:focus { background:var(--blue-ll); border-radius:4px; padding:0 4px; }
+
+    .section-label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--blue-l); margin-bottom:4px; }
+    .drivers-box {
+      background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm);
+      padding:10px 12px; font-size:.82rem; font-family:'DM Mono',monospace; color:var(--ink2);
+      white-space:pre-wrap; line-height:1.6; min-height:40px;
+    }
+    .drivers-box.alert { background:rgba(239,68,68,.06); border-color:rgba(239,68,68,.25); color:var(--red); }
+
+    .data-table { width:100%; border-collapse:collapse; font-size:.8rem; }
+    .data-table th {
+      background:var(--blue-ll); color:var(--blue); font-weight:700; font-size:.68rem;
+      text-transform:uppercase; padding:7px 8px; text-align:center; border-bottom:2px solid var(--blue-l);
+    }
+    .data-table td { padding:7px 8px; text-align:center; border-bottom:1px solid var(--border); color:var(--ink2); }
+
+    .prod-command-split { display: grid; grid-template-columns: 1fr 1.8fr; gap: 24px; }
+    .timeframe-block {
+      padding: 10px 14px; border-radius: var(--radius-sm);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      margin-bottom: 12px; width: 100%;
+    }
+    .timeframe-yesterday { background: var(--ink); color: white; }
+    .timeframe-today   { background: var(--blue); color: white; }
+    .timeframe-title { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+    .timeframe-date { font-family: 'DM Mono', monospace; font-size: 0.7rem; opacity: 0.85; }
+
+    .split-row { display: flex; gap: 16px; width: 100%; }
+    .split-col { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .col-label {
+      background: var(--surface2); padding: 4px; border-radius: var(--radius-xs);
+      border: 1px solid var(--border); text-align: center; font-weight: 800;
+      font-size: 0.68rem; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;
+    }
+    .readiness-stack {
+      background: rgba(37, 99, 235, 0.04); border: 1px dashed var(--blue-ll); border-radius: var(--radius-sm);
+      padding: 10px; display: flex; flex-direction: column; gap: 8px; height: 100%;
+    }
+    .readiness-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .readiness-line {
+      font-weight: 800; font-size: 0.75rem; color: var(--blue); margin-bottom: 6px;
+      border-bottom: 1px solid var(--surface2); padding-bottom: 2px;
+    }
+    .status-pill {
+      font-size: 0.65rem; font-weight: 700; padding: 3px 6px; border-radius: 4px;
+      display: flex; justify-content: space-between; align-items: center; margin-top: 3px;
+    }
+    .pill-yes { background: rgba(16, 185, 129, 0.1); color: var(--green); }
+    .pill-no  { background: rgba(239, 68, 68, 0.1);  color: var(--red-l); }
+
+    .chart-wrap {
+      position:relative; width:100%; border-radius:var(--radius-sm); overflow:hidden;
+      background:var(--surface2); border:1px solid var(--border); padding:10px;
+    }
+    .plan-card-body {
+      padding:16px; min-height:220px; outline:none; white-space:pre-wrap;
+      color:var(--ink2); font-size:.95rem; background:var(--surface2); line-height:1.6;
+    }
   </style>
 </head>
 <body>
+
 <div class="top-nav">
   <div class="logo">
     <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm0 11h7v7H3zm11-11h7v7h-7zm0 11h7v7h-7z"/></svg></div>
     <span class="logo-text">Novus <span>Foods</span> Ops</span>
   </div>
-  <nav class="nav-tabs">
-    <a class="nav-tab" href="staff-meeting-dashboard.html">Meeting Dashboard</a>
-    <a class="nav-tab" href="dds-dashboard.html">DDS Dashboard</a>
-    <a class="nav-tab active" href="needs-action.html">Needs Action</a>
-    <a class="nav-tab" href="sap-audit.html">SAP Audit</a>
-    <a class="nav-tab" href="Inventory-control.html">Inventory Control</a>
+
+    <nav class="nav-tabs">
+    <a class="nav-tab" href="dds-announcements.html">DDS Announcements</a>
+    <a class="nav-tab active" href="dds-dashboard.html">DDS Dashboard</a>
+    <a class="nav-tab" href="dds-rules.html">Rules of Engagement</a>
+    <a class="nav-tab" href="dds-corevalues.html">Core Values</a>
+    <a class="nav-tab" href="staff-meeting-dashboard.html">Customizable Dashboard</a>
+    <a class="nav-tab" href="needs-action.html">Needs Action</a>
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
-    <label id="upload-label" class="btn btn-brand" style="cursor:pointer;">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <span id="data-status">Upload workbook to load</span>
+    <label class="btn btn-ghost" style="cursor:pointer;">
       Upload Data
-      <input type="file" id="main-file-upload" accept=".xlsx,.xls" style="display:none;" onchange="handleFileUpload(event)">
+      <input type="file" id="main-file-upload" accept=".xlsx,.xls" style="display:none;" onchange="handleFile(event)">
     </label>
     <button class="btn btn-danger" onclick="NovusCore.navigateTo('index.html')">Logout</button>
   </div>
 </div>
 
 <div class="page">
-  <div class="header-section">
-    <div>
-      <h1 class="page-title">Needs Action Tracker</h1>
-      <p class="page-subtitle">Departmental action items and task monitoring</p>
-    </div>
-    <div style="text-align:right; display: flex; gap: 10px; align-items: center;">
-      <button class="btn btn-ghost" onclick="resetInternalData()">Reset Internal Storage</button>
-      <button id="btn-save-excel" class="btn btn-brand" onclick="exportUpdatedExcel()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Save Changes to Excel
-      </button>
-      <div id="save-msg" style="font-size:0.7rem;color:var(--green);margin-top:6px;display:none;">✓ FILE DOWNLOADED</div>
-    </div>
-  </div>
 
-  <!-- ADD ACTION PANEL -->
-  <div class="panel" style="border-left: 4px solid var(--blue);">
-    <div class="panel-header"><span class="panel-title">Add New Action Item</span></div>
-    <div class="panel-body">
-      <div class="filter-grid" style="grid-template-columns: 1fr 2fr 1fr 1fr;">
-        <div class="form-group"><label>Date</label><input type="date" id="new-date"></div>
-        <div class="form-group"><label>Action Description</label><input type="text" id="new-desc" placeholder="What needs to be done?"></div>
-        <div class="form-group"><label>Owner</label><input type="text" id="new-owner" placeholder="Name or Dept"></div>
-        <div class="form-group" style="display:flex; align-items:flex-end;">
-          <button class="btn btn-brand" style="width:100%; height:38px;" onclick="addNewAction()">Add Item</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- DDS Sub-navigation (now page links instead of JS view-switcher) -->
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-    <div class="panel">
-      <div class="panel-header"><span class="panel-title">Data Filters</span></div>
-      <div class="panel-body">
-        <div class="filter-grid">
-          <div class="form-group"><label>Owner Filter</label><select id="na-owner"><option value="">All Owners</option></select></div>
-          <div class="form-group">
-            <label>Status</label>
-            <select id="na-status">
-              <option value="open">Open (Active)</option>
-              <option value="completed">Completed</option>
-              <option value="all">All Items</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-header"><span class="panel-title">Summary Metrics</span></div>
+  <!-- ── MAIN DASHBOARD ─────────────────────────────────── -->
+  <div class="date-header" id="current-date-display">Loading…</div>
+
+  <div class="dash-grid">
+
+    <!-- Safety -->
+    <div class="panel" style="grid-column:span 4;">
+      <div class="panel-header"><span class="panel-title">Safety</span></div>
+      <div class="panel-date" id="date-safety">—</div>
       <div class="panel-body">
         <div class="metric-row">
-          <div class="metric-box"><div class="metric-label">Total Items</div><div class="metric-value" id="na-total-count">—</div></div>
-          <div class="metric-box"><div class="metric-label">Open Items</div><div class="metric-value" style="color:var(--red);" id="na-open-count">—</div></div>
-          <div class="metric-box"><div class="metric-label">Completed</div><div class="metric-value" style="color:var(--green);" id="na-completed-count">—</div></div>
+          <div class="metric-box"><div class="metric-label">Days W/O Incident</div><div class="metric-value" id="days-incident" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Near Misses</div><div class="metric-value" id="near-misses" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="panel">
-    <div class="panel-header"><span class="panel-title">Action Items Log</span></div>
-    <div class="panel-body">
-      <div class="table-container">
-        <table class="data-table" id="na-table">
-          <thead>
-            <tr>
-              <th style="width:110px;">Created</th>
-              <th>Needs Action Description</th>
-              <th style="width:120px;">Completed Date</th>
-              <th style="width:150px;">Owner</th>
-              <th style="width:100px;">Status</th>
-              <th style="width:80px; text-align:center;">Mark</th>
-            </tr>
-          </thead>
-          <tbody id="na-table-body">
-            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">Initializing tracker...</td></tr>
-          </tbody>
-        </table>
+    <!-- Quality -->
+    <div class="panel" style="grid-column:span 8;">
+      <div class="panel-header"><span class="panel-title">Quality</span></div>
+      <div class="panel-date" id="date-quality">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Holds</div><div class="metric-value" id="holds" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Holds/COA</div><div class="metric-value" id="holds-coa" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">PEM %</div><div class="metric-value" id="pem" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Complaints</div><div class="metric-value" id="complaints" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
       </div>
     </div>
+
+    <!-- Production -->
+    <div class="panel" style="grid-column:span 12;" id="panel-production">
+      <div class="panel-header"><span class="panel-title">Production Summary</span></div>
+      <div class="panel-body">
+        <div class="prod-command-split">
+          <div>
+            <div class="timeframe-block timeframe-today">
+              <div class="timeframe-title">Today's Operational Status</div>
+              <div class="timeframe-date" id="today-date-label">—</div>
+            </div>
+            <div class="split-row">
+              <div class="split-col"><div class="col-label">Salsa Lines</div><div class="readiness-stack" id="readiness-grid-salsa"></div></div>
+              <div class="split-col"><div class="col-label">Layer Lines</div><div class="readiness-stack" id="readiness-grid-layer"></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="timeframe-block timeframe-yesterday">
+              <div class="timeframe-title">Yesterday's Performance</div>
+              <div class="timeframe-date" id="yesterday-date-label">—</div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+              <div class="metric-box"><div class="metric-label">Code Yellow</div><div class="metric-value" id="code-yellow" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+              <div style="flex:2">
+                <div class="section-label">Top Downtime Drivers</div>
+                <div class="drivers-box alert" id="top-drivers">No data</div>
+              </div>
+            </div>
+            <div class="split-row" style="margin-top:12px;">
+              <div class="split-col">
+                <div class="col-label">Salsa Lines</div>
+                <table class="data-table">
+                  <thead><tr><th>Line</th><th>OEE</th><th>Attain</th><th>DT</th></tr></thead>
+                  <tbody id="prod-tbody-salsa"></tbody>
+                </table>
+              </div>
+              <div class="split-col">
+                <div class="col-label">Layer Lines</div>
+                <table class="data-table">
+                  <thead><tr><th>Line</th><th>OEE</th><th>Attain</th><th>DT</th></tr></thead>
+                  <tbody id="prod-tbody-layer"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-wrap" style="height:200px; margin-top:16px;">
+          <canvas id="production-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Costs -->
+    <div class="panel" style="grid-column:span 4;">
+      <div class="panel-header"><span class="panel-title">Costs</span></div>
+      <div class="panel-date" id="date-costs">—</div>
+      <div class="panel-body">
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>Direct</th><th>Indirect</th></tr></thead>
+          <tbody>
+            <tr><td>Cost / Lb</td><td id="cost-direct" contenteditable="true" oninput="saveManual(this.id)">—</td><td id="cost-indirect" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+            <tr><td>Lb / hr</td><td id="pound-hr-direct" contenteditable="true" oninput="saveManual(this.id)">—</td><td id="pound-hr-indirect" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+            <tr><td>Proj. Conversion</td><td colspan="2" id="conversion-costs" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+            <tr><td>Lbs Produced</td><td colspan="2" id="pounds-prod" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:16px;">
+          <div class="section-label">OT Trend by Dept</div>
+          <div class="chart-wrap" style="height:190px;"><canvas id="costs-ot-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HR / Training -->
+    <div class="panel" style="grid-column:span 4;">
+      <div class="panel-header"><span class="panel-title">HR | Training</span></div>
+      <div class="panel-date" id="date-hr">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Trainings Complete</div><div class="metric-value" id="trainings" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Headcount Total</div><div class="metric-value" id="headcount" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Safety Audits</div><div class="metric-value" id="safety-audits" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Meal Penalties</div><div class="metric-value" id="meal-penalties" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="chart-wrap" style="height:160px; margin-top:12px;"><canvas id="hr-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- SAP -->
+    <div class="panel" style="grid-column:span 4;">
+      <div class="panel-header"><span class="panel-title">SAP</span></div>
+      <div class="panel-date" id="date-sap">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Open Orders</div><div class="metric-value" id="proc-orders" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">WH Tasks</div><div class="metric-value" id="warehouse-tasks" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="chart-wrap" style="height:130px; margin-top:12px;"><canvas id="sap-open-orders-chart"></canvas></div>
+      </div>
+    </div>
+
   </div>
-</div>
+
+  <div class="panel" style="margin-bottom:32px;">
+    <div class="panel-header"><span class="panel-title">Daily Plan / Gemba Walk Notes</span></div>
+    <div class="panel-body">
+      <div class="plan-card-body" id="plan-gemba-walk" contenteditable="true" oninput="savePlan('plan-gemba-walk')">—</div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
 
 <script>
-const NEEDS_SHEET_NAME="Needs Action";
-const LOCAL_STORAGE_KEY = "novus_needs_action_overlay";
+// ────────────────────────────────────────────────
+let workbook = null;
+const TODAY = new Date();
+const charts = {};
 
-let fullWorkbook=null, needsRows=[], filteredRows=[];
-const ownerSelect=document.getElementById("na-owner"), statusSelect=document.getElementById("na-status");
-const totalCountEl=document.getElementById("na-total-count"), openCountEl=document.getElementById("na-open-count"), completedCountEl=document.getElementById("na-completed-count"), tableBody=document.getElementById("na-table-body"), saveMsg=document.getElementById("save-msg");
-
-function safeString(v){return(v===null||v===undefined)?"":String(v);}
-function pad2(n){return String(n).padStart(2,"0");}
-
-function parseExcelDate(value){
-  if(!value) return null;
-  if(value instanceof Date) return value;
-  if(typeof value === 'number') return new Date((value - 25569) * 86400 * 1000);
-  const d = new Date(value);
-  return isNaN(d) ? null : d;
+// ─── Date helpers ───────────────────────────────────────
+function toDateStr(d) {
+  if (!d || isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0,10);
 }
 
-function formatDateShort(d){
-  if(!d) return "";
-  const date = parseExcelDate(d);
-  if(!date) return "";
-  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth()+1)}-${pad2(date.getUTCDate())}`;
-}
-
-function rowStatus(row){
-  const dcRaw=row["Date Completed"];
-  return(dcRaw!==null&&dcRaw!==undefined&&String(dcRaw).trim()!=="")?"completed":"open";
-}
-
-// Helper to handle mapping between "Owner" and "Department" columns in Excel
-function getOwnerValue(row) {
-  return safeString(row["Owner"] || row["Department"]);
-}
-
-function _mergeWithLocal(excelRows) {
-  const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
-  const merged = [...excelRows];
-  localData.forEach(item => {
-    const idx = merged.findIndex(r =>
-      safeString(r["Needs Action"]) === safeString(item["Needs Action"]) &&
-      formatDateShort(r["Date"])    === formatDateShort(item["Date"]));
-    if (idx > -1) merged[idx] = item; else merged.push(item);
-  });
-  return merged;
-}
-
-function applyBuffer(buf) {
-  fullWorkbook = XLSX.read(buf, {type:"array", cellDates:true});
-  const ws = fullWorkbook.Sheets[NEEDS_SHEET_NAME];
-  const excelRows = ws ? XLSX.utils.sheet_to_json(ws, {defval:null}) : [];
-  needsRows = _mergeWithLocal(excelRows).map((r,idx) => ({_id:idx,...r}));
-  document.getElementById('new-date').value = formatDateShort(new Date());
-  const lbl = document.getElementById('upload-label');
-  if (lbl) { lbl.style.cssText += ";background:var(--green,#059669);border-color:var(--green,#059669);color:#fff;"; lbl.title = NovusCore.WorkbookCache.fileName(); }
-  initFilters();
-  applyFilters();
-}
-
-async function handleFileUpload(evt) {
-  const file = evt.target.files[0];
-  if (!file) return;
-  tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink3);">Reading file…</td></tr>';
-  try {
-    const buf = await NovusCore.WorkbookCache.save(file);
-    applyBuffer(buf);
-    NovusCore.Toast.success("Workbook loaded ✓");
-  } catch(err) {
-    console.error(err);
-    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;padding:40px;">Error reading file: ${err.message}</td></tr>`;
-    NovusCore.Toast.error("Failed to read file.");
+function parseExcelDate(v) {
+  if (!v) return null;
+  if (typeof v === 'number' && v > 25569) {
+    return new Date((v - 25569) * 86400 * 1000);
   }
+  const dt = new Date(v);
+  return isNaN(dt.getTime()) ? null : dt;
 }
 
-function loadNeedsActionSheet() {
-  const cached = NovusCore.WorkbookCache.load();
-  if (cached) {
-    applyBuffer(cached);
+function normalizeKey(k) {
+  return (k || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function findColumn(row, target) {
+  const cleanTarget = normalizeKey(target);
+  return Object.keys(row).find(k => normalizeKey(k) === cleanTarget) || null;
+}
+
+function getCell(row, field) {
+  const col = findColumn(row, field);
+  if (!col) return null;
+  let val = row[col];
+  if (val == null || val === '' || String(val).includes('#') || val === 'DNR') return null;
+  return val;
+}
+
+// ─── Sheet data ─────────────────────────────────────────
+function getSheet(name) {
+  if (!workbook) return [];
+  const ws = workbook.Sheets[name];
+  return ws ? XLSX.utils.sheet_to_json(ws, {defval:''}) : [];
+}
+
+function latestDateInSheet(rows) {
+  let max = null;
+  for (const r of rows) {
+    const d = parseExcelDate(r.Date ?? r.date);
+    if (d && (!max || d > max)) max = d;
+  }
+  return max ? { obj: max, str: toDateStr(max) } : null;
+}
+
+function valueOnDate(rows, dateStr, field, sum = false) {
+  if (!dateStr) return null;
+  const dayRows = rows.filter(r => toDateStr(parseExcelDate(r.Date ?? r.date)) === dateStr);
+  if (!dayRows.length) return null;
+
+  if (sum) {
+    return dayRows.reduce((acc, r) => acc + (Number(getCell(r, field)) || 0), 0) || null;
+  }
+  return getCell(dayRows[dayRows.length-1], field);
+}
+
+// ─── Render logic ───────────────────────────────────────
+function updateDateDisplay(id, dateInfo) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!dateInfo) {
+    el.textContent = 'No data';
+    el.classList.add('stale');
     return;
   }
-  const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
-  needsRows = localData.map((r,idx) => ({_id:idx,...r}));
-  document.getElementById('new-date').value = formatDateShort(new Date());
-  initFilters();
-  applyFilters();
-  if (!needsRows.length)
-    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink3);">⬆ Upload your department data workbook to load items, or add new items below.</td></tr>';
+  el.textContent = `Data: ${dateInfo.obj.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}`;
+  el.classList.remove('stale');
 }
 
-function initFilters(){
-  const ownerSet=new Set();
-  needsRows.forEach(r=>{
-    const owner = getOwnerValue(r);
-    if(owner) ownerSet.add(owner.trim());
-  });
-  const owners=Array.from(ownerSet).sort();
-  while(ownerSelect.options.length>1)ownerSelect.remove(1);
-  owners.forEach(owner=>{const o=document.createElement("option");o.value=owner;o.textContent=owner;ownerSelect.appendChild(o);});
-}
+function renderDashboard() {
+  if (!workbook) return;
 
-function addNewAction() {
-  const dateVal = document.getElementById('new-date').value;
-  const descVal = document.getElementById('new-desc').value;
-  const ownerVal = document.getElementById('new-owner').value;
-
-  if(!descVal) { alert("Please enter a description"); return; }
-
-  const newItem = {
-    "Date": dateVal,
-    "Needs Action": descVal,
-    "Owner": ownerVal,
-    "Department": ownerVal, // Sync to both for compatibility
-    "Date Completed": null
+  const sheets = {
+    hr:   getSheet('HR | Training'),
+    qa:   getSheet('QA'),
+    prod: getSheet('Production'),
+    fin:  getSheet('Finance'),
+    sap:  getSheet('SAP'),
+    maint:getSheet('Maintenance')
   };
 
-  needsRows.unshift({_id: Date.now(), ...newItem});
-  saveToInternal();
-  
-  document.getElementById('new-desc').value = "";
-  document.getElementById('new-owner').value = "";
-  applyFilters();
-  NovusCore.Toast.success("Action Item Added");
+  const dates = {
+    safety:   latestDateInSheet(sheets.hr),
+    quality:  latestDateInSheet(sheets.qa),
+    prod:     latestDateInSheet(sheets.prod),
+    costs:    latestDateInSheet(sheets.fin),
+    hr:       latestDateInSheet(sheets.hr),
+    sap:      latestDateInSheet(sheets.sap)
+  };
+
+  // Update date headers
+  updateDateDisplay('date-safety',   dates.safety);
+  updateDateDisplay('date-quality',  dates.quality);
+  updateDateDisplay('date-costs',    dates.costs);
+  updateDateDisplay('date-hr',       dates.hr);
+  updateDateDisplay('date-sap',      dates.sap);
+
+  document.getElementById('current-date-display').textContent =
+    `Today: ${TODAY.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'})}`;
+
+  // ── Metrics ───────────────────────────────────────────
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val ?? '—';
+  };
+
+  set('days-incident',   valueOnDate(sheets.hr,   dates.safety?.str, 'Days without Incident'));
+  set('near-misses',     valueOnDate(sheets.hr,   dates.safety?.str, 'Near Miss Reports'));
+  set('holds',           valueOnDate(sheets.qa,   dates.quality?.str, 'Holds'));
+  set('holds-coa',       valueOnDate(sheets.qa,   dates.quality?.str, 'Holds/COA'));
+  set('pem',             fmtPercent(valueOnDate(sheets.qa, dates.quality?.str, 'PEM %')));
+  set('complaints',      valueOnDate(sheets.qa,   dates.quality?.str, 'Number of Complaints'));
+  set('code-red',        valueOnDate(sheets.maint,dates.prod?.str,   'Code Red')     ?? '0');
+  set('code-yellow',     valueOnDate(sheets.maint,dates.prod?.str,   'Code Yellow')  ?? '0');
+
+  set('cost-direct',     valueOnDate(sheets.fin,  dates.costs?.str, '$/Pound - Direct'));
+  set('cost-indirect',   valueOnDate(sheets.fin,  dates.costs?.str, '$/Pound - Indirect'));
+  set('pound-hr-direct', valueOnDate(sheets.fin,  dates.costs?.str, 'Pounds/hour - Direct'));
+  set('pound-hr-indirect',valueOnDate(sheets.fin, dates.costs?.str, 'Pounds/hour - Indirect'));
+  set('pounds-prod',     (valueOnDate(sheets.fin, dates.costs?.str, 'Pounds Produced', true)||0).toLocaleString());
+  set('trainings',       fmtPercent(valueOnDate(sheets.hr, dates.hr?.str, 'Trainings Complete')));
+  set('proc-orders',     valueOnDate(sheets.sap,  dates.sap?.str,   'Open Process Orders'));
+  set('warehouse-tasks', valueOnDate(sheets.sap,  dates.sap?.str,   'Warehouse Tasks'));
+
+  const hcDir = Number(valueOnDate(sheets.hr, dates.hr?.str, 'Head Count - Direct'))  || 0;
+  const hcInd = Number(valueOnDate(sheets.hr, dates.hr?.str, 'Head Count - Indirect')) || 0;
+  set('headcount', hcDir + hcInd || '—');
+
+  // Production lines
+  renderProductionLines(sheets.prod, dates.prod?.str);
+
+  initCharts(sheets.prod, sheets.hr, sheets.sap);
 }
 
-function toggleCompletion(rowId) {
-  const row = needsRows.find(r => r._id === rowId);
-  if(!row) return;
+function fmtPercent(v, dec = 1) {
+  if (v == null) return '—';
+  let n = Number(v);
+  if (isNaN(n)) return '—';
+  if (n <= 1.1) n *= 100;
+  return n.toFixed(dec) + '%';
+}
 
-  if (rowStatus(row) === "open") {
-    row["Date Completed"] = formatDateShort(new Date());
-  } else {
-    row["Date Completed"] = null;
+function renderProductionLines(prodRows, targetDate) {
+  if (!targetDate) return;
+
+  const salsa = ['2A','PL1','MP4','PXM6'];
+  const layer = ['PL2','2E'];
+
+  const renderLine = (line, tbodyId, stackId) => {
+    const row = prodRows.find(r =>
+      toDateStr(parseExcelDate(r.Date)) === targetDate &&
+      String(getCell(r, 'Line')||'').trim().toUpperCase() === line
+    );
+
+    const oee  = fmtPercent(getCell(row, 'OEE'));
+    const att  = fmtPercent(getCell(row, 'Attainment'),1);
+    const dt   = (getCell(row, 'Downtime')||0) + 'm';
+
+    document.getElementById(tbodyId).innerHTML += `
+      <tr>
+        <td style="font-weight:700">${line}</td>
+        <td>${oee}</td>
+        <td>${att}</td>
+        <td>${dt}</td>
+      </tr>`;
+
+    const startup = String(getCell(row,'Start Up')||'').toLowerCase().includes('y');
+    const cil     = String(getCell(row,'CIL')||'').toLowerCase().includes('y');
+
+    document.getElementById(stackId).innerHTML += `
+      <div class="readiness-card">
+        <div class="readiness-line">${line}</div>
+        <div class="status-pill ${startup?'pill-yes':'pill-no'}">STARTUP <span>${startup?'✓':'✗'}</span></div>
+        <div class="status-pill ${cil?'pill-yes':'pill-no'}">CIL <span>${cil?'✓':'✗'}</span></div>
+      </div>`;
+  };
+
+  const tbS = document.getElementById('prod-tbody-salsa'); tbS.innerHTML = '';
+  const tbL = document.getElementById('prod-tbody-layer'); tbL.innerHTML = '';
+  const rdS = document.getElementById('readiness-grid-salsa'); rdS.innerHTML = '';
+  const rdL = document.getElementById('readiness-grid-layer'); rdL.innerHTML = '';
+
+  salsa.forEach(l => renderLine(l, 'prod-tbody-salsa', 'readiness-grid-salsa'));
+  layer.forEach(l => renderLine(l, 'prod-tbody-layer', 'readiness-grid-layer'));
+
+  // Today / Yesterday labels
+  document.getElementById('today-date-label').textContent     = targetDate ? new Date(targetDate).toLocaleDateString() : '—';
+  document.getElementById('yesterday-date-label').textContent = targetDate ? new Date(targetDate).toLocaleDateString() : '—';
+}
+
+// ─── Charts ─────────────────────────────────────────────
+function initCharts(prod, hr, sap) {
+  Object.values(charts).forEach(c => c?.destroy?.());
+
+  const last7 = [...new Set(prod.map(r => toDateStr(parseExcelDate(r.Date))))]
+    .filter(Boolean)
+    .sort()
+    .slice(-7);
+
+  const prodCtx = document.getElementById('production-chart')?.getContext('2d');
+  if (prodCtx) {
+    charts.prod = new Chart(prodCtx, {
+      type: 'line',
+      data: {
+        labels: last7.map(d => d.slice(5).replace('-','/')),
+        datasets: [{
+          label: 'Avg OEE %',
+          data: last7.map(d => {
+            const day = prod.filter(r => toDateStr(parseExcelDate(r.Date)) === d);
+            const avg = day.reduce((s,r)=>s + (Number(getCell(r,'OEE'))||0), 0) / (day.length||1);
+            return (avg <= 1.1 ? avg*100 : avg).toFixed(1);
+          }),
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37,99,235,0.15)',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: 'top' } },
+        scales: { y: { beginAtZero: false } }
+      }
+    });
   }
 
-  saveToInternal();
-  applyFilters();
+  // Additional charts (hr-chart, costs-ot-chart, sap-open-orders-chart) left as placeholders
 }
 
-function saveToInternal() {
-  const dataToSave = needsRows.map(r => {
-    const { _id, ...rest } = r;
-    return rest;
-  });
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
-  
-  const btn=document.getElementById("btn-save-excel");
-  btn.style.background="var(--amber)";
-  btn.innerHTML="💾 Unsaved Changes (Export to Excel)";
+// ─── Save manual edits ──────────────────────────────────
+function saveManual(id) {
+  console.debug(`Manual edit on ${id}`);
 }
 
-function resetInternalData() {
-  if(confirm("Clear all internal changes and revert to original Excel file?")) {
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-    location.reload();
+function savePlan(id) {
+  console.debug(`Plan edit on ${id}`);
+}
+
+// ─── File handling ──────────────────────────────────────
+function handleFile(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = new Uint8Array(ev.target.result);
+      workbook = XLSX.read(data, { type: 'array' });
+      renderDashboard();
+      document.getElementById('data-status').textContent = '✓ Data Loaded';
+    } catch (err) {
+      console.error(err);
+      document.getElementById('data-status').textContent = '✗ Load failed';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ─── Init ───────────────────────────────────────────────
+window.addEventListener('load', () => {
+  NovusCore.requireAuth();
+  // Optional: try to load cached workbook from novus-core.js
+  if (NovusCore?.WorkbookCache?.load) {
+    const cached = NovusCore.WorkbookCache.load();
+    if (cached) {
+      workbook = XLSX.read(cached, { type: 'array' });
+      renderDashboard();
+      document.getElementById('data-status').textContent = '✓ Cached Data';
+    }
   }
-}
-
-function exportUpdatedExcel(){
-  if(!fullWorkbook)return;
-  const cleanData = needsRows.map(r=>{const{_id,...rest}=r; return rest;});
-  const newSheet = XLSX.utils.json_to_sheet(cleanData);
-  fullWorkbook.Sheets[NEEDS_SHEET_NAME] = newSheet;
-  XLSX.writeFile(fullWorkbook,"all_department_data_2026.xlsx");
-  
-  const btn=document.getElementById("btn-save-excel");
-  btn.style.background="";
-  btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Changes to Excel`;
-  
-  saveMsg.style.display="block";
-  setTimeout(()=>{saveMsg.style.display="none";},3000);
-}
-
-function applyFilters(){
-  const selOwner=ownerSelect.value, selStatus=statusSelect.value;
-  filteredRows=needsRows.filter(row=>{
-    if(selOwner && getOwnerValue(row).trim() !== selOwner) return false;
-    const st=rowStatus(row);
-    if(selStatus==="open"&&st!=="open")return false;
-    if(selStatus==="completed"&&st!=="completed")return false;
-    return true;
-  });
-  renderSummaryAndTable();
-}
-
-function renderSummaryAndTable(){
-  let open=0, comp=0;
-  filteredRows.forEach(r=>{const st=rowStatus(r); if(st==="open")open++; else comp++;});
-  totalCountEl.textContent=filteredRows.length;
-  openCountEl.textContent=open;
-  completedCountEl.textContent=comp;
-  renderTable();
-}
-
-function renderTable(){
-  tableBody.innerHTML="";
-  if(!filteredRows.length){tableBody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">No items match current filters.</td></tr>`;return;}
-  
-  filteredRows.forEach(row=>{
-    const tr=document.createElement("tr");
-    const status=rowStatus(row);
-    const isChecked = status === 'completed' ? 'checked' : '';
-    
-    tr.innerHTML=`
-      <td class="date-mono">${formatDateShort(row["Date"])}</td>
-      <td class="na-text-cell" style="${status === 'completed' ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${safeString(row["Needs Action"])}</td>
-      <td class="date-mono">${formatDateShort(row["Date Completed"])}</td>
-      <td style="font-weight:600;color:var(--blue);">${getOwnerValue(row)}</td>
-      <td><span style="font-weight:700;color:${status==='open'?'var(--red)':'var(--green)'};">${status==='open'?'Open':'Completed'}</span></td>
-      <td style="text-align:center;">
-        <label class="checkbox-wrapper">
-          <input type="checkbox" ${isChecked} onchange="toggleCompletion(${row._id})">
-          <div class="checkmark">
-            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-          </div>
-        </label>
-      </td>
-    `;
-    tableBody.appendChild(tr);
-  });
-}
-
-ownerSelect.onchange=applyFilters;
-statusSelect.onchange=applyFilters;
-window.onload=loadNeedsActionSheet;
+});
 </script>
 </body>
 </html>
