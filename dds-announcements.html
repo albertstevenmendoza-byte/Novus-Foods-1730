@@ -13,22 +13,43 @@
     .nav-tabs { display: flex; gap: 5px; background: #f1f5f9; padding: 5px; border-radius: 10px; }
     .nav-tab { padding: 6px 14px; border-radius: 7px; text-decoration: none; font-size: 0.8rem; font-weight: 600; color: #64748b; }
     .nav-tab.active { background: white; color: var(--blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .page { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
+    .page { max-width: 1760px; margin: 0 auto; padding: 40px 20px; }
     .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-    .btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; }
+    .btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
     .btn-primary { background: var(--blue); color: white; }
-    .board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
-    .pretty-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-    .card-img { width: 100%; height: 180px; object-fit: cover; background: #eee; }
-    .card-content { padding: 20px; }
-    .badge { background: var(--blue); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; display: inline-block; }
-    .card-body { font-size: 1rem; min-height: 60px; margin-bottom: 15px; white-space: pre-wrap; }
-    .card-footer { display: flex; justify-content: space-between; font-size: 0.7rem; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 15px; }
+    .board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 30px; }
+    
+    .pretty-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04); transition: 0.3s; position: relative;}
+    .pretty-card:hover { transform: translateY(-5px); }
+    .card-image-wrap { width: 100%; height: 210px; background: #eee; position: relative; overflow: hidden; }
+    .card-image-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .img-edit-btn { position: absolute; top: 10px; right: 10px; padding: 5px 10px; background: rgba(255,255,255,0.9); border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; opacity: 0; transition: 0.2s; border:none; }
+    .pretty-card:hover .img-edit-btn { opacity: 1; }
+
+    .card-content { padding: 25px; }
+    .badge { background: var(--blue); color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; display: inline-block; }
+    .card-body { font-size: 1.1rem; min-height: 80px; outline: none; white-space: pre-wrap; margin-bottom: 20px; font-weight: 500;}
+    
+    .card-controls { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px; }
+    .color-dots { display: flex; gap: 8px; }
+    .dot { width: 16px; height: 16px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
     .delete-btn { cursor: pointer; color: #cbd5e1; } .delete-btn:hover { color: #ef4444; }
+    .card-footer { background: #fafbfc; padding: 12px 25px; border-top: 1px solid var(--border); font-size: 0.7rem; color: #94a3b8; }
+
+    /* MODAL */
+    .gallery-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); display: none; place-items: center; z-index: 2000; }
+    .gallery-overlay.active { display: grid; }
+    .gallery-window { background: white; width: 90%; max-width: 800px; padding: 32px; border-radius: 24px; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin: 20px 0; }
+    .gallery-item { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; cursor: pointer; border: 3px solid transparent; }
+    .gallery-item:hover { border-color: var(--blue); transform: scale(1.02); }
+
     body:not(.is-admin) .admin-only { display: none !important; }
   </style>
 </head>
 <body id="main-body">
+
 <div class="top-nav">
   <div class="logo">Novus <span>Foods</span> Ops</div>
   <nav class="nav-tabs">
@@ -40,15 +61,48 @@
   </nav>
   <button class="btn" onclick="NovusCore.navigateTo('index.html')">Logout</button>
 </div>
+
 <div class="page">
   <div class="header-flex">
-    <h2>DDS Announcements</h2>
-    <button class="btn btn-primary admin-only" id="add-btn" onclick="addItem()">+ Post Update</button>
+    <div>
+      <h2 style="font-size:2rem; font-weight:800;">DDS Announcements</h2>
+      <p style="color:#64748b">Official global updates and sequential announcements.</p>
+    </div>
+    <button class="btn btn-primary admin-only" id="add-btn" onclick="addItem()">+ Post New Update</button>
   </div>
   <div class="board-container" id="board">Loading global feed...</div>
 </div>
+
+<!-- Gallery Modal -->
+<div class="gallery-overlay" id="galleryOverlay">
+  <div class="gallery-window">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="font-weight:800">Select Professional Cover</h3>
+      <button class="btn" onclick="closeGallery()">Close</button>
+    </div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+    <div style="text-align:center; border-top:1px solid #eee; padding-top:20px;">
+      <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Upload Custom Image</button>
+      <input type="file" id="fileInput" style="display:none" accept="image/*" onchange="handleFileUpload(event)">
+    </div>
+  </div>
+</div>
+
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbzkbLOYmulfI0eVjt8jOlvggWveqkLmDb570Jz8aDxT9TlvV3CzSCFjxtORjOTI5Ftq-A/exec";
+
+  const PROF_PRESETS = [
+    'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1565061828021-dd353ba0a1b7?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=800&q=80'
+  ];
+
+  const THEME_COLORS = ['#ffffff', '#f0f9ff', '#f0fdf4', '#fffbeb', '#fef2f2', '#f8fafc'];
+
+  let activeCardId = null;
 
   function checkAdmin() {
     try {
@@ -60,50 +114,80 @@
   if (isAdmin) document.getElementById('main-body').classList.add('is-admin');
 
   async function loadData() {
-    try {
-      const res = await fetch(API_URL + "?sheet=Announcements");
-      const data = await res.json();
-      const container = document.getElementById('board');
-      if (data.length === 0) {
-        container.innerHTML = "<p>No announcements found.</p>";
-        return;
-      }
-      container.innerHTML = data.reverse().map(item => `
-        <div class="pretty-card">
-          <img class="card-img" src="${item.image || 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80'}">
-          <div class="card-content">
-            <span class="badge">Update #${item.number}</span>
-            <div class="card-body">${item.text}</div>
-            <div class="card-footer"><span>${item.date}</span>
-            ${isAdmin ? `<span class="delete-btn" onclick="deleteItem('${item.id}')">🗑️</span>` : ''}
+    const res = await fetch(API_URL + "?sheet=Announcements");
+    const data = await res.json();
+    const container = document.getElementById('board');
+    container.innerHTML = data.reverse().map(item => `
+      <div class="pretty-card" style="background-color: ${item.color || '#ffffff'}">
+        <div class="card-image-wrap">
+          <img src="${item.image || PROF_PRESETS[0]}">
+          <button class="img-edit-btn admin-only" onclick="openGallery('${item.id}')">Change Image</button>
+        </div>
+        <div class="card-content">
+          <span class="badge">Announcement ${item.number}</span>
+          <div class="card-body" contenteditable="${isAdmin}" onblur="updateField('${item.id}', 'text', this.innerText)">${item.text}</div>
+          <div class="card-controls">
+            <div class="color-dots admin-only">
+              ${THEME_COLORS.map(c => `<div class="dot" style="background:${c}" onclick="updateField('${item.id}', 'color', '${c}')"></div>`).join('')}
             </div>
+            ${isAdmin ? `<span class="delete-btn" onclick="deleteItem('${item.id}')">🗑️</span>` : ''}
           </div>
-        </div>`).join('');
-    } catch(e) { document.getElementById('board').innerText = "Error loading global feed."; }
+        </div>
+        <div class="card-footer"><span>${item.date}</span></div>
+      </div>`).join('');
   }
 
   async function addItem() {
-    const text = prompt("Enter announcement text:");
+    if (!isAdmin) return;
+    const text = prompt("Announcement text:");
     if (!text) return;
-    const btn = document.getElementById('add-btn');
-    btn.innerText = "Syncing...";
-    btn.disabled = true;
-
-    const newItem = { 
-      sheet: "Announcements", 
-      action: "add", 
-      id: Date.now().toString(), 
-      number: document.querySelectorAll('.pretty-card').length + 1, 
-      text: text, 
-      date: new Date().toLocaleDateString(), 
-      image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80", 
-      color: "#ffffff" 
+    document.getElementById('add-btn').innerText = "Syncing...";
+    
+    const newItem = {
+      sheet: "Announcements",
+      action: "add",
+      id: Date.now().toString(),
+      number: document.querySelectorAll('.pretty-card').length + 1,
+      text: text,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      image: PROF_PRESETS[0],
+      color: "#ffffff"
     };
 
     await fetch(API_URL, { method: 'POST', body: JSON.stringify(newItem) });
-    btn.innerText = "+ Post Update";
-    btn.disabled = false;
+    document.getElementById('add-btn').innerText = "+ Post New Update";
     loadData();
+  }
+
+  async function updateField(id, field, value) {
+    if (!isAdmin) return;
+    const payload = { sheet: "Announcements", action: "edit", id: id, field: field, value: value };
+    await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+    if (field !== 'text') loadData(); // Re-render for color/image changes
+  }
+
+  function openGallery(id) {
+    activeCardId = id;
+    const grid = document.getElementById('galleryGrid');
+    grid.innerHTML = PROF_PRESETS.map(url => `<img src="${url}" class="gallery-item" onclick="selectPreset('${url}')">`).join('');
+    document.getElementById('galleryOverlay').classList.add('active');
+  }
+
+  function closeGallery() { document.getElementById('galleryOverlay').classList.remove('active'); }
+
+  async function selectPreset(url) {
+    await updateField(activeCardId, 'image', url);
+    closeGallery();
+  }
+
+  function handleFileUpload(e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      await updateField(activeCardId, 'image', event.target.result);
+      closeGallery();
+    };
+    reader.readAsDataURL(file);
   }
 
   async function deleteItem(id) {
@@ -111,6 +195,7 @@
     await fetch(API_URL, { method: 'POST', body: JSON.stringify({ sheet: "Announcements", action: "delete", id: id }) });
     loadData();
   }
+
   window.onload = () => { NovusCore.requireAuth(); loadData(); };
 </script>
 </body>
