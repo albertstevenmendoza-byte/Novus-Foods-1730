@@ -1,314 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>DDS Announcements – Novus Foods Ops Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="novus-core.js"></script>
   <style>
-    :root {
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --border: #e2e8f0;
-      --ink: #0f172a;
-      --ink-light: #64748b;
-      --blue: #2563eb;
-      --radius-lg: 20px;
-      --radius-md: 12px;
-      --radius-sm: 8px;
-      --shadow: 0 10px 15px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02);
-      --ease: cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background-color: var(--bg);
-      background-image: radial-gradient(#cbd5e1 0.6px, transparent 0.6px);
-      background-size: 30px 30px;
-      color: var(--ink);
-      line-height: 1.6;
-    }
-
-    /* NAVIGATION */
-    .top-nav {
-      height: 64px; background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 0 28px; position: sticky; top: 0; z-index: 1000;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; }
-    .logo-icon { width: 30px; height: 30px; background: var(--blue); border-radius: 8px; display: grid; place-items: center; color: white; }
-    .logo span { color: var(--blue); }
-
-    .nav-tabs { display: flex; gap: 2px; background: #f1f5f9; padding: 4px; border-radius: 10px; overflow-x: auto; scrollbar-width: none; }
-    .nav-tab { 
-      padding: 6px 14px; border-radius: 7px; text-decoration: none; 
-      font-size: 0.82rem; font-weight: 600; color: var(--ink-light); 
-      white-space: nowrap; transition: 0.2s; 
-    }
-    .nav-tab.active { background: white; color: var(--blue); box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
-
-    /* LAYOUT */
-    .page { max-width: 1760px; margin: 0 auto; padding: 40px 20px 80px; }
-    .header-flex { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; }
-
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px;
-      border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer;
-      border: none; transition: all 0.2s;
-    }
-    .btn-primary { background: var(--blue); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(37,99,235,0.3); }
-
-    /* CARDS */
-    .board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 30px; }
-    
-    .pretty-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      display: flex; flex-direction: column;
-      transition: all 0.4s var(--ease);
-      box-shadow: var(--shadow);
-      position: relative;
-    }
-    .pretty-card:hover { transform: translateY(-6px); box-shadow: 0 20px 30px -10px rgba(0,0,0,0.1); }
-
-    /* IMAGE SECTION */
-    .card-image-wrap {
-      width: 100%; height: 220px; background: #f1f5f9;
-      position: relative; overflow: hidden;
-    }
-    .card-image-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s; }
-    .pretty-card:hover .card-image-wrap img { transform: scale(1.05); }
-    
-    .image-overlay-btns {
-      position: absolute; top: 12px; right: 12px; display: flex; gap: 8px;
-      opacity: 0; transition: 0.3s;
-    }
-    .pretty-card:hover .image-overlay-btns { opacity: 1; }
-    
-    .img-btn {
-      padding: 6px 12px; background: rgba(255,255,255,0.9); border-radius: 8px;
-      font-size: 0.75rem; font-weight: 700; cursor: pointer; border: none;
-      backdrop-filter: blur(4px); box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .img-btn:hover { background: var(--blue); color: white; }
-
-    /* CONTENT AREA */
-    .card-content { padding: 28px; flex-grow: 1; }
-    .announcement-badge {
-      display: inline-block; padding: 4px 10px; background: var(--blue); color: white;
-      border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
-      letter-spacing: 0.05em; margin-bottom: 12px;
-    }
-    .card-body { 
-      font-size: 1.1rem; color: var(--ink); outline: none; 
-      min-height: 100px; white-space: pre-wrap; font-weight: 500;
-    }
-
-    /* CONTROLS */
-    .card-controls {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.05);
-    }
-    .color-dots { display: flex; gap: 8px; }
-    .dot { width: 16px; height: 16px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); transition: 0.2s; }
-    .dot:hover { transform: scale(1.2); }
-
-    .card-footer {
-      padding: 16px 28px; background: #fafbfc; border-top: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .card-meta { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--ink-light); }
-    .delete-btn { cursor: pointer; opacity: 0.4; transition: 0.2s; }
-    .delete-btn:hover { opacity: 1; color: #ef4444; }
-
-    /* PRESET GALLERY MODAL */
-    .gallery-overlay {
-      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8);
-      backdrop-filter: blur(8px); display: none; place-items: center; z-index: 2000;
-    }
-    .gallery-overlay.active { display: grid; }
-    .gallery-window {
-      background: white; width: 90%; max-width: 800px; padding: 32px;
-      border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-    }
-    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin: 20px 0; }
-    .gallery-item { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; cursor: pointer; transition: 0.2s; border: 3px solid transparent; }
-    .gallery-item:hover { transform: scale(1.05); border-color: var(--blue); }
-
-    [contenteditable]:empty:before { content: "Type announcement details here..."; color: var(--ink-light); }
+    :root { --bg: #f8fafc; --surface: #ffffff; --border: #e2e8f0; --ink: #0f172a; --blue: #2563eb; --radius: 20px; }
+    body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--ink); margin: 0; }
+    .top-nav { height: 64px; background: white; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 28px; position: sticky; top: 0; z-index: 1000; }
+    .logo { font-weight: 700; } .logo span { color: var(--blue); }
+    .nav-tabs { display: flex; gap: 5px; background: #f1f5f9; padding: 5px; border-radius: 10px; }
+    .nav-tab { padding: 6px 14px; border-radius: 7px; text-decoration: none; font-size: 0.8rem; font-weight: 600; color: #64748b; }
+    .nav-tab.active { background: white; color: var(--blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .page { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
+    .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; }
+    .btn-primary { background: var(--blue); color: white; }
+    .board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+    .pretty-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+    .card-img { width: 100%; height: 180px; object-fit: cover; background: #eee; }
+    .card-content { padding: 20px; }
+    .badge { background: var(--blue); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; display: inline-block; }
+    .card-body { font-size: 1rem; min-height: 60px; margin-bottom: 15px; white-space: pre-wrap; }
+    .card-footer { display: flex; justify-content: space-between; font-size: 0.7rem; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 15px; }
+    .delete-btn { cursor: pointer; color: #cbd5e1; } .delete-btn:hover { color: #ef4444; }
+    body:not(.is-admin) .admin-only { display: none !important; }
   </style>
 </head>
-<body>
-
+<body id="main-body">
 <div class="top-nav">
-  <div class="logo">
-    <div class="logo-icon">N</div>
-    Novus <span>Foods</span> Ops
-  </div>
+  <div class="logo">Novus <span>Foods</span> Ops</div>
   <nav class="nav-tabs">
     <a class="nav-tab active" href="dds-announcements.html">DDS Announcements</a>
     <a class="nav-tab" href="dds-dashboard.html">DDS Dashboard</a>
     <a class="nav-tab" href="dds-rules.html">Rules of Engagement</a>
     <a class="nav-tab" href="dds-corevalues.html">Core Values</a>
-    <a class="nav-tab" href="staff-meeting-dashboard.html">Customizable Dashboard</a>
     <a class="nav-tab" href="needs-action.html">Needs Action</a>
   </nav>
-  <button class="btn" style="background:#fee2e2; color:#dc2626" onclick="NovusCore.navigateTo('index.html')">Logout</button>
+  <button class="btn" onclick="NovusCore.navigateTo('index.html')">Logout</button>
 </div>
-
 <div class="page">
   <div class="header-flex">
-    <div>
-      <h2 style="font-size:2rem; font-weight:800; letter-spacing:-0.03em;">DDS Announcements</h2>
-      <p style="color:var(--ink-light)">Official internal updates and sequential announcements.</p>
-    </div>
-    <button class="btn btn-primary" onclick="addItem()">+ Post New Update</button>
+    <h2>DDS Announcements</h2>
+    <button class="btn btn-primary admin-only" id="add-btn" onclick="addItem()">+ Post Update</button>
   </div>
-
-  <div class="board-container" id="announcement-board"></div>
+  <div class="board-container" id="board">Loading global feed...</div>
 </div>
-
-<!-- Image Selection Overlay -->
-<div class="gallery-overlay" id="galleryOverlay">
-  <div class="gallery-window">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 style="font-weight:800">Select Professional Cover</h3>
-      <button class="btn" onclick="closeGallery()">Close</button>
-    </div>
-    <div class="gallery-grid" id="galleryGrid"></div>
-    <div style="text-align:center; border-top:1px solid #eee; padding-top:20px;">
-      <p style="font-size:0.8rem; color:var(--ink-light); margin-bottom:10px;">Or upload a custom image from your device</p>
-      <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Upload Custom Image</button>
-    </div>
-  </div>
-</div>
-
-<input type="file" id="fileInput" style="display:none" accept="image/*" onchange="handleFileUpload(event)">
-
 <script>
-const STORAGE_ANN = 'dds_ann_v19';
+  const API_URL = "https://script.google.com/macros/s/AKfycbzkbLOYmulfI0eVjt8jOlvggWveqkLmDb570Jz8aDxT9TlvV3CzSCFjxtORjOTI5Ftq-A/exec";
 
-// Curated Professional Imagery (Warehouse, Corporate, Logistics, Food Ops)
-const PROF_PRESETS = [
-  'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80', // Warehouse High Bay
-  'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80', // Professional Office
-  'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=800&q=80', // Logistics/Boxes
-  'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80', // Tech/Data
-  'https://images.unsplash.com/photo-1565061828021-dd353ba0a1b7?auto=format&fit=crop&w=800&q=80', // Industrial/Steel
-  'https://images.unsplash.com/photo-1589792900482-7662e7d4ad7a?auto=format&fit=crop&w=800&q=80', // Clean Kitchen/Lab
-  'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=800&q=80', // Team Collaboration
-  'https://images.unsplash.com/photo-1531973576160-7125cd663d86?auto=format&fit=crop&w=800&q=80'  // Modern Building
-];
+  function checkAdmin() {
+    try {
+      const user = JSON.parse(sessionStorage.getItem('novus1730_user'));
+      return user && user.role === 'admin';
+    } catch(e) { return false; }
+  }
+  const isAdmin = checkAdmin();
+  if (isAdmin) document.getElementById('main-body').classList.add('is-admin');
 
-const THEME_COLORS = ['#ffffff', '#f0f9ff', '#f0fdf4', '#fffbeb', '#fef2f2', '#f8fafc'];
-
-let items = JSON.parse(localStorage.getItem(STORAGE_ANN) || '[]');
-let activeCardId = null;
-
-function renderBoard() {
-  const container = document.getElementById('announcement-board');
-  container.innerHTML = items.map(item => `
-    <div class="pretty-card" style="background-color: ${item.color || '#ffffff'}">
-      <div class="card-image-wrap">
-        <img src="${item.image || PROF_PRESETS[0]}">
-        <div class="image-overlay-btns">
-          <button class="img-btn" onclick="openGallery(${item.id})">Change Image</button>
-        </div>
-      </div>
-      <div class="card-content">
-        <span class="announcement-badge">Announcement ${item.number}</span>
-        <div class="card-body" contenteditable="true" onblur="updateText(${item.id}, this.innerText)">${item.text}</div>
-        
-        <div class="card-controls">
-          <div class="color-dots">
-            ${THEME_COLORS.map(c => `<div class="dot" style="background:${c}" onclick="updateColor(${item.id}, '${c}')"></div>`).join('')}
+  async function loadData() {
+    try {
+      const res = await fetch(API_URL + "?sheet=Announcements");
+      const data = await res.json();
+      const container = document.getElementById('board');
+      if (data.length === 0) {
+        container.innerHTML = "<p>No announcements found.</p>";
+        return;
+      }
+      container.innerHTML = data.reverse().map(item => `
+        <div class="pretty-card">
+          <img class="card-img" src="${item.image || 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80'}">
+          <div class="card-content">
+            <span class="badge">Update #${item.number}</span>
+            <div class="card-body">${item.text}</div>
+            <div class="card-footer"><span>${item.date}</span>
+            ${isAdmin ? `<span class="delete-btn" onclick="deleteItem('${item.id}')">🗑️</span>` : ''}
+            </div>
           </div>
-          <span class="delete-btn" onclick="deleteItem(${item.id})">🗑️</span>
-        </div>
-      </div>
-      <div class="card-footer">
-        <span class="card-meta">${item.date}</span>
-      </div>
-    </div>
-  `).join('');
-}
+        </div>`).join('');
+    } catch(e) { document.getElementById('board').innerText = "Error loading global feed."; }
+  }
 
-function addItem() {
-  // Logic to ensure numbers are strictly sequential based on existing items
-  const nextNum = items.length > 0 ? Math.max(...items.map(i => i.number || 0)) + 1 : 1;
-  items.unshift({
-    id: Date.now(),
-    number: nextNum,
-    text: '',
-    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    image: PROF_PRESETS[0],
-    color: '#ffffff'
-  });
-  save();
-}
+  async function addItem() {
+    const text = prompt("Enter announcement text:");
+    if (!text) return;
+    const btn = document.getElementById('add-btn');
+    btn.innerText = "Syncing...";
+    btn.disabled = true;
 
-function updateText(id, text) {
-  const item = items.find(i => i.id === id);
-  if (item) { item.text = text; save(false); }
-}
+    const newItem = { 
+      sheet: "Announcements", 
+      action: "add", 
+      id: Date.now().toString(), 
+      number: document.querySelectorAll('.pretty-card').length + 1, 
+      text: text, 
+      date: new Date().toLocaleDateString(), 
+      image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80", 
+      color: "#ffffff" 
+    };
 
-function updateColor(id, color) {
-  const item = items.find(i => i.id === id);
-  if (item) { item.color = color; save(); }
-}
+    await fetch(API_URL, { method: 'POST', body: JSON.stringify(newItem) });
+    btn.innerText = "+ Post Update";
+    btn.disabled = false;
+    loadData();
+  }
 
-function openGallery(id) {
-  activeCardId = id;
-  const grid = document.getElementById('galleryGrid');
-  grid.innerHTML = PROF_PRESETS.map(url => `
-    <img src="${url}" class="gallery-item" onclick="selectPreset('${url}')">
-  `).join('');
-  document.getElementById('galleryOverlay').classList.add('active');
-}
-
-function closeGallery() { document.getElementById('galleryOverlay').classList.remove('active'); }
-
-function selectPreset(url) {
-  const item = items.find(i => i.id === activeCardId);
-  if (item) { item.image = url; save(); closeGallery(); }
-}
-
-function handleFileUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const item = items.find(i => i.id === activeCardId);
-    if (item) { item.image = event.target.result; save(); closeGallery(); }
-  };
-  reader.readAsDataURL(file);
-}
-
-function deleteItem(id) {
-  if (!confirm('Permanently delete this announcement?')) return;
-  items = items.filter(i => i.id !== id);
-  save();
-}
-
-function save(reRender = true) {
-  localStorage.setItem(STORAGE_ANN, JSON.stringify(items));
-  if (reRender) renderBoard();
-}
-
-window.addEventListener('load', () => {
-  if (typeof NovusCore !== 'undefined') NovusCore.requireAuth();
-  renderBoard();
-});
+  async function deleteItem(id) {
+    if (!confirm("Delete globally?")) return;
+    await fetch(API_URL, { method: 'POST', body: JSON.stringify({ sheet: "Announcements", action: "delete", id: id }) });
+    loadData();
+  }
+  window.onload = () => { NovusCore.requireAuth(); loadData(); };
 </script>
 </body>
 </html>
