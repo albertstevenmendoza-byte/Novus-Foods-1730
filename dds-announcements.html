@@ -15,10 +15,15 @@
     .nav-tab.active { background: white; color: var(--blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .page { max-width: 1760px; margin: 0 auto; padding: 40px 20px; }
     .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    
+    /* SYNC INDICATOR */
+    #sync-indicator { font-size: 0.7rem; font-weight: 700; color: var(--blue); opacity: 0; transition: 0.3s; margin-left: 15px; }
+    #sync-indicator.active { opacity: 1; }
+
     .btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
     .btn-primary { background: var(--blue); color: white; }
-    .board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 30px; }
     
+    .board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 30px; }
     .pretty-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04); transition: 0.3s; position: relative;}
     .pretty-card:hover { transform: translateY(-5px); }
     .card-image-wrap { width: 100%; height: 210px; background: #eee; position: relative; overflow: hidden; }
@@ -33,7 +38,8 @@
     
     .card-controls { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px; }
     .color-dots { display: flex; gap: 8px; }
-    .dot { width: 16px; height: 16px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
+    .dot { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.15); transition: 0.2s; }
+    .dot:hover { transform: scale(1.2); }
     .delete-btn { cursor: pointer; color: #cbd5e1; } .delete-btn:hover { color: #ef4444; }
     .card-footer { background: #fafbfc; padding: 12px 25px; border-top: 1px solid var(--border); font-size: 0.7rem; color: #94a3b8; }
 
@@ -64,16 +70,15 @@
 
 <div class="page">
   <div class="header-flex">
-    <div>
+    <div style="display:flex; align-items:center;">
       <h2 style="font-size:2rem; font-weight:800;">DDS Announcements</h2>
-      <p style="color:#64748b">Official global updates and sequential announcements.</p>
+      <span id="sync-indicator">Syncing to Cloud...</span>
     </div>
     <button class="btn btn-primary admin-only" id="add-btn" onclick="addItem()">+ Post New Update</button>
   </div>
   <div class="board-container" id="board">Loading global feed...</div>
 </div>
 
-<!-- Gallery Modal -->
 <div class="gallery-overlay" id="galleryOverlay">
   <div class="gallery-window">
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -101,7 +106,6 @@
   ];
 
   const THEME_COLORS = ['#ffffff', '#f0f9ff', '#f0fdf4', '#fffbeb', '#fef2f2', '#f8fafc'];
-
   let activeCardId = null;
 
   function checkAdmin() {
@@ -113,6 +117,9 @@
   const isAdmin = checkAdmin();
   if (isAdmin) document.getElementById('main-body').classList.add('is-admin');
 
+  function showSync() { document.getElementById('sync-indicator').classList.add('active'); }
+  function hideSync() { setTimeout(() => document.getElementById('sync-indicator').classList.remove('active'), 1000); }
+
   async function loadData() {
     const res = await fetch(API_URL + "?sheet=Announcements");
     const data = await res.json();
@@ -120,7 +127,7 @@
     container.innerHTML = data.reverse().map(item => `
       <div class="pretty-card" id="card-${item.id}" style="background-color: ${item.color || '#ffffff'}">
         <div class="card-image-wrap">
-          <img src="${item.image || PROF_PRESETS[0]}">
+          <img src="${item.image || PROF_PRESETS[0]}" id="img-${item.id}">
           <button class="img-edit-btn admin-only" onclick="openGallery('${item.id}')">Change Image</button>
         </div>
         <div class="card-content">
@@ -128,4 +135,75 @@
           <div class="card-body" contenteditable="${isAdmin}" onblur="updateField('${item.id}', 'text', this.innerText)">${item.text}</div>
           <div class="card-controls">
             <div class="color-dots admin-only">
-              ${THEME_COLORS.map(c => `<div class="dot" style="background:${c}" on
+              ${THEME_COLORS.map(c => `<div class="dot" style="background:${c}" onclick="updateField('${item.id}', 'color', '${c}')"></div>`).join('')}
+            </div>
+            ${isAdmin ? `<span class="delete-btn" onclick="deleteItem('${item.id}')">🗑️</span>` : ''}
+          </div>
+        </div>
+        <div class="card-footer"><span>${item.date}</span></div>
+      </div>`).join('');
+  }
+
+  async function updateField(id, field, value) {
+    if (!isAdmin) return;
+    
+    // OPTIMISTIC UI: Update screen instantly
+    if (field === 'color') document.getElementById(`card-${id}`).style.backgroundColor = value;
+    if (field === 'image') document.getElementById(`img-${id}`).src = value;
+
+    showSync();
+    const payload = { sheet: "Announcements", action: "edit", id: id.toString(), field: field, value: value };
+    
+    try {
+      await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+    } catch(e) { console.error("Sync failed", e); }
+    hideSync();
+  }
+
+  async function addItem() {
+    if (!isAdmin) return;
+    const text = prompt("Announcement text:");
+    if (!text) return;
+    showSync();
+    
+    const newItem = {
+      sheet: "Announcements", action: "add", id: Date.now().toString(),
+      number: document.querySelectorAll('.pretty-card').length + 1,
+      text: text, date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      image: PROF_PRESETS[0], color: "#ffffff"
+    };
+
+    await fetch(API_URL, { method: 'POST', body: JSON.stringify(newItem) });
+    hideSync();
+    loadData();
+  }
+
+  function openGallery(id) {
+    activeCardId = id;
+    const grid = document.getElementById('galleryGrid');
+    grid.innerHTML = PROF_PRESETS.map(url => `<img src="${url}" class="gallery-item" onclick="selectPreset('${url}')">`).join('');
+    document.getElementById('galleryOverlay').classList.add('active');
+  }
+
+  function closeGallery() { document.getElementById('galleryOverlay').classList.remove('active'); }
+  async function selectPreset(url) { updateField(activeCardId, 'image', url); closeGallery(); }
+
+  function handleFileUpload(e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = async (event) => { updateField(activeCardId, 'image', event.target.result); closeGallery(); };
+    reader.readAsDataURL(file);
+  }
+
+  async function deleteItem(id) {
+    if (!confirm("Delete globally?")) return;
+    showSync();
+    await fetch(API_URL, { method: 'POST', body: JSON.stringify({ sheet: "Announcements", action: "delete", id: id.toString() }) });
+    hideSync();
+    loadData();
+  }
+
+  window.onload = () => { NovusCore.requireAuth(); loadData(); };
+</script>
+</body>
+</html>
