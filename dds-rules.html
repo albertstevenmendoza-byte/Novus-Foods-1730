@@ -76,11 +76,22 @@
     .card-body strong { color: var(--ink); font-weight: 800; }
     .card-footer { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--surface2); display: flex; justify-content: space-between; align-items: center; }
     .card-meta { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--ink4); text-transform: uppercase; }
-    .delete-btn { cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--ink4); transition: all 0.2s; }
+    
+    /* Delete button styling */
+    .delete-btn { 
+        cursor: pointer; width: 28px; height: 28px; 
+        display: flex; align-items: center; justify-content: center; 
+        border-radius: 50%; color: var(--ink4); transition: all 0.2s; 
+    }
     .delete-btn:hover { background: var(--red-l); color: white; }
+    
+    /* FAILSAFE: Hide delete buttons by default if user is not admin */
+    body:not(.is-admin) .delete-btn { display: none !important; }
+    body:not(.is-admin) #add-rule-btn { display: none !important; }
+
   </style>
 </head>
-<body>
+<body id="rules-page-body">
 
 <div class="top-nav">
   <div class="logo">
@@ -124,14 +135,19 @@ const DEFAULT_RULES = [
 
 let items = JSON.parse(localStorage.getItem(STORAGE_EXP) || JSON.stringify(DEFAULT_RULES));
 
-// Check if user is an admin
+// --- ROBUST ADMIN CHECK ---
 function isAdmin() {
   try {
     const userStr = sessionStorage.getItem('novus1730_user');
-    if (!userStr) return false;
+    if (!userStr) {
+        console.warn("No user session found.");
+        return false;
+    }
     const user = JSON.parse(userStr);
+    console.log("Current User Role:", user.role); // DEBUG: Open console (F12) to see this
     return user.role === 'admin';
   } catch (e) {
+    console.error("Error checking admin status:", e);
     return false;
   }
 }
@@ -141,6 +157,13 @@ function renderBoard() {
   if (!container) return;
 
   const adminStatus = isAdmin();
+  
+  // Add a class to the body for CSS-based hiding (backup security)
+  if (adminStatus) {
+      document.getElementById('rules-page-body').classList.add('is-admin');
+  } else {
+      document.getElementById('rules-page-body').classList.remove('is-admin');
+  }
 
   container.innerHTML = items.map(item => {
     const displayText = item.text.replace(/^([^:]+:)/, '<strong>$1</strong>');
@@ -148,7 +171,7 @@ function renderBoard() {
     // Only admins get contenteditable="true"
     const canEdit = adminStatus ? 'contenteditable="true"' : 'contenteditable="false"';
     
-    // Only admins see the delete button
+    // Only admins see the delete button in the HTML
     const deleteBtn = adminStatus 
       ? `<span class="delete-btn" onclick="deleteItem(${item.id})">🗑</span>` 
       : '';
@@ -167,7 +190,11 @@ function renderBoard() {
 }
 
 function editItem(id, text) {
-  if (!isAdmin()) return;
+  if (!isAdmin()) {
+      alert("Access Denied: Admin only.");
+      renderBoard();
+      return;
+  }
   const item = items.find(i => i.id === id);
   if (item) {
     item.text = text;
@@ -176,7 +203,10 @@ function editItem(id, text) {
 }
 
 function addItem() {
-  if (!isAdmin()) return;
+  if (!isAdmin()) {
+      alert("Access Denied: You do not have permission to add rules.");
+      return;
+  }
   items.unshift({
     id: Date.now(),
     text: 'New rule – click to edit',
@@ -187,20 +217,29 @@ function addItem() {
 }
 
 function deleteItem(id) {
-  if (!isAdmin()) return;
+  // Triple-check admin status inside the click event
+  if (!isAdmin()) {
+      alert("Access Denied: You do not have permission to delete rules.");
+      renderBoard(); // Force refresh UI to hide buttons
+      return;
+  }
+  
   if (!confirm('Delete this rule?')) return;
+  
   items = items.filter(i => i.id !== id);
   localStorage.setItem(STORAGE_EXP, JSON.stringify(items));
   renderBoard();
 }
 
 window.addEventListener('load', () => {
-  NovusCore.requireAuth();
+  if (typeof NovusCore !== 'undefined') NovusCore.requireAuth();
 
-  // Hide the Add Rule button if user is not an admin
-  if (!isAdmin()) {
-    const addBtn = document.getElementById('add-rule-btn');
-    if (addBtn) addBtn.style.display = 'none';
+  // Initial UI Setup
+  const adminStatus = isAdmin();
+  const addBtn = document.getElementById('add-rule-btn');
+  
+  if (!adminStatus && addBtn) {
+    addBtn.style.display = 'none';
   }
 
   renderBoard();
