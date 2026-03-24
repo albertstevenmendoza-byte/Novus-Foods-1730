@@ -18,15 +18,17 @@
     .btn { padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer; border:none; }
     .btn-primary { background:var(--teal); color:white; }
     .board-container { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:20px; }
-    .pretty-card { background:white; border-radius:var(--radius); padding:24px; border:1px solid var(--border); position:relative; }
+    .pretty-card { background:white; border-radius:var(--radius); padding:24px; border:1px solid var(--border); position:relative; transition: 0.2s; }
     .pretty-card::before { content:''; position:absolute; top:0; left:0; width:100%; height:4px; background:var(--teal); }
     .card-body { font-size:1rem; min-height:80px; outline:none; line-height:1.6; white-space: pre-wrap; }
+    .card-body strong { color: var(--ink); font-weight: 800; }
     .card-footer { margin-top:15px; padding-top:15px; border-top:1px solid #f8fafc; display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:#94a3b8; }
-    .delete-btn { cursor:pointer; color:#94a3b8; } .delete-btn:hover { color:#ef4444; }
+    .delete-btn { cursor:pointer; color:#94a3b8; opacity: 0.3; transition: 0.2s; } .delete-btn:hover { color:#ef4444; opacity: 1; }
     body:not(.is-admin) .admin-only { display:none !important; }
   </style>
 </head>
 <body id="main-body">
+
 <div class="top-nav">
   <div class="logo">Novus <span>Foods</span> Ops</div>
   <nav class="nav-tabs">
@@ -38,15 +40,29 @@
   </nav>
   <button class="btn" onclick="NovusCore.navigateTo('index.html')">Logout</button>
 </div>
+
 <div class="page">
   <div class="header-flex">
-    <h2>Rules of Engagement</h2>
-    <button class="btn btn-primary admin-only" id="add-btn" onclick="addItem()">+ Add Rule</button>
+    <div>
+      <h2 style="font-size:1.2rem; font-weight:700;">Rules of Engagement</h2>
+      <p style="font-size: 0.8rem; color: #64748b;">Standard protocols for daily operations meetings.</p>
+    </div>
+    <button class="btn btn-primary admin-only" id="add-btn" onclick="addItem()">+ Add Custom Rule</button>
   </div>
   <div class="board-container" id="board">Loading global rules...</div>
 </div>
+
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbzkbLOYmulfI0eVjt8jOlvggWveqkLmDb570Jz8aDxT9TlvV3CzSCFjxtORjOTI5Ftq-A/exec";
+
+  // THESE ARE YOUR SET-IN-STONE DEFAULTS
+  const DEFAULT_RULES = [
+    { id: "1", text: "🚀 Punctuality: Meeting starts exactly on time. Be present 2 minutes early.", date: "System" },
+    { id: "2", text: "📊 Preparation: Have your specific department metrics ready to discuss.", date: "System" },
+    { id: "3", text: "🧠 Focus: No side conversations. Stay focused on the data and the 'Why' behind the numbers.", date: "System" },
+    { id: "4", text: "🛠️ Action Oriented: Identify gaps, assign owners, and set clear deadlines for recovery.", date: "System" },
+    { id: "5", text: "🤝 Respect: One person speaks at a time. Keep updates concise (under 60 seconds).", date: "System" }
+  ];
 
   function checkAdmin() {
     try {
@@ -61,34 +77,75 @@
     try {
       const res = await fetch(API_URL + "?sheet=Rules");
       const data = await res.json();
-      const container = document.getElementById('board');
-      container.innerHTML = data.map(item => `
+      
+      // IF THE SHEET IS EMPTY, AUTO-POPULATE WITH DEFAULTS
+      if (data.length === 0) {
+        if (isAdmin) {
+          console.log("Sheet empty. Initializing default rules...");
+          for (let rule of DEFAULT_RULES) {
+            await syncRule(rule);
+          }
+          loadData(); // Reload after syncing
+          return;
+        } else {
+          renderBoard(DEFAULT_RULES); // Just show defaults to viewers if sheet is empty
+          return;
+        }
+      }
+      
+      renderBoard(data);
+    } catch(e) { 
+      console.error(e);
+      document.getElementById('board').innerText = "Error loading global rules."; 
+    }
+  }
+
+  function renderBoard(items) {
+    const container = document.getElementById('board');
+    container.innerHTML = items.map(item => {
+      // Bold the header part (text before the colon)
+      const displayText = item.text.replace(/^([^:]+:)/, '<strong>$1</strong>');
+      
+      return `
         <div class="pretty-card">
-          <div class="card-body" contenteditable="${isAdmin}" onblur="editItem('${item.id}', this.innerText)">${item.text}</div>
-          <div class="card-footer"><span>RULE • ${item.date}</span>
-          ${isAdmin ? `<span class="delete-btn" onclick="deleteItem('${item.id}')">🗑️</span>` : ''}
+          <div class="card-body" contenteditable="${isAdmin}" onblur="editItem('${item.id}', this.innerText)">${displayText}</div>
+          <div class="card-footer">
+            <span>RULE • ${item.date}</span>
+            ${isAdmin ? `<span class="delete-btn" onclick="deleteItem('${item.id}')">🗑️</span>` : ''}
           </div>
-        </div>`).join('');
-    } catch(e) { document.getElementById('board').innerText = "Error loading global rules."; }
+        </div>`;
+    }).join('');
+  }
+
+  // Function used for the initial setup of defaults
+  async function syncRule(rule) {
+    const payload = { sheet: "Rules", action: "add", id: rule.id, text: rule.text, date: rule.date };
+    await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
   }
 
   async function addItem() {
-    const text = prompt("New rule:");
+    const text = prompt("New rule text:");
     if (!text) return;
     const btn = document.getElementById('add-btn');
     btn.innerText = "Syncing...";
-    btn.disabled = true;
 
-    const newItem = { sheet: "Rules", action: "add", id: Date.now().toString(), text: text, date: new Date().toLocaleDateString() };
+    const newItem = { 
+      sheet: "Rules", 
+      action: "add", 
+      id: Date.now().toString(), 
+      text: text, 
+      date: new Date().toLocaleDateString() 
+    };
+
     await fetch(API_URL, { method: 'POST', body: JSON.stringify(newItem) });
-    btn.innerText = "+ Add Rule";
-    btn.disabled = false;
+    btn.innerText = "+ Add Custom Rule";
     loadData();
   }
 
   async function editItem(id, newText) {
     if (!isAdmin) return;
-    await fetch(API_URL, { method: 'POST', body: JSON.stringify({ sheet: "Rules", action: "edit", id: id, text: newText }) });
+    const payload = { sheet: "Rules", action: "edit", id: id, text: newText };
+    await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
   }
 
   async function deleteItem(id) {
@@ -96,6 +153,7 @@
     await fetch(API_URL, { method: 'POST', body: JSON.stringify({ sheet: "Rules", action: "delete", id: id }) });
     loadData();
   }
+
   window.onload = () => { NovusCore.requireAuth(); loadData(); };
 </script>
 </body>
