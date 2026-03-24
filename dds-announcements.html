@@ -118,7 +118,7 @@
     const data = await res.json();
     const container = document.getElementById('board');
     container.innerHTML = data.reverse().map(item => `
-      <div class="pretty-card" style="background-color: ${item.color || '#ffffff'}">
+      <div class="pretty-card" id="card-${item.id}" style="background-color: ${item.color || '#ffffff'}">
         <div class="card-image-wrap">
           <img src="${item.image || PROF_PRESETS[0]}">
           <button class="img-edit-btn admin-only" onclick="openGallery('${item.id}')">Change Image</button>
@@ -128,75 +128,4 @@
           <div class="card-body" contenteditable="${isAdmin}" onblur="updateField('${item.id}', 'text', this.innerText)">${item.text}</div>
           <div class="card-controls">
             <div class="color-dots admin-only">
-              ${THEME_COLORS.map(c => `<div class="dot" style="background:${c}" onclick="updateField('${item.id}', 'color', '${c}')"></div>`).join('')}
-            </div>
-            ${isAdmin ? `<span class="delete-btn" onclick="deleteItem('${item.id}')">🗑️</span>` : ''}
-          </div>
-        </div>
-        <div class="card-footer"><span>${item.date}</span></div>
-      </div>`).join('');
-  }
-
-  async function addItem() {
-    if (!isAdmin) return;
-    const text = prompt("Announcement text:");
-    if (!text) return;
-    document.getElementById('add-btn').innerText = "Syncing...";
-    
-    const newItem = {
-      sheet: "Announcements",
-      action: "add",
-      id: Date.now().toString(),
-      number: document.querySelectorAll('.pretty-card').length + 1,
-      text: text,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      image: PROF_PRESETS[0],
-      color: "#ffffff"
-    };
-
-    await fetch(API_URL, { method: 'POST', body: JSON.stringify(newItem) });
-    document.getElementById('add-btn').innerText = "+ Post New Update";
-    loadData();
-  }
-
-  async function updateField(id, field, value) {
-    if (!isAdmin) return;
-    const payload = { sheet: "Announcements", action: "edit", id: id, field: field, value: value };
-    await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-    if (field !== 'text') loadData(); // Re-render for color/image changes
-  }
-
-  function openGallery(id) {
-    activeCardId = id;
-    const grid = document.getElementById('galleryGrid');
-    grid.innerHTML = PROF_PRESETS.map(url => `<img src="${url}" class="gallery-item" onclick="selectPreset('${url}')">`).join('');
-    document.getElementById('galleryOverlay').classList.add('active');
-  }
-
-  function closeGallery() { document.getElementById('galleryOverlay').classList.remove('active'); }
-
-  async function selectPreset(url) {
-    await updateField(activeCardId, 'image', url);
-    closeGallery();
-  }
-
-  function handleFileUpload(e) {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      await updateField(activeCardId, 'image', event.target.result);
-      closeGallery();
-    };
-    reader.readAsDataURL(file);
-  }
-
-  async function deleteItem(id) {
-    if (!confirm("Delete globally?")) return;
-    await fetch(API_URL, { method: 'POST', body: JSON.stringify({ sheet: "Announcements", action: "delete", id: id }) });
-    loadData();
-  }
-
-  window.onload = () => { NovusCore.requireAuth(); loadData(); };
-</script>
-</body>
-</html>
+              ${THEME_COLORS.map(c => `<div class="dot" style="background:${c}" on
