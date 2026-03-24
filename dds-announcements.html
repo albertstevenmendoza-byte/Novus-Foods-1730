@@ -60,21 +60,21 @@
     .card-body { font-size: 1.15rem; min-height: 90px; outline: none; white-space: pre-wrap; margin-bottom: 25px; font-weight: 500; line-height: 1.6; color: #334155; }
     
     .card-controls { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 18px; }
-    .color-dots { display: flex; gap: 10px; align-items: center; }
+    .color-dots { display: flex; gap: 12px; align-items: center; }
 
-    /* COLOR DOTS WITH BORDERS */
+    /* THICK BORDERS FOR COLOR OPTIONS */
     .dot { 
-      width: 22px; 
-      height: 22px; 
+      width: 24px; 
+      height: 24px; 
       border-radius: 50%; 
       cursor: pointer; 
-      border: 1.5px solid rgba(0, 0, 0, 0.15); /* Permanent visible border */
+      border: 2.5px solid #cbd5e1; 
       transition: 0.2s; 
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    .dot:hover { transform: scale(1.2); border-color: rgba(0, 0, 0, 0.4); }
+    .dot:hover { transform: scale(1.2); border-color: #94a3b8; }
     .dot.active { 
-      border: 3px solid var(--blue); /* Thick blue border for selected color */
+      border: 4px solid var(--blue) !important; 
       transform: scale(1.1); 
       box-shadow: 0 0 0 2px white; 
     }
@@ -146,19 +146,7 @@
     'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=800&q=80'
   ];
 
-  // PASTEL PALETTE
-  const THEME_COLORS = [
-    '#ffffff', // White
-    '#e0f2fe', // Pastel Blue
-    '#dcfce7', // Pastel Green
-    '#fef3c7', // Pastel Amber
-    '#fee2e2', // Pastel Red
-    '#f3e8ff', // Pastel Purple
-    '#ccfbf1', // Pastel Teal
-    '#fce7f3'  // Pastel Pink
-  ];
-
-  let activeCardId = null;
+  const THEME_COLORS = ['#ffffff', '#e0f2fe', '#dcfce7', '#fef3c7', '#fee2e2', '#f3e8ff', '#ccfbf1', '#fce7f3'];
 
   function checkAdmin() {
     try {
@@ -201,12 +189,12 @@
                id="body-${item.id}"
                style="text-align: ${style.align}"
                contenteditable="${isAdmin}" 
-               onblur="updateField('${item.id}', 'text', this.innerText)">${item.text}</div>
+               onblur="updateField('${item.id}', 'text', this.innerText.trim())">${item.text}</div>
           <div class="card-controls">
             <div class="color-dots admin-only">
               ${THEME_COLORS.map(c => {
                 const isCurrent = style.bg.toLowerCase() === c.toLowerCase();
-                return `<div class="dot ${isCurrent ? 'active' : ''}" style="background:${c}" onclick="updateStyle('${item.id}', 'bg', '${c}')"></div>`;
+                return `<div class="dot ${isCurrent ? 'active' : ''}" style="background:${c}" data-color="${c}" onclick="updateStyle('${item.id}', 'bg', '${c}')"></div>`;
               }).join('')}
             </div>
             ${isAdmin ? `<span class="delete-btn" onclick="deleteItem('${item.id}')">🗑️</span>` : ''}
@@ -220,33 +208,46 @@
   async function updateStyle(id, prop, val) {
     if (!isAdmin) return;
     const card = document.getElementById(`card-${id}`);
-    const styleData = card.getAttribute('data-raw-style');
-    const style = parseStyle(styleData);
+    const body = document.getElementById(`body-${id}`);
+    const style = parseStyle(card.getAttribute('data-raw-style'));
     style[prop] = val;
+
+    // INSTANT UI UPDATE (Optimistic)
+    if (prop === 'bg') {
+        card.style.backgroundColor = val;
+        const dots = card.querySelectorAll('.dot');
+        dots.forEach(d => {
+            if (d.getAttribute('data-color') === val) d.classList.add('active');
+            else d.classList.remove('active');
+        });
+    }
+    if (prop === 'align') body.style.textAlign = val;
+    if (prop === 'theme') {
+        card.classList.remove('theme-light', 'theme-dark');
+        card.classList.add(`theme-${val}`);
+    }
 
     const newStyleStr = `${style.bg}|${style.align}|${style.theme}`;
     card.setAttribute('data-raw-style', newStyleStr);
     
-    await updateField(id, 'color', newStyleStr);
-    loadData(); // Re-render to update the 'active' dots and alignment
+    // Save in background
+    await updateField(id, 'color', newStyleStr, false); 
   }
 
-  async function updateField(id, field, value) {
+  async function updateField(id, field, value, reload = true) {
     if (!isAdmin) return;
     showSync();
     const payload = { sheet: "Announcements", action: "edit", id: id.toString(), field: field, value: value };
-    try {
-      await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+    try { 
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) }); 
     } catch(e) { console.error("Sync failed", e); }
     hideSync();
-    if (field === 'image') loadData(); 
+    if (reload && field === 'image') loadData(); 
   }
 
   async function addItem() {
     if (!isAdmin) return;
     showSync();
-    
-    // NO POP-UP: Just push default placeholder
     const newItem = {
       sheet: "Announcements", action: "add", id: Date.now().toString(),
       number: document.querySelectorAll('.pretty-card').length + 1,
@@ -254,33 +255,32 @@
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       image: PROF_PRESETS[0], color: "#ffffff|left|light"
     };
-
     await fetch(API_URL, { method: 'POST', body: JSON.stringify(newItem) });
     hideSync();
     loadData();
   }
 
+  let activeCardId = null;
   function openGallery(id) {
     activeCardId = id;
     const grid = document.getElementById('galleryGrid');
     grid.innerHTML = PROF_PRESETS.map(url => `<img src="${url}" class="gallery-item" onclick="selectPreset('${url}')">`).join('');
     document.getElementById('galleryOverlay').classList.add('active');
   }
-
   function closeGallery() { document.getElementById('galleryOverlay').classList.remove('active'); }
   async function selectPreset(url) { 
-    await updateField(activeCardId, 'image', url); 
+    document.getElementById(`img-${activeCardId}`).src = url;
+    await updateField(activeCardId, 'image', url, false); 
     closeGallery(); 
-    loadData();
   }
 
   function handleFileUpload(e) {
     const file = e.target.files[0];
     const reader = new FileReader();
     reader.onload = async (event) => { 
-        await updateField(activeCardId, 'image', event.target.result); 
+        document.getElementById(`img-${activeCardId}`).src = event.target.result;
+        await updateField(activeCardId, 'image', event.target.result, false); 
         closeGallery(); 
-        loadData();
     };
     reader.readAsDataURL(file);
   }
