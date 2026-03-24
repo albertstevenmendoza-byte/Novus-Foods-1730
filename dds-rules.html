@@ -63,18 +63,6 @@
     .btn-primary { background:var(--teal); color:white; }
     .btn-danger  { background:var(--red-l); color:white; }
 
-    /* DDS sub-nav */
-    .sub-tab-container {
-      display: flex; gap: 8px; margin-bottom: 20px;
-      background: rgba(0,0,0,0.03); padding: 4px; border-radius: 12px; width: fit-content;
-    }
-    .sub-tab {
-      text-decoration: none; display: inline-block;
-      cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--ink3);
-      padding: 8px 18px; border-radius: 9px; transition: all 0.2s var(--ease);
-    }
-    .sub-tab.active { background: var(--surface); color: var(--blue); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-
     /* BOARDS */
     .board-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 10px; }
     .pretty-card {
@@ -117,7 +105,7 @@
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
     <h2 style="font-size:1.2rem; font-weight:700; color:var(--ink);">Rules of Engagement</h2>
-    <button class="btn btn-primary" onclick="addItem()">+ Add Rule</button>
+    <button class="btn btn-primary" id="add-rule-btn" onclick="addItem()">+ Add Rule</button>
   </div>
   <div class="board-container" id="expectation-board"></div>
 
@@ -136,26 +124,50 @@ const DEFAULT_RULES = [
 
 let items = JSON.parse(localStorage.getItem(STORAGE_EXP) || JSON.stringify(DEFAULT_RULES));
 
+// Check if user is an admin
+function isAdmin() {
+  try {
+    const userStr = sessionStorage.getItem('novus1730_user');
+    if (!userStr) return false;
+    const user = JSON.parse(userStr);
+    return user.role === 'admin';
+  } catch (e) {
+    return false;
+  }
+}
+
 function renderBoard() {
   const container = document.getElementById('expectation-board');
   if (!container) return;
 
+  const adminStatus = isAdmin();
+
   container.innerHTML = items.map(item => {
     const displayText = item.text.replace(/^([^:]+:)/, '<strong>$1</strong>');
+    
+    // Only admins get contenteditable="true"
+    const canEdit = adminStatus ? 'contenteditable="true"' : 'contenteditable="false"';
+    
+    // Only admins see the delete button
+    const deleteBtn = adminStatus 
+      ? `<span class="delete-btn" onclick="deleteItem(${item.id})">🗑</span>` 
+      : '';
+
     return `
       <div class="pretty-card card-expectation">
-        <div class="card-body" contenteditable="true" onblur="editItem(${item.id}, this.innerText.trim())">
+        <div class="card-body" ${canEdit} onblur="editItem(${item.id}, this.innerText.trim())">
           ${displayText || ' '}
         </div>
         <div class="card-footer">
           <span class="card-meta">RULE • ${item.date || '—'}</span>
-          <span class="delete-btn" onclick="deleteItem(${item.id})">🗑</span>
+          ${deleteBtn}
         </div>
       </div>`;
   }).join('');
 }
 
 function editItem(id, text) {
+  if (!isAdmin()) return;
   const item = items.find(i => i.id === id);
   if (item) {
     item.text = text;
@@ -164,6 +176,7 @@ function editItem(id, text) {
 }
 
 function addItem() {
+  if (!isAdmin()) return;
   items.unshift({
     id: Date.now(),
     text: 'New rule – click to edit',
@@ -174,6 +187,7 @@ function addItem() {
 }
 
 function deleteItem(id) {
+  if (!isAdmin()) return;
   if (!confirm('Delete this rule?')) return;
   items = items.filter(i => i.id !== id);
   localStorage.setItem(STORAGE_EXP, JSON.stringify(items));
@@ -182,6 +196,13 @@ function deleteItem(id) {
 
 window.addEventListener('load', () => {
   NovusCore.requireAuth();
+
+  // Hide the Add Rule button if user is not an admin
+  if (!isAdmin()) {
+    const addBtn = document.getElementById('add-rule-btn');
+    if (addBtn) addBtn.style.display = 'none';
+  }
+
   renderBoard();
 });
 </script>
