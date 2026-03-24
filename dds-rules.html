@@ -77,21 +77,17 @@
     .card-footer { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--surface2); display: flex; justify-content: space-between; align-items: center; }
     .card-meta { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--ink4); text-transform: uppercase; }
     
-    /* Delete button styling */
-    .delete-btn { 
-        cursor: pointer; width: 28px; height: 28px; 
-        display: flex; align-items: center; justify-content: center; 
-        border-radius: 50%; color: var(--ink4); transition: all 0.2s; 
-    }
+    .delete-btn { cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--ink4); transition: all 0.2s; }
     .delete-btn:hover { background: var(--red-l); color: white; }
-    
-    /* FAILSAFE: Hide delete buttons by default if user is not admin */
-    body:not(.is-admin) .delete-btn { display: none !important; }
-    body:not(.is-admin) #add-rule-btn { display: none !important; }
 
+    /* CSS SAFETY LOCK: If body doesn't have 'is-admin' class, hide these elements no matter what */
+    body:not(.is-admin) .delete-btn, 
+    body:not(.is-admin) #add-rule-btn { 
+        display: none !important; 
+    }
   </style>
 </head>
-<body id="rules-page-body">
+<body id="main-body">
 
 <div class="top-nav">
   <div class="logo">
@@ -113,13 +109,11 @@
 </div>
 
 <div class="page">
-
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
     <h2 style="font-size:1.2rem; font-weight:700; color:var(--ink);">Rules of Engagement</h2>
     <button class="btn btn-primary" id="add-rule-btn" onclick="addItem()">+ Add Rule</button>
   </div>
   <div class="board-container" id="expectation-board"></div>
-
 </div>
 
 <script>
@@ -135,19 +129,14 @@ const DEFAULT_RULES = [
 
 let items = JSON.parse(localStorage.getItem(STORAGE_EXP) || JSON.stringify(DEFAULT_RULES));
 
-// --- ROBUST ADMIN CHECK ---
-function isAdmin() {
+// 1. Function to check role
+function checkIsAdmin() {
   try {
-    const userStr = sessionStorage.getItem('novus1730_user');
-    if (!userStr) {
-        console.warn("No user session found.");
-        return false;
-    }
-    const user = JSON.parse(userStr);
-    console.log("Current User Role:", user.role); // DEBUG: Open console (F12) to see this
+    const session = sessionStorage.getItem('novus1730_user');
+    if (!session) return false;
+    const user = JSON.parse(session);
     return user.role === 'admin';
   } catch (e) {
-    console.error("Error checking admin status:", e);
     return false;
   }
 }
@@ -156,45 +145,42 @@ function renderBoard() {
   const container = document.getElementById('expectation-board');
   if (!container) return;
 
-  const adminStatus = isAdmin();
+  const isAdmin = checkIsAdmin();
   
-  // Add a class to the body for CSS-based hiding (backup security)
-  if (adminStatus) {
-      document.getElementById('rules-page-body').classList.add('is-admin');
+  // Apply the CSS safety class to the body
+  if (isAdmin) {
+    document.getElementById('main-body').classList.add('is-admin');
   } else {
-      document.getElementById('rules-page-body').classList.remove('is-admin');
+    document.getElementById('main-body').classList.remove('is-admin');
   }
 
   container.innerHTML = items.map(item => {
     const displayText = item.text.replace(/^([^:]+:)/, '<strong>$1</strong>');
     
-    // Only admins get contenteditable="true"
-    const canEdit = adminStatus ? 'contenteditable="true"' : 'contenteditable="false"';
-    
-    // Only admins see the delete button in the HTML
-    const deleteBtn = adminStatus 
-      ? `<span class="delete-btn" onclick="deleteItem(${item.id})">🗑</span>` 
-      : '';
+    // Logic: If not admin, do not include the delete button HTML at all
+    let deleteBtnHTML = '';
+    if (isAdmin) {
+        deleteBtnHTML = `<span class="delete-btn" onclick="deleteItem(${item.id})">🗑</span>`;
+    }
+
+    // Logic: If not admin, set contenteditable to false
+    const editable = isAdmin ? 'contenteditable="true"' : 'contenteditable="false"';
 
     return `
       <div class="pretty-card card-expectation">
-        <div class="card-body" ${canEdit} onblur="editItem(${item.id}, this.innerText.trim())">
+        <div class="card-body" ${editable} onblur="editItem(${item.id}, this.innerText.trim())">
           ${displayText || ' '}
         </div>
         <div class="card-footer">
           <span class="card-meta">RULE • ${item.date || '—'}</span>
-          ${deleteBtn}
+          ${deleteBtnHTML}
         </div>
       </div>`;
   }).join('');
 }
 
 function editItem(id, text) {
-  if (!isAdmin()) {
-      alert("Access Denied: Admin only.");
-      renderBoard();
-      return;
-  }
+  if (!checkIsAdmin()) return;
   const item = items.find(i => i.id === id);
   if (item) {
     item.text = text;
@@ -203,10 +189,7 @@ function editItem(id, text) {
 }
 
 function addItem() {
-  if (!isAdmin()) {
-      alert("Access Denied: You do not have permission to add rules.");
-      return;
-  }
+  if (!checkIsAdmin()) return;
   items.unshift({
     id: Date.now(),
     text: 'New rule – click to edit',
@@ -217,15 +200,8 @@ function addItem() {
 }
 
 function deleteItem(id) {
-  // Triple-check admin status inside the click event
-  if (!isAdmin()) {
-      alert("Access Denied: You do not have permission to delete rules.");
-      renderBoard(); // Force refresh UI to hide buttons
-      return;
-  }
-  
+  if (!checkIsAdmin()) return;
   if (!confirm('Delete this rule?')) return;
-  
   items = items.filter(i => i.id !== id);
   localStorage.setItem(STORAGE_EXP, JSON.stringify(items));
   renderBoard();
@@ -233,13 +209,11 @@ function deleteItem(id) {
 
 window.addEventListener('load', () => {
   if (typeof NovusCore !== 'undefined') NovusCore.requireAuth();
-
-  // Initial UI Setup
-  const adminStatus = isAdmin();
-  const addBtn = document.getElementById('add-rule-btn');
   
-  if (!adminStatus && addBtn) {
-    addBtn.style.display = 'none';
+  // Initial UI Check for the Add button
+  if (!checkIsAdmin()) {
+    const btn = document.getElementById('add-rule-btn');
+    if (btn) btn.style.display = 'none';
   }
 
   renderBoard();
