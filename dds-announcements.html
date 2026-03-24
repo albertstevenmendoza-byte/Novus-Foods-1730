@@ -35,15 +35,13 @@
     }
     .pretty-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.08); }
     
-    /* Card Themes */
     .pretty-card.theme-dark { color: white; }
-    .pretty-card.theme-dark .card-footer { background: rgba(0,0,0,0.1); color: rgba(255,255,255,0.7); border-top: 1px solid rgba(255,255,255,0.1); }
+    .pretty-card.theme-dark .card-footer { background: rgba(0,0,0,0.1); color: rgba(255,255,255,0.7); }
     .pretty-card.theme-dark .card-body { color: white; }
 
     .card-image-wrap { width: 100%; height: 220px; background: #f1f5f9; position: relative; overflow: hidden; }
     .card-image-wrap img { width: 100%; height: 100%; object-fit: cover; transition: 0.6s; }
     
-    /* TOOLBAR */
     .admin-toolbar {
       position: absolute; top: 12px; left: 12px; right: 12px;
       display: flex; gap: 6px; opacity: 0; transition: 0.3s; z-index: 10;
@@ -72,7 +70,6 @@
     
     .card-footer { padding: 14px 30px; font-size: 0.72rem; color: #94a3b8; font-weight: 600; border-top: 1px solid rgba(0,0,0,0.02); }
 
-    /* MODAL */
     .gallery-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); display: none; place-items: center; z-index: 2000; padding: 20px; }
     .gallery-overlay.active { display: grid; }
     .gallery-window { background: white; width: 100%; max-width: 850px; padding: 35px; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
@@ -134,7 +131,6 @@
     'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=800&q=80'
   ];
 
-  // PROFESSIONAL PASTEL PALETTE
   const THEME_COLORS = [
     '#ffffff', // White
     '#e0f2fe', // Pastel Blue
@@ -214,7 +210,6 @@
     const currentStyle = parseStyle(card.getAttribute('data-raw-style'));
     currentStyle[prop] = val;
     
-    // Optimistic UI
     if (prop === 'bg') card.style.backgroundColor = val;
     if (prop === 'align') body.style.textAlign = val;
     if (prop === 'theme') {
@@ -243,7 +238,7 @@
     if (!isAdmin) return;
     showSync();
     
-    // Create new item with placeholder text
+    // Default placeholder text instead of prompt()
     const newItem = {
       sheet: "Announcements", action: "add", id: Date.now().toString(),
       number: document.querySelectorAll('.pretty-card').length + 1,
