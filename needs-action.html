@@ -4,322 +4,159 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Needs Action – Novus Foods Ops Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"></noscript>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="novus-core.js"></script>
   <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
-    :root{--bg:#f4f6fb;--surface:#fff;--surface2:#f8fafc;--border:#e2e8f0;--border2:#cbd5e1;--ink:#0f172a;--ink2:#334155;--ink3:#64748b;--ink4:#94a3b8;--blue:#2563eb;--blue-l:#3b82f6;--blue-ll:#dbeafe;--blue-glow:rgba(37,99,235,.12);--green:#059669;--green-l:#10b981;--red:#dc2626;--red-l:#ef4444;--amber:#d97706;--radius:14px;--radius-sm:8px;--nav-h:58px;--ease:cubic-bezier(.4,0,.2,1);}
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'DM Sans',system-ui,sans-serif;font-size:13.5px;line-height:1.55;background:var(--bg);color:var(--ink);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");}
-    .page{max-width:1600px;margin:0 auto;padding:0 20px 60px;}
-    .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);margin-bottom:24px;will-change:transform;transform:translateZ(0);}
-    .logo{display:flex;align-items:center;gap:10px;}
-    .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--blue-l));border-radius:8px;display:flex;align-items:center;justify-content:center;}
-    .logo-icon svg{width:16px;height:16px;fill:white;}
-    .logo-text{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;}
-    .logo-text span{color:var(--blue);}
-    .nav-tabs{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;overflow-x:auto;scrollbar-width:none;}
-    .nav-tabs::-webkit-scrollbar{display:none;}
-    .nav-tab{color:var(--ink3);text-decoration:none;font-weight:500;font-size:.82rem;padding:6px 14px;border-radius:7px;transition:all .15s;}
-    .nav-tab:hover{background:var(--surface);color:var(--ink2);}
-    .nav-tab.active{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-    .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:transform .1s,filter .1s;position:relative;overflow:hidden;}
-    .btn:active{transform:scale(.97);}
-    .btn-brand{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:white;box-shadow:0 2px 8px rgba(37,99,235,.25);}
-    .btn-brand:hover{filter:brightness(1.07);}
-    .btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--ink2);}
-    .btn-danger{background:var(--red-l);color:white;}
-    .header-section{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding:0 4px;}
-    .page-title{font-size:1.5rem;font-weight:800;color:var(--ink);letter-spacing:-.02em;}
-    .page-subtitle{color:var(--ink3);font-size:.9rem;}
-    .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.02);}
-    .panel-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));padding:10px 16px;display:flex;align-items:center;justify-content:space-between;}
-    .panel-title{color:white;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.02em;}
-    .panel-body{padding:16px;}
-    .filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;}
-    .form-group label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;}
-    select, input[type="text"], input[type="date"]{width:100%;padding:9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:.85rem;outline:none;}
-    select:focus, input:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px var(--blue-glow);}
-    .metric-row{display:flex;gap:12px;margin-bottom:4px;}
-    .metric-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;flex:1;text-align:center;}
-    .metric-label{font-size:.65rem;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;}
-    .metric-value{font-size:1.6rem;font-weight:800;color:var(--ink);line-height:1;}
-    .table-container{overflow-x:auto;}
-    .data-table{width:100%;border-collapse:collapse;font-size:.82rem;}
-    .data-table th{background:var(--blue-ll);color:var(--blue);font-weight:700;font-size:.68rem;text-transform:uppercase;padding:10px;text-align:left;border-bottom:2px solid var(--blue-l);}
-    .data-table td{padding:12px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
-    .data-table tr:hover td{background:var(--surface2);}
-    .na-text-cell{min-width:300px;max-width:500px;line-height:1.5;color:var(--ink2);}
-    .date-mono{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--ink3);}
-    #sync-indicator{font-family:'DM Mono',monospace;font-weight:600;font-size:0.7rem;color:var(--blue);opacity:0;transition:0.3s;}
+    :root{--bg:#f4f6fb;--surface:#fff;--border:#e2e8f0;--ink:#0f172a;--blue:#2563eb;--green:#059669;--red:#dc2626;--radius:14px;}
+    body{font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); margin:0;}
+    .top-nav{height:64px; background:white; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; padding:0 28px; position:sticky; top:0; z-index:1000;}
+    .logo{font-weight:700;} .logo span{color:var(--blue);}
+    .nav-tabs{display:flex; gap:2px; background:#f1f5f9; padding:4px; border-radius:10px;}
+    .nav-tab{color:#64748b; text-decoration:none; font-weight:500; font-size:.82rem; padding:6px 14px; border-radius:7px;}
+    .nav-tab.active{background:white; color:var(--blue); box-shadow:0 1px 4px rgba(0,0,0,.08);}
+    .page{max-width:1600px; margin:0 auto; padding:40px 20px;}
+    .btn{display:inline-flex; align-items:center; gap:6px; padding:10px 18px; border-radius:8px; font-size:.82rem; font-weight:600; cursor:pointer; border:none;}
+    .btn-brand{background:var(--blue); color:white;}
+    .panel{background:white; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:16px;}
+    .panel-header{background:linear-gradient(135deg,var(--blue),#3b82f6); padding:12px 16px; color:white; font-weight:700; font-size:.85rem; text-transform:uppercase;}
+    .panel-body{padding:20px;}
+    .filter-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px;}
+    .form-group label{display:block; font-size:.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:6px;}
+    select, input{width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; font-family:inherit;}
+    .metric-row{display:flex; gap:12px; margin-bottom:20px;}
+    .metric-box{background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:15px; flex:1; text-align:center;}
+    .metric-value{font-size:1.8rem; font-weight:800;}
+    .data-table{width:100%; border-collapse:collapse; font-size:.85rem;}
+    .data-table th{background:#f1f5f9; color:var(--blue); font-weight:700; padding:12px; text-align:left; border-bottom:2px solid var(--blue);}
+    .data-table td{padding:12px; border-bottom:1px solid var(--border);}
+    #sync-indicator{font-size:0.7rem; color:var(--blue); font-weight:700; opacity:0; transition:0.3s;}
     #sync-indicator.active{opacity:1;}
-    
-    .checkbox-wrapper { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    .checkbox-wrapper input { display: none; }
-    .checkmark { width: 20px; height: 20px; border: 2px solid var(--border2); border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-    .checkbox-wrapper input:checked + .checkmark { background: var(--green); border-color: var(--green); }
-    .checkmark svg { width: 12px; height: 12px; fill: white; display: none; }
-    .checkbox-wrapper input:checked + .checkmark svg { display: block; }
-    body:not(.is-admin) .admin-only { display: none !important; }
-
-    ::-webkit-scrollbar{width:7px;height:7px;}
-    ::-webkit-scrollbar-track{background:transparent;}
-    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+    .checkbox-wrapper{cursor:pointer;}
+    body:not(.is-admin) .admin-only{display:none !important;}
   </style>
 </head>
 <body id="main-body">
 <div class="top-nav">
-  <div class="logo">
-    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm0 11h7v7H3zm11-11h7v7h-7zm0 11h7v7h-7z"/></svg></div>
-    <span class="logo-text">Novus <span>Foods</span> Ops</span>
-  </div>
-    <nav class="nav-tabs">
+  <div class="logo">Novus <span>Foods</span> Ops</div>
+  <nav class="nav-tabs">
     <a class="nav-tab" href="dds-announcements.html">DDS Announcements</a>
     <a class="nav-tab" href="dds-dashboard.html">DDS Dashboard</a>
     <a class="nav-tab" href="dds-rules.html">Rules of Engagement</a>
-    <a class="nav-tab" href="dds-corevalues.html">Core Values</a>
-    <a class="nav-tab" href="staff-meeting-dashboard.html">Customizable Dashboard</a>
     <a class="nav-tab active" href="needs-action.html">Needs Action</a>
   </nav>
-  <div style="display:flex;gap:8px;align-items:center;">
-    <button class="btn btn-danger" onclick="NovusCore.navigateTo('index.html')">Logout</button>
-  </div>
+  <button class="btn" onclick="NovusCore.navigateTo('index.html')">Logout</button>
 </div>
 
 <div class="page">
-  <div class="header-section">
-    <div>
-      <h1 class="page-title">Needs Action Tracker</h1>
-      <p class="page-subtitle">Departmental action items and task monitoring</p>
-    </div>
-    <div style="text-align:right; display: flex; gap: 15px; align-items: center;">
-      <span id="sync-indicator">Syncing to Cloud...</span>
-      <button id="btn-export-excel" class="btn btn-brand" onclick="exportToExcel()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Export Log to Excel
-      </button>
-    </div>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+    <div><h1 style="margin:0;">Needs Action Tracker</h1><span id="sync-indicator">Syncing...</span></div>
+    <button class="btn btn-brand" onclick="exportToExcel()">Export to Excel</button>
   </div>
 
-  <!-- ADD ACTION PANEL (Admin Only) -->
-  <div class="panel admin-only" style="border-left: 4px solid var(--blue);">
-    <div class="panel-header"><span class="panel-title">Add New Action Item</span></div>
+  <div class="panel admin-only">
+    <div class="panel-header">Add New Action Item</div>
     <div class="panel-body">
-      <div class="filter-grid" style="grid-template-columns: 1fr 2fr 1fr 1fr;">
+      <div class="filter-grid">
         <div class="form-group"><label>Date</label><input type="date" id="new-date"></div>
-        <div class="form-group"><label>Action Description</label><input type="text" id="new-desc" placeholder="What needs to be done?"></div>
-        <div class="form-group"><label>Owner</label><input type="text" id="new-owner" placeholder="Name or Dept"></div>
-        <div class="form-group" style="display:flex; align-items:flex-end;">
-          <button class="btn btn-brand" style="width:100%; height:38px;" onclick="addNewAction()">Add Item</button>
-        </div>
+        <div class="form-group"><label>Description</label><input type="text" id="new-desc"></div>
+        <div class="form-group"><label>Owner</label><input type="text" id="new-owner"></div>
+        <div class="form-group" style="display:flex; align-items:flex-end;"><button class="btn btn-brand" style="width:100%" onclick="addNewAction()">Add Item</button></div>
       </div>
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-    <div class="panel">
-      <div class="panel-header"><span class="panel-title">Data Filters</span></div>
-      <div class="panel-body">
-        <div class="filter-grid">
-          <div class="form-group"><label>Owner Filter</label><select id="filter-owner" onchange="applyFilters()"><option value="">All Owners</option></select></div>
-          <div class="form-group">
-            <label>Status</label>
-            <select id="filter-status" onchange="applyFilters()">
-              <option value="open">Open (Active)</option>
-              <option value="completed">Completed</option>
-              <option value="all">All Items</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="panel-header"><span class="panel-title">Summary Metrics</span></div>
-      <div class="panel-body">
-        <div class="metric-row">
-          <div class="metric-box"><div class="metric-label">Total Items</div><div class="metric-value" id="na-total-count">—</div></div>
-          <div class="metric-box"><div class="metric-label">Open Items</div><div class="metric-value" style="color:var(--red);" id="na-open-count">—</div></div>
-          <div class="metric-box"><div class="metric-label">Completed</div><div class="metric-value" style="color:var(--green);" id="na-completed-count">—</div></div>
-        </div>
-      </div>
-    </div>
+  <div class="metric-row">
+    <div class="metric-box"><div>Total</div><div class="metric-value" id="count-total">—</div></div>
+    <div class="metric-box"><div>Open</div><div class="metric-value" style="color:var(--red)" id="count-open">—</div></div>
+    <div class="metric-box"><div>Completed</div><div class="metric-value" style="color:var(--green)" id="count-comp">—</div></div>
   </div>
 
   <div class="panel">
-    <div class="panel-header"><span class="panel-title">Action Items Log</span></div>
+    <div class="panel-header">Action Log</div>
     <div class="panel-body">
-      <div class="table-container">
-        <table class="data-table" id="na-table">
-          <thead>
-            <tr>
-              <th style="width:110px;">Created</th>
-              <th>Needs Action Description</th>
-              <th style="width:120px;">Completed Date</th>
-              <th style="width:150px;">Owner</th>
-              <th style="width:100px;">Status</th>
-              <th style="width:80px; text-align:center;">Mark</th>
-            </tr>
-          </thead>
-          <tbody id="na-table-body">
-            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">Loading global tracker...</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <table class="data-table">
+        <thead><tr><th>Created</th><th>Description</th><th>Completed</th><th>Owner</th><th>Status</th><th>Mark</th></tr></thead>
+        <tbody id="table-body"><tr><td colspan="6" style="text-align:center;padding:40px;">Loading cloud data...</td></tr></tbody>
+      </table>
     </div>
   </div>
 </div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzkbLOYmulfI0eVjt8jOlvggWveqkLmDb570Jz8aDxT9TlvV3CzSCFjxtORjOTI5Ftq-A/exec";
-
 let allActions = [];
 let isAdmin = false;
 
 function checkAdmin() {
-  try {
-    const user = JSON.parse(sessionStorage.getItem('novus1730_user'));
-    isAdmin = user && user.role === 'admin';
-    if (isAdmin) document.getElementById('main-body').classList.add('is-admin');
-  } catch(e) { isAdmin = false; }
+  const user = JSON.parse(sessionStorage.getItem('novus1730_user'));
+  isAdmin = user && user.role === 'admin';
+  if (isAdmin) document.getElementById('main-body').classList.add('is-admin');
 }
 
-function showSync() { document.getElementById('sync-indicator').classList.add('active'); }
-function hideSync() { setTimeout(() => document.getElementById('sync-indicator').classList.remove('active'), 1000); }
-
-async function loadActions() {
-  try {
-    const res = await fetch(`${API_URL}?sheet=NeedsAction&t=${Date.now()}`);
-    allActions = await res.json();
-    initOwnerFilter();
-    applyFilters();
-  } catch(e) {
-    document.getElementById('na-table-body').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;padding:20px;">Error loading cloud data.</td></tr>';
-  }
+async function loadData() {
+  const res = await fetch(`${API_URL}?sheet=NeedsAction&t=${Date.now()}`);
+  allActions = await res.json();
+  renderUI();
 }
 
-function initOwnerFilter() {
-  const select = document.getElementById('filter-owner');
-  const owners = [...new Set(allActions.map(a => a.owner))].filter(Boolean).sort();
-  const currentVal = select.value;
-  select.innerHTML = '<option value="">All Owners</option>';
-  owners.forEach(o => {
-    const opt = document.createElement('option');
-    opt.value = o; opt.textContent = o;
-    select.appendChild(opt);
-  });
-  select.value = currentVal;
-}
+function renderUI() {
+  const tbody = document.getElementById('table-body');
+  const open = allActions.filter(a => !a.completedDate).length;
+  document.getElementById('count-total').textContent = allActions.length;
+  document.getElementById('count-open').textContent = open;
+  document.getElementById('count-comp').textContent = allActions.length - open;
 
-function applyFilters() {
-  const owner = document.getElementById('filter-owner').value;
-  const status = document.getElementById('filter-status').value;
-
-  const filtered = allActions.filter(a => {
-    const matchesOwner = !owner || a.owner === owner;
-    const isComp = !!a.completedDate;
-    const matchesStatus = status === 'all' || (status === 'open' && !isComp) || (status === 'completed' && isComp);
-    return matchesOwner && matchesStatus;
-  });
-
-  renderSummary(filtered);
-  renderTable(filtered);
-}
-
-function renderSummary(data) {
-  const total = data.length;
-  const completed = data.filter(a => !!a.completedDate).length;
-  document.getElementById('na-total-count').textContent = total;
-  document.getElementById('na-open-count').textContent = total - completed;
-  document.getElementById('na-completed-count').textContent = completed;
-}
-
-function renderTable(data) {
-  const tbody = document.getElementById('na-table-body');
-  if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">No items found.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = data.slice().reverse().map(item => {
-    const isDone = !!item.completedDate;
-    return `
-      <tr>
-        <td class="date-mono">${item.date}</td>
-        <td class="na-text-cell" style="${isDone ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${item.description}</td>
-        <td class="date-mono">${item.completedDate || '—'}</td>
-        <td style="font-weight:600;color:var(--blue);">${item.owner}</td>
-        <td><span style="font-weight:700;color:${isDone ? 'var(--green)' : 'var(--red)'};">${isDone ? 'Completed' : 'Open'}</span></td>
-        <td style="text-align:center;">
-          <label class="checkbox-wrapper">
-            <input type="checkbox" ${isDone ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''} onchange="toggleAction('${item.id}', this.checked)">
-            <div class="checkmark">
-              <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
-          </label>
-        </td>
-      </tr>
-    `;
+  tbody.innerHTML = allActions.slice().reverse().map(a => {
+    const isDone = !!a.completedDate;
+    return `<tr>
+      <td>${a.date}</td>
+      <td style="${isDone ? 'text-decoration:line-through;opacity:0.5' : ''}">${a.description}</td>
+      <td>${a.completedDate || '—'}</td>
+      <td style="font-weight:700;color:var(--blue)">${a.owner}</td>
+      <td style="font-weight:700;color:${isDone ? 'var(--green)' : 'var(--red)'}">${isDone ? 'Done' : 'Open'}</td>
+      <td><input type="checkbox" ${isDone ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''} onchange="toggleAction('${a.id}', this.checked)"></td>
+    </tr>`;
   }).join('');
 }
 
 async function addNewAction() {
-  if (!isAdmin) return;
   const date = document.getElementById('new-date').value;
   const desc = document.getElementById('new-desc').value;
   const owner = document.getElementById('new-owner').value;
+  if (!desc || !owner) return alert("Fill all fields");
 
-  if (!desc || !owner) { alert("Please fill in description and owner."); return; }
-
-  showSync();
-  const newItem = {
-    sheet: "NeedsAction",
-    action: "add",
-    id: Date.now().toString(),
-    date: date,
-    description: desc,
-    owner: owner
-  };
-
+  document.getElementById('sync-indicator').classList.add('active');
+  const newItem = { sheet: "NeedsAction", action: "add", id: Date.now().toString(), date: date, description: desc, owner: owner };
   await fetch(API_URL, { method: 'POST', body: JSON.stringify(newItem) });
+  
   document.getElementById('new-desc').value = "";
   document.getElementById('new-owner').value = "";
-  hideSync();
-  loadActions();
+  document.getElementById('sync-indicator').classList.remove('active');
+  loadData();
 }
 
 async function toggleAction(id, isChecked) {
-  if (!isAdmin) return;
-  showSync();
-  const dateStr = isChecked ? new Date().toISOString().split('T')[0] : "";
-  
-  const payload = {
-    sheet: "NeedsAction",
-    action: "edit",
-    id: id.toString(),
-    field: "completedDate",
-    value: dateStr
-  };
-
+  document.getElementById('sync-indicator').classList.add('active');
+  const val = isChecked ? new Date().toISOString().split('T')[0] : "";
+  const payload = { sheet: "NeedsAction", action: "edit", id: id, field: "completedDate", value: val };
   await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-  hideSync();
-  loadActions();
+  document.getElementById('sync-indicator').classList.remove('active');
+  loadData();
 }
 
 function exportToExcel() {
-  const worksheet = XLSX.utils.json_to_sheet(allActions);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Needs Action Log");
-  XLSX.writeFile(workbook, `Novus_Needs_Action_${new Date().toISOString().split('T')[0]}.xlsx`);
+  const ws = XLSX.utils.json_to_sheet(allActions);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Needs Action");
+  XLSX.writeFile(wb, "Needs_Action_Log.xlsx");
 }
 
 window.onload = () => {
   NovusCore.requireAuth();
   checkAdmin();
   document.getElementById('new-date').value = new Date().toISOString().split('T')[0];
-  loadActions();
+  loadData();
 };
 </script>
 </body>
