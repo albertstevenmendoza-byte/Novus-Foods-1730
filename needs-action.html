@@ -19,7 +19,7 @@
     .btn{display:inline-flex; align-items:center; gap:6px; padding:10px 18px; border-radius:8px; font-size:.82rem; font-weight:600; cursor:pointer; border:none;}
     .btn-brand{background:var(--blue); color:white;}
     .panel{background:white; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:16px;}
-    .panel-header{background:linear-gradient(135deg,var(--blue),#3b82f6); padding:12px 16px; color:white; font-weight:700; font-size:.85rem; text-transform:uppercase;}
+    .panel-header{background:linear-gradient(135deg,var(--blue),#3b82f6); padding:12px 16px; color:white; font-weight:700; font-size:.85rem; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;}
     .panel-body{padding:20px;}
     .filter-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px;}
     .form-group label{display:block; font-size:.7rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:6px;}
@@ -32,8 +32,10 @@
     .data-table td{padding:12px; border-bottom:1px solid var(--border);}
     #sync-indicator{font-size:0.7rem; color:var(--blue); font-weight:700; opacity:0; transition:0.3s;}
     #sync-indicator.active{opacity:1;}
-    .checkbox-wrapper{cursor:pointer;}
-    body:not(.is-admin) .admin-only{display:none !important;}
+    body:not(.is-admin) .admin-only {display:none !important;}
+    
+    .view-toggle { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); color: white; }
+    .view-toggle:hover { background: rgba(255,255,255,0.3); }
   </style>
 </head>
 <body id="main-body">
@@ -50,7 +52,7 @@
 
 <div class="page">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-    <div><h1 style="margin:0;">Needs Action Tracker</h1><span id="sync-indicator">Syncing...</span></div>
+    <div><h1 style="margin:0;">Needs Action Tracker</h1><span id="sync-indicator">Syncing to Cloud...</span></div>
     <button class="btn btn-brand" onclick="exportToExcel()">Export to Excel</button>
   </div>
 
@@ -59,21 +61,24 @@
     <div class="panel-body">
       <div class="filter-grid">
         <div class="form-group"><label>Date</label><input type="date" id="new-date"></div>
-        <div class="form-group"><label>Description</label><input type="text" id="new-desc"></div>
-        <div class="form-group"><label>Owner</label><input type="text" id="new-owner"></div>
+        <div class="form-group"><label>Description</label><input type="text" id="new-desc" placeholder="What needs to be done?"></div>
+        <div class="form-group"><label>Owner</label><input type="text" id="new-owner" placeholder="Name or Dept"></div>
         <div class="form-group" style="display:flex; align-items:flex-end;"><button class="btn btn-brand" style="width:100%" onclick="addNewAction()">Add Item</button></div>
       </div>
     </div>
   </div>
 
   <div class="metric-row">
-    <div class="metric-box"><div>Total</div><div class="metric-value" id="count-total">—</div></div>
-    <div class="metric-box"><div>Open</div><div class="metric-value" style="color:var(--red)" id="count-open">—</div></div>
+    <div class="metric-box"><div>Total Items</div><div class="metric-value" id="count-total">—</div></div>
+    <div class="metric-box"><div>Open Items</div><div class="metric-value" style="color:var(--red)" id="count-open">—</div></div>
     <div class="metric-box"><div>Completed</div><div class="metric-value" style="color:var(--green)" id="count-comp">—</div></div>
   </div>
 
   <div class="panel">
-    <div class="panel-header">Action Log</div>
+    <div class="panel-header">
+      Action Log
+      <button class="view-toggle" id="toggle-view" onclick="toggleVisibility()">Show Completed Actions</button>
+    </div>
     <div class="panel-body">
       <table class="data-table">
         <thead><tr><th>Created</th><th>Description</th><th>Completed</th><th>Owner</th><th>Status</th><th>Mark</th></tr></thead>
@@ -87,6 +92,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbzkbLOYmulfI0eVjt8jOlvggWveqkLmDb570Jz8aDxT9TlvV3CzSCFjxtORjOTI5Ftq-A/exec";
 let allActions = [];
 let isAdmin = false;
+let showCompleted = false;
 
 function checkAdmin() {
   const user = JSON.parse(sessionStorage.getItem('novus1730_user'));
@@ -95,24 +101,41 @@ function checkAdmin() {
 }
 
 async function loadData() {
-  const res = await fetch(`${API_URL}?sheet=NeedsAction&t=${Date.now()}`);
-  allActions = await res.json();
+  try {
+    const res = await fetch(`${API_URL}?sheet=NeedsAction&t=${Date.now()}`);
+    allActions = await res.json();
+    renderUI();
+  } catch(e) { console.error("Load failed", e); }
+}
+
+function toggleVisibility() {
+  showCompleted = !showCompleted;
+  document.getElementById('toggle-view').textContent = showCompleted ? "Hide Completed Actions" : "Show Completed Actions";
   renderUI();
 }
 
 function renderUI() {
   const tbody = document.getElementById('table-body');
-  const open = allActions.filter(a => !a.completedDate).length;
+  const openCount = allActions.filter(a => !a.completedDate || a.completedDate === "").length;
+  
   document.getElementById('count-total').textContent = allActions.length;
-  document.getElementById('count-open').textContent = open;
-  document.getElementById('count-comp').textContent = allActions.length - open;
+  document.getElementById('count-open').textContent = openCount;
+  document.getElementById('count-comp').textContent = allActions.length - openCount;
 
-  tbody.innerHTML = allActions.slice().reverse().map(a => {
-    const isDone = !!a.completedDate;
+  // Filter logic
+  const displayData = showCompleted ? allActions : allActions.filter(a => !a.completedDate || a.completedDate === "");
+
+  if (displayData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">No ${showCompleted ? '' : 'open'} actions found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = displayData.slice().reverse().map(a => {
+    const isDone = a.completedDate && a.completedDate !== "";
     return `<tr>
-      <td>${a.date}</td>
+      <td style="font-family:monospace;">${a.date}</td>
       <td style="${isDone ? 'text-decoration:line-through;opacity:0.5' : ''}">${a.description}</td>
-      <td>${a.completedDate || '—'}</td>
+      <td style="font-family:monospace;">${a.completedDate || '—'}</td>
       <td style="font-weight:700;color:var(--blue)">${a.owner}</td>
       <td style="font-weight:700;color:${isDone ? 'var(--green)' : 'var(--red)'}">${isDone ? 'Done' : 'Open'}</td>
       <td><input type="checkbox" ${isDone ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''} onchange="toggleAction('${a.id}', this.checked)"></td>
@@ -124,10 +147,18 @@ async function addNewAction() {
   const date = document.getElementById('new-date').value;
   const desc = document.getElementById('new-desc').value;
   const owner = document.getElementById('new-owner').value;
-  if (!desc || !owner) return alert("Fill all fields");
+  if (!date || !desc || !owner) return alert("Fill all fields");
 
   document.getElementById('sync-indicator').classList.add('active');
-  const newItem = { sheet: "NeedsAction", action: "add", id: Date.now().toString(), date: date, description: desc, owner: owner };
+  const newItem = { 
+    sheet: "NeedsAction", 
+    action: "add", 
+    id: Date.now().toString(), 
+    date: date, 
+    description: desc, 
+    owner: owner 
+  };
+  
   await fetch(API_URL, { method: 'POST', body: JSON.stringify(newItem) });
   
   document.getElementById('new-desc').value = "";
@@ -138,8 +169,9 @@ async function addNewAction() {
 
 async function toggleAction(id, isChecked) {
   document.getElementById('sync-indicator').classList.add('active');
-  const val = isChecked ? new Date().toISOString().split('T')[0] : "";
+  const val = isChecked ? new Date().toLocaleDateString('en-CA') : ""; // YYYY-MM-DD
   const payload = { sheet: "NeedsAction", action: "edit", id: id, field: "completedDate", value: val };
+  
   await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
   document.getElementById('sync-indicator').classList.remove('active');
   loadData();
@@ -148,8 +180,8 @@ async function toggleAction(id, isChecked) {
 function exportToExcel() {
   const ws = XLSX.utils.json_to_sheet(allActions);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Needs Action");
-  XLSX.writeFile(wb, "Needs_Action_Log.xlsx");
+  XLSX.utils.book_append_sheet(wb, ws, "Needs Action Log");
+  XLSX.writeFile(wb, "Novus_Needs_Action_Log.xlsx");
 }
 
 window.onload = () => {
