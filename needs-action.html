@@ -32,7 +32,6 @@
     .btn-brand:hover{filter:brightness(1.07);}
     .btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--ink2);}
     .btn-danger{background:var(--red-l);color:white;}
-    .btn-complete{background:var(--green);color:white;padding:5px 10px;font-size:.75rem;border-radius:6px;border:none;cursor:pointer;}
     .header-section{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding:0 4px;}
     .page-title{font-size:1.5rem;font-weight:800;color:var(--ink);letter-spacing:-.02em;}
     .page-subtitle{color:var(--ink3);font-size:.9rem;}
@@ -55,8 +54,8 @@
     .data-table tr:hover td{background:var(--surface2);}
     .na-text-cell{min-width:300px;max-width:500px;line-height:1.5;color:var(--ink2);}
     .date-mono{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--ink3);}
-    .date-input-sm{padding:5px;border:1px solid var(--border2);border-radius:5px;font-family:'DM Mono',monospace;font-size:.75rem;margin-right:6px;}
-    #save-msg{font-family:'DM Mono',monospace;font-weight:600;}
+    #sync-indicator{font-family:'DM Mono',monospace;font-weight:600;font-size:0.7rem;color:var(--blue);opacity:0;transition:0.3s;}
+    #sync-indicator.active{opacity:1;}
     
     .checkbox-wrapper { display: flex; align-items: center; gap: 8px; cursor: pointer; }
     .checkbox-wrapper input { display: none; }
@@ -64,13 +63,14 @@
     .checkbox-wrapper input:checked + .checkmark { background: var(--green); border-color: var(--green); }
     .checkmark svg { width: 12px; height: 12px; fill: white; display: none; }
     .checkbox-wrapper input:checked + .checkmark svg { display: block; }
+    body:not(.is-admin) .admin-only { display: none !important; }
 
     ::-webkit-scrollbar{width:7px;height:7px;}
     ::-webkit-scrollbar-track{background:transparent;}
     ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
   </style>
 </head>
-<body>
+<body id="main-body">
 <div class="top-nav">
   <div class="logo">
     <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm0 11h7v7H3zm11-11h7v7h-7zm0 11h7v7h-7z"/></svg></div>
@@ -85,11 +85,6 @@
     <a class="nav-tab active" href="needs-action.html">Needs Action</a>
   </nav>
   <div style="display:flex;gap:8px;align-items:center;">
-    <label id="upload-label" class="btn btn-brand" style="cursor:pointer;">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Upload Data
-      <input type="file" id="main-file-upload" accept=".xlsx,.xls" style="display:none;" onchange="handleFileUpload(event)">
-    </label>
     <button class="btn btn-danger" onclick="NovusCore.navigateTo('index.html')">Logout</button>
   </div>
 </div>
@@ -100,18 +95,17 @@
       <h1 class="page-title">Needs Action Tracker</h1>
       <p class="page-subtitle">Departmental action items and task monitoring</p>
     </div>
-    <div style="text-align:right; display: flex; gap: 10px; align-items: center;">
-      <button class="btn btn-ghost" onclick="resetInternalData()">Reset Internal Storage</button>
-      <button id="btn-save-excel" class="btn btn-brand" onclick="exportUpdatedExcel()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Save Changes to Excel
+    <div style="text-align:right; display: flex; gap: 15px; align-items: center;">
+      <span id="sync-indicator">Syncing to Cloud...</span>
+      <button id="btn-export-excel" class="btn btn-brand" onclick="exportToExcel()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Export Log to Excel
       </button>
-      <div id="save-msg" style="font-size:0.7rem;color:var(--green);margin-top:6px;display:none;">✓ FILE DOWNLOADED</div>
     </div>
   </div>
 
-  <!-- ADD ACTION PANEL -->
-  <div class="panel" style="border-left: 4px solid var(--blue);">
+  <!-- ADD ACTION PANEL (Admin Only) -->
+  <div class="panel admin-only" style="border-left: 4px solid var(--blue);">
     <div class="panel-header"><span class="panel-title">Add New Action Item</span></div>
     <div class="panel-body">
       <div class="filter-grid" style="grid-template-columns: 1fr 2fr 1fr 1fr;">
@@ -130,10 +124,10 @@
       <div class="panel-header"><span class="panel-title">Data Filters</span></div>
       <div class="panel-body">
         <div class="filter-grid">
-          <div class="form-group"><label>Owner Filter</label><select id="na-owner"><option value="">All Owners</option></select></div>
+          <div class="form-group"><label>Owner Filter</label><select id="filter-owner" onchange="applyFilters()"><option value="">All Owners</option></select></div>
           <div class="form-group">
             <label>Status</label>
-            <select id="na-status">
+            <select id="filter-status" onchange="applyFilters()">
               <option value="open">Open (Active)</option>
               <option value="completed">Completed</option>
               <option value="all">All Items</option>
@@ -170,7 +164,7 @@
             </tr>
           </thead>
           <tbody id="na-table-body">
-            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">Initializing tracker...</td></tr>
+            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">Loading global tracker...</td></tr>
           </tbody>
         </table>
       </div>
@@ -179,231 +173,154 @@
 </div>
 
 <script>
-const NEEDS_SHEET_NAME="Needs Action";
-const LOCAL_STORAGE_KEY = "novus_needs_action_overlay";
+const API_URL = "https://script.google.com/macros/s/AKfycbzkbLOYmulfI0eVjt8jOlvggWveqkLmDb570Jz8aDxT9TlvV3CzSCFjxtORjOTI5Ftq-A/exec";
 
-let fullWorkbook=null, needsRows=[], filteredRows=[];
-const ownerSelect=document.getElementById("na-owner"), statusSelect=document.getElementById("na-status");
-const totalCountEl=document.getElementById("na-total-count"), openCountEl=document.getElementById("na-open-count"), completedCountEl=document.getElementById("na-completed-count"), tableBody=document.getElementById("na-table-body"), saveMsg=document.getElementById("save-msg");
+let allActions = [];
+let isAdmin = false;
 
-function safeString(v){return(v===null||v===undefined)?"":String(v);}
-function pad2(n){return String(n).padStart(2,"0");}
-
-function parseExcelDate(value){
-  if(!value) return null;
-  if(value instanceof Date) return value;
-  if(typeof value === 'number') return new Date((value - 25569) * 86400 * 1000);
-  const d = new Date(value);
-  return isNaN(d) ? null : d;
-}
-
-function formatDateShort(d){
-  if(!d) return "";
-  const date = parseExcelDate(d);
-  if(!date) return "";
-  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth()+1)}-${pad2(date.getUTCDate())}`;
-}
-
-function rowStatus(row){
-  const dcRaw=row["Date Completed"];
-  return(dcRaw!==null&&dcRaw!==undefined&&String(dcRaw).trim()!=="")?"completed":"open";
-}
-
-// Helper to handle mapping between "Owner" and "Department" columns in Excel
-function getOwnerValue(row) {
-  return safeString(row["Owner"] || row["Department"]);
-}
-
-function _mergeWithLocal(excelRows) {
-  const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
-  const merged = [...excelRows];
-  localData.forEach(item => {
-    const idx = merged.findIndex(r =>
-      safeString(r["Needs Action"]) === safeString(item["Needs Action"]) &&
-      formatDateShort(r["Date"])    === formatDateShort(item["Date"]));
-    if (idx > -1) merged[idx] = item; else merged.push(item);
-  });
-  return merged;
-}
-
-function applyBuffer(buf) {
-  fullWorkbook = XLSX.read(buf, {type:"array", cellDates:true});
-  const ws = fullWorkbook.Sheets[NEEDS_SHEET_NAME];
-  const excelRows = ws ? XLSX.utils.sheet_to_json(ws, {defval:null}) : [];
-  needsRows = _mergeWithLocal(excelRows).map((r,idx) => ({_id:idx,...r}));
-  document.getElementById('new-date').value = formatDateShort(new Date());
-  const lbl = document.getElementById('upload-label');
-  if (lbl) { lbl.style.cssText += ";background:var(--green,#059669);border-color:var(--green,#059669);color:#fff;"; lbl.title = NovusCore.WorkbookCache.fileName(); }
-  initFilters();
-  applyFilters();
-}
-
-async function handleFileUpload(evt) {
-  const file = evt.target.files[0];
-  if (!file) return;
-  tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink3);">Reading file…</td></tr>';
+function checkAdmin() {
   try {
-    const buf = await NovusCore.WorkbookCache.save(file);
-    applyBuffer(buf);
-    NovusCore.Toast.success("Workbook loaded ✓");
-  } catch(err) {
-    console.error(err);
-    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;padding:40px;">Error reading file: ${err.message}</td></tr>`;
-    NovusCore.Toast.error("Failed to read file.");
+    const user = JSON.parse(sessionStorage.getItem('novus1730_user'));
+    isAdmin = user && user.role === 'admin';
+    if (isAdmin) document.getElementById('main-body').classList.add('is-admin');
+  } catch(e) { isAdmin = false; }
+}
+
+function showSync() { document.getElementById('sync-indicator').classList.add('active'); }
+function hideSync() { setTimeout(() => document.getElementById('sync-indicator').classList.remove('active'), 1000); }
+
+async function loadActions() {
+  try {
+    const res = await fetch(`${API_URL}?sheet=NeedsAction&t=${Date.now()}`);
+    allActions = await res.json();
+    initOwnerFilter();
+    applyFilters();
+  } catch(e) {
+    document.getElementById('na-table-body').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;padding:20px;">Error loading cloud data.</td></tr>';
   }
 }
 
-function loadNeedsActionSheet() {
-  NovusCore.requireAuth();
-  const cached = NovusCore.WorkbookCache.load();
-  if (cached) {
-    applyBuffer(cached);
+function initOwnerFilter() {
+  const select = document.getElementById('filter-owner');
+  const owners = [...new Set(allActions.map(a => a.owner))].filter(Boolean).sort();
+  const currentVal = select.value;
+  select.innerHTML = '<option value="">All Owners</option>';
+  owners.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o; opt.textContent = o;
+    select.appendChild(opt);
+  });
+  select.value = currentVal;
+}
+
+function applyFilters() {
+  const owner = document.getElementById('filter-owner').value;
+  const status = document.getElementById('filter-status').value;
+
+  const filtered = allActions.filter(a => {
+    const matchesOwner = !owner || a.owner === owner;
+    const isComp = !!a.completedDate;
+    const matchesStatus = status === 'all' || (status === 'open' && !isComp) || (status === 'completed' && isComp);
+    return matchesOwner && matchesStatus;
+  });
+
+  renderSummary(filtered);
+  renderTable(filtered);
+}
+
+function renderSummary(data) {
+  const total = data.length;
+  const completed = data.filter(a => !!a.completedDate).length;
+  document.getElementById('na-total-count').textContent = total;
+  document.getElementById('na-open-count').textContent = total - completed;
+  document.getElementById('na-completed-count').textContent = completed;
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('na-table-body');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">No items found.</td></tr>';
     return;
   }
-  const localData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
-  needsRows = localData.map((r,idx) => ({_id:idx,...r}));
-  document.getElementById('new-date').value = formatDateShort(new Date());
-  initFilters();
-  applyFilters();
-  if (!needsRows.length)
-    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink3);">⬆ Upload your department data workbook to load items, or add new items below.</td></tr>';
+
+  tbody.innerHTML = data.slice().reverse().map(item => {
+    const isDone = !!item.completedDate;
+    return `
+      <tr>
+        <td class="date-mono">${item.date}</td>
+        <td class="na-text-cell" style="${isDone ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${item.description}</td>
+        <td class="date-mono">${item.completedDate || '—'}</td>
+        <td style="font-weight:600;color:var(--blue);">${item.owner}</td>
+        <td><span style="font-weight:700;color:${isDone ? 'var(--green)' : 'var(--red)'};">${isDone ? 'Completed' : 'Open'}</span></td>
+        <td style="text-align:center;">
+          <label class="checkbox-wrapper">
+            <input type="checkbox" ${isDone ? 'checked' : ''} ${!isAdmin ? 'disabled' : ''} onchange="toggleAction('${item.id}', this.checked)">
+            <div class="checkmark">
+              <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+          </label>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
-function initFilters(){
-  const ownerSet=new Set();
-  needsRows.forEach(r=>{
-    const owner = getOwnerValue(r);
-    if(owner) ownerSet.add(owner.trim());
-  });
-  const owners=Array.from(ownerSet).sort();
-  while(ownerSelect.options.length>1)ownerSelect.remove(1);
-  owners.forEach(owner=>{const o=document.createElement("option");o.value=owner;o.textContent=owner;ownerSelect.appendChild(o);});
-}
+async function addNewAction() {
+  if (!isAdmin) return;
+  const date = document.getElementById('new-date').value;
+  const desc = document.getElementById('new-desc').value;
+  const owner = document.getElementById('new-owner').value;
 
-function addNewAction() {
-  const dateVal = document.getElementById('new-date').value;
-  const descVal = document.getElementById('new-desc').value;
-  const ownerVal = document.getElementById('new-owner').value;
+  if (!desc || !owner) { alert("Please fill in description and owner."); return; }
 
-  if(!descVal) { alert("Please enter a description"); return; }
-
+  showSync();
   const newItem = {
-    "Date": dateVal,
-    "Needs Action": descVal,
-    "Owner": ownerVal,
-    "Department": ownerVal, // Sync to both for compatibility
-    "Date Completed": null
+    sheet: "NeedsAction",
+    action: "add",
+    id: Date.now().toString(),
+    date: date,
+    description: desc,
+    owner: owner
   };
 
-  needsRows.unshift({_id: Date.now(), ...newItem});
-  saveToInternal();
-  
+  await fetch(API_URL, { method: 'POST', body: JSON.stringify(newItem) });
   document.getElementById('new-desc').value = "";
   document.getElementById('new-owner').value = "";
-  applyFilters();
-  NovusCore.Toast.success("Action Item Added");
+  hideSync();
+  loadActions();
 }
 
-function toggleCompletion(rowId) {
-  const row = needsRows.find(r => r._id === rowId);
-  if(!row) return;
-
-  if (rowStatus(row) === "open") {
-    row["Date Completed"] = formatDateShort(new Date());
-  } else {
-    row["Date Completed"] = null;
-  }
-
-  saveToInternal();
-  applyFilters();
-}
-
-function saveToInternal() {
-  const dataToSave = needsRows.map(r => {
-    const { _id, ...rest } = r;
-    return rest;
-  });
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
+async function toggleAction(id, isChecked) {
+  if (!isAdmin) return;
+  showSync();
+  const dateStr = isChecked ? new Date().toISOString().split('T')[0] : "";
   
-  const btn=document.getElementById("btn-save-excel");
-  btn.style.background="var(--amber)";
-  btn.innerHTML="💾 Unsaved Changes (Export to Excel)";
+  const payload = {
+    sheet: "NeedsAction",
+    action: "edit",
+    id: id.toString(),
+    field: "completedDate",
+    value: dateStr
+  };
+
+  await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+  hideSync();
+  loadActions();
 }
 
-function resetInternalData() {
-  if(confirm("Clear all internal changes and revert to original Excel file?")) {
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-    location.reload();
-  }
+function exportToExcel() {
+  const worksheet = XLSX.utils.json_to_sheet(allActions);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Needs Action Log");
+  XLSX.writeFile(workbook, `Novus_Needs_Action_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-function exportUpdatedExcel(){
-  if(!fullWorkbook)return;
-  const cleanData = needsRows.map(r=>{const{_id,...rest}=r; return rest;});
-  const newSheet = XLSX.utils.json_to_sheet(cleanData);
-  fullWorkbook.Sheets[NEEDS_SHEET_NAME] = newSheet;
-  XLSX.writeFile(fullWorkbook,"all_department_data_2026.xlsx");
-  
-  const btn=document.getElementById("btn-save-excel");
-  btn.style.background="";
-  btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Changes to Excel`;
-  
-  saveMsg.style.display="block";
-  setTimeout(()=>{saveMsg.style.display="none";},3000);
-}
-
-function applyFilters(){
-  const selOwner=ownerSelect.value, selStatus=statusSelect.value;
-  filteredRows=needsRows.filter(row=>{
-    if(selOwner && getOwnerValue(row).trim() !== selOwner) return false;
-    const st=rowStatus(row);
-    if(selStatus==="open"&&st!=="open")return false;
-    if(selStatus==="completed"&&st!=="completed")return false;
-    return true;
-  });
-  renderSummaryAndTable();
-}
-
-function renderSummaryAndTable(){
-  let open=0, comp=0;
-  filteredRows.forEach(r=>{const st=rowStatus(r); if(st==="open")open++; else comp++;});
-  totalCountEl.textContent=filteredRows.length;
-  openCountEl.textContent=open;
-  completedCountEl.textContent=comp;
-  renderTable();
-}
-
-function renderTable(){
-  tableBody.innerHTML="";
-  if(!filteredRows.length){tableBody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--ink4);">No items match current filters.</td></tr>`;return;}
-  
-  filteredRows.forEach(row=>{
-    const tr=document.createElement("tr");
-    const status=rowStatus(row);
-    const isChecked = status === 'completed' ? 'checked' : '';
-    
-    tr.innerHTML=`
-      <td class="date-mono">${formatDateShort(row["Date"])}</td>
-      <td class="na-text-cell" style="${status === 'completed' ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${safeString(row["Needs Action"])}</td>
-      <td class="date-mono">${formatDateShort(row["Date Completed"])}</td>
-      <td style="font-weight:600;color:var(--blue);">${getOwnerValue(row)}</td>
-      <td><span style="font-weight:700;color:${status==='open'?'var(--red)':'var(--green)'};">${status==='open'?'Open':'Completed'}</span></td>
-      <td style="text-align:center;">
-        <label class="checkbox-wrapper">
-          <input type="checkbox" ${isChecked} onchange="toggleCompletion(${row._id})">
-          <div class="checkmark">
-            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-          </div>
-        </label>
-      </td>
-    `;
-    tableBody.appendChild(tr);
-  });
-}
-
-ownerSelect.onchange=applyFilters;
-statusSelect.onchange=applyFilters;
-window.onload=loadNeedsActionSheet;
+window.onload = () => {
+  NovusCore.requireAuth();
+  checkAdmin();
+  document.getElementById('new-date').value = new Date().toISOString().split('T')[0];
+  loadActions();
+};
 </script>
 </body>
 </html>
