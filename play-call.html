@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Play Call – Novus Foods Ops Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="novus-core.js"></script>
+  <style>
+    :root {
+      --bg:#f4f6fb;--surface:#ffffff;--surface2:#f8fafc;--border:#e2e8f0;--border2:#cbd5e1;
+      --ink:#0f172a;--ink2:#334155;--ink3:#64748b;--ink4:#94a3b8;
+      --blue:#2563eb;--blue-l:#3b82f6;--blue-ll:#dbeafe;--blue-glow:rgba(37,99,235,.12);
+      --green:#059669;--red:#dc2626;--radius:14px;--radius-sm:8px;--nav-h:58px;
+      --ease:cubic-bezier(.4,0,.2,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;font-size:13.5px;background:var(--bg);color:var(--ink);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.022'/%3E%3C/svg%3E");}
+    .page{max-width:1760px;margin:0 auto;padding:0 20px 60px;}
+    .top-nav{height:var(--nav-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:24px;}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--blue-l));border-radius:8px;display:flex;align-items:center;justify-content:center;}
+    .logo-icon svg{width:16px;height:16px;fill:white;}
+    .logo-text{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.02em;}
+    .logo-text span{color:var(--blue);}
+    .nav-tabs{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;overflow-x:auto;scrollbar-width:none;}
+    .nav-tabs::-webkit-scrollbar{display:none;}
+    .nav-tab{color:var(--ink3);text-decoration:none;font-weight:500;font-size:.82rem;padding:6px 14px;border-radius:7px;transition:all .15s;white-space:nowrap;}
+    .nav-tab:hover{background:var(--surface);color:var(--ink2);}
+    .nav-tab.active{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+    .playcall-title{text-align:center;font-size:2.4rem;font-weight:800;letter-spacing:-.04em;margin-bottom:30px;color:var(--ink);margin-top:20px;}
+    .playcall-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(400px, 1fr));gap:20px;}
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s;}
+    .panel-header{background:linear-gradient(135deg,var(--blue),var(--blue-l));padding:12px 18px;display:flex;align-items:center;justify-content:space-between;}
+    .panel-title{color:white;font-weight:700;font-size:1.1rem;}
+    .task-input-container { padding: 12px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+    .task-input { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); font-family: inherit; font-size: 0.9rem; outline: none; }
+    .task-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); background: white; }
+    
+    .task-list { padding: 8px 0; min-height: 160px; display: flex; flex-direction: column; }
+    .empty-state { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; color: var(--ink4); font-size: 0.85rem; font-style: italic; }
+    
+    .task-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; border-bottom: 1px solid rgba(0,0,0,0.03); transition: all 0.4s var(--ease); }
+    .task-item.removing { opacity: 0; transform: translateX(40px); pointer-events: none; }
+    .checkbox { width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--border2); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .checkbox svg { width: 14px; height: 14px; fill: none; stroke: white; stroke-width: 3.5; display: none; }
+    .checkbox.checked { background: var(--green); border-color: var(--green); }
+    .checkbox.checked svg { display: block; }
+    .task-text { font-size: 1rem; color: var(--ink2); line-height: 1.45; flex: 1; font-weight: 500; }
+    #sync-status { font-size: 0.7rem; font-family: 'DM Mono'; color: var(--ink4); }
+  </style>
+</head>
+<body>
+
+<div class="top-nav">
+  <div class="logo"><div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm0 11h7v7H3zm11-11h7v7h-7zm0 11h7v7h-7z"/></svg></div><span class="logo-text">Novus <span>Foods</span> Ops</span></div>
+  <nav class="nav-tabs">
+    <a class="nav-tab" href="dds-announcements.html">DDS Announcements</a>
+    <a class="nav-tab" href="dds-dashboard.html">DDS Dashboard</a>
+    <a class="nav-tab" href="dds-rules.html">Rules of Engagement</a>
+    <a class="nav-tab" href="dds-corevalues.html">Core Values</a>
+    <a class="nav-tab" href="staff-meeting-dashboard.html">Customizable Dashboard</a>
+    <a class="nav-tab active" href="play-call.html">Play Call</a>
+    <a class="nav-tab" href="needs-action.html">Needs Action</a>
+  </nav>
+  <div style="display:flex;gap:12px;align-items:center;">
+    <span id="sync-status">Connecting...</span>
+    <button class="btn" style="background:var(--bg); border:1px solid var(--border2); padding: 5px 12px; cursor:pointer;" onclick="fetchData()">Refresh</button>
+  </div>
+</div>
+
+<div class="page">
+  <h1 class="playcall-title">Daily Play Call</h1>
+  <div class="playcall-grid" id="main-grid"></div>
+</div>
+
+<script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkbLOYmulfI0eVjt8jOlvggWveqkLmDb570Jz8aDxT9TlvV3CzSCFjxtORjOTI5Ftq-A/exec";
+
+  const MANAGERS = [
+    { name: 'Hector', webhook: '' },
+    { name: 'Cristian', webhook: 'https://default56b8cda7546e49b1ab41957d6fafac.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/3330a334c6e340e9ab750cb4a1b9702b/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9BdUCDaZe7dhLNatV69lY-ZRPPe8qYvKIFfxJ20oO00' },
+    { name: 'Yoana', webhook: '' },
+    { name: 'Carl', webhook: 'https://default56b8cda7546e49b1ab41957d6fafac.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/32e270c28aa74b1bbee4588d4ab2a6e3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=vItsJFg2BsGJxTkZwA4GOUb4EMemCrpX5l0IGwe-YZs' },
+    { name: 'Mauricio', webhook: 'https://default56b8cda7546e49b1ab41957d6fafac.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/3ecd57b9d8c74c14a60fa474d3a05117/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=e_NGMAjZLA48_994qgnITGCqx083usTtSr_bjKfzIUs' },
+    { name: 'Vanessa', webhook: '' },
+    { name: 'Marvin', webhook: 'https://default56b8cda7546e49b1ab41957d6fafac.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4efb2c51d13e4e03b53ebbb7848aae90/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YpwhSanRDkkERoeQ8SINfIPZ8zcRpjzWhLmkaASZL0k' },
+    { name: 'Albert', webhook: 'https://default56b8cda7546e49b1ab41957d6fafac.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a32d55cc566d4897ad4934189492cea0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ehXMfQLr6N94l8tYdGN7zqxSN4Fagu310qRNgTdeNJw' }
+  ];
+
+  let taskData = [];
+
+  // OPTIMIZATION: Try to load cached data immediately
+  try {
+    const cache = localStorage.getItem('novus_playcall_cache');
+    if (cache) {
+      taskData = JSON.parse(cache);
+    }
+  } catch (e) {}
+
+  async function fetchData() {
+    const status = document.getElementById('sync-status');
+    status.textContent = "Syncing...";
+    try {
+      const resp = await fetch(`${SCRIPT_URL}?sheet=PlayCall`);
+      const data = await resp.json();
+      taskData = Array.isArray(data) ? data : [];
+      
+      // Update cache for next load
+      localStorage.setItem('novus_playcall_cache', JSON.stringify(taskData));
+      
+      render();
+      status.textContent = "Cloud Synced";
+    } catch (e) {
+      status.textContent = "Offline Mode";
+      render();
+    }
+  }
+
+  function render() {
+    const grid = document.getElementById('main-grid');
+    grid.innerHTML = '';
+    MANAGERS.forEach(mgr => {
+      const mgrTasks = taskData.filter(t => t.owner === mgr.name);
+      const panel = document.createElement('div');
+      panel.className = 'panel';
+      panel.innerHTML = `
+        <div class="panel-header"><span class="panel-title">${mgr.name}</span></div>
+        <div class="task-input-container">
+          <input type="text" class="task-input" placeholder="Assign play..." onkeydown="if(event.key==='Enter') addTask('${mgr.name}', this)">
+        </div>
+        <div class="task-list" id="list-${mgr.name}">
+          ${mgrTasks.length === 0 ? '<div class="empty-state">No active plays.</div>' : ''}
+        </div>
+      `;
+      grid.appendChild(panel);
+      const list = document.getElementById(`list-${mgr.name}`);
+      mgrTasks.forEach(task => {
+        const item = document.createElement('div');
+        item.className = 'task-item';
+        item.innerHTML = `
+          <div class="checkbox" onclick="completeTask('${task.id}', this)">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <div class="task-text">${task.text}</div>
+        `;
+        list.appendChild(item);
+      });
+    });
+  }
+
+  async function addTask(managerName, input) {
+    const text = input.value.trim();
+    if (!text) return;
+    const mgr = MANAGERS.find(m => m.name === managerName);
+    const id = Date.now().toString();
+
+    const payload = { 
+        action: "add", 
+        sheet: "PlayCall", 
+        id: id, 
+        owner: managerName, 
+        text: text, 
+        webhook: mgr.webhook, 
+        date: new Date().toLocaleString() 
+    };
+    
+    input.value = "Saving...";
+    input.disabled = true;
+
+    try {
+      await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+      if(window.NovusCore && NovusCore.Toast) NovusCore.Toast.success(`Play assigned to ${managerName}`);
+      
+      // Update local data immediately for speed
+      taskData.push({ id, owner: managerName, text });
+      localStorage.setItem('novus_playcall_cache', JSON.stringify(taskData));
+      render();
+      
+      fetchData(); // Sync in background
+    } catch (e) {
+      alert("Error saving.");
+    } finally {
+      input.value = ""; input.disabled = false; input.focus();
+    }
+  }
+
+  async function completeTask(id, el) {
+    el.classList.add('checked');
+    const row = el.closest('.task-item');
+    try {
+      // Remove from UI immediately for speed
+      row.classList.add('removing');
+      setTimeout(() => {
+        row.remove();
+        taskData = taskData.filter(t => t.id !== id);
+        localStorage.setItem('novus_playcall_cache', JSON.stringify(taskData));
+      }, 400);
+
+      await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "delete", sheet: "PlayCall", id: id }) });
+    } catch (e) {
+      el.classList.remove('checked');
+    }
+  }
+
+  // Draw cached data immediately
+  render();
+  // Start fetch immediately
+  fetchData();
+  // Set auto-refresh
+  setInterval(fetchData, 60000);
+</script>
+</body>
+</html>
