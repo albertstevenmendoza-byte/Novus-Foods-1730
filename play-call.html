@@ -38,8 +38,9 @@
     .task-input-container { padding: 12px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); }
     .task-input { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); font-family: inherit; font-size: 0.9rem; outline: none; }
     .task-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); background: white; }
+    .task-input:disabled { background: var(--bg); color: var(--ink4); cursor: not-allowed; }
     
-    .task-list { padding: 8px 0; min-height: 160px; display: flex; flex-direction: column; }
+    .task-list { padding: 8px 0; min-height: 100px; display: flex; flex-direction: column; }
     .empty-state { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; color: var(--ink4); font-size: 0.85rem; font-style: italic; }
     
     .task-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; border-bottom: 1px solid rgba(0,0,0,0.03); transition: all 0.4s var(--ease); }
@@ -67,7 +68,7 @@
   </nav>
   <div style="display:flex;gap:12px;align-items:center;">
     <span id="sync-status">Connecting...</span>
-    <button class="btn" style="background:var(--bg); border:1px solid var(--border2); padding: 5px 12px; cursor:pointer;" onclick="fetchData()">Refresh</button>
+    <button class="btn" style="background:var(--bg); border:1px solid var(--border2); padding: 5px 12px; cursor:pointer; border-radius: 6px;" onclick="fetchData()">Refresh</button>
   </div>
 </div>
 
@@ -90,13 +91,49 @@
 
   let taskData = [];
 
-  // OPTIMIZATION: Try to load cached data immediately
-  try {
-    const cache = localStorage.getItem('novus_playcall_cache');
-    if (cache) {
-      taskData = JSON.parse(cache);
-    }
-  } catch (e) {}
+  // Initialize the Grid Structure once
+  function initGrid() {
+    const grid = document.getElementById('main-grid');
+    grid.innerHTML = '';
+    MANAGERS.forEach(mgr => {
+      const panel = document.createElement('div');
+      panel.className = 'panel';
+      panel.innerHTML = `
+        <div class="panel-header"><span class="panel-title">${mgr.name}</span></div>
+        <div class="task-input-container">
+          <input type="text" class="task-input" id="input-${mgr.name.replace(/\s+/g, '')}" placeholder="Assign play..." onkeydown="if(event.key==='Enter') addTask('${mgr.name}', this)">
+        </div>
+        <div class="task-list" id="list-${mgr.name.replace(/\s+/g, '')}">
+          <div class="empty-state">Loading plays...</div>
+        </div>
+      `;
+      grid.appendChild(panel);
+    });
+  }
+
+  // Update only the task lists (Doesn't touch the inputs)
+  function render() {
+    MANAGERS.forEach(mgr => {
+      const listId = `list-${mgr.name.replace(/\s+/g, '')}`;
+      const listContainer = document.getElementById(listId);
+      if (!listContainer) return;
+
+      const mgrTasks = taskData.filter(t => t.owner === mgr.name);
+      
+      if (mgrTasks.length === 0) {
+        listContainer.innerHTML = '<div class="empty-state">No active plays.</div>';
+      } else {
+        listContainer.innerHTML = mgrTasks.map(task => `
+          <div class="task-item" id="task-${task.id}">
+            <div class="checkbox" onclick="completeTask('${task.id}', this)">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="task-text">${task.text}</div>
+          </div>
+        `).join('');
+      }
+    });
+  }
 
   async function fetchData() {
     const status = document.getElementById('sync-status');
@@ -105,10 +142,7 @@
       const resp = await fetch(`${SCRIPT_URL}?sheet=PlayCall`);
       const data = await resp.json();
       taskData = Array.isArray(data) ? data : [];
-      
-      // Update cache for next load
       localStorage.setItem('novus_playcall_cache', JSON.stringify(taskData));
-      
       render();
       status.textContent = "Cloud Synced";
     } catch (e) {
@@ -117,43 +151,17 @@
     }
   }
 
-  function render() {
-    const grid = document.getElementById('main-grid');
-    grid.innerHTML = '';
-    MANAGERS.forEach(mgr => {
-      const mgrTasks = taskData.filter(t => t.owner === mgr.name);
-      const panel = document.createElement('div');
-      panel.className = 'panel';
-      panel.innerHTML = `
-        <div class="panel-header"><span class="panel-title">${mgr.name}</span></div>
-        <div class="task-input-container">
-          <input type="text" class="task-input" placeholder="Assign play..." onkeydown="if(event.key==='Enter') addTask('${mgr.name}', this)">
-        </div>
-        <div class="task-list" id="list-${mgr.name}">
-          ${mgrTasks.length === 0 ? '<div class="empty-state">No active plays.</div>' : ''}
-        </div>
-      `;
-      grid.appendChild(panel);
-      const list = document.getElementById(`list-${mgr.name}`);
-      mgrTasks.forEach(task => {
-        const item = document.createElement('div');
-        item.className = 'task-item';
-        item.innerHTML = `
-          <div class="checkbox" onclick="completeTask('${task.id}', this)">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </div>
-          <div class="task-text">${task.text}</div>
-        `;
-        list.appendChild(item);
-      });
-    });
-  }
-
   async function addTask(managerName, input) {
     const text = input.value.trim();
     if (!text) return;
+    
     const mgr = MANAGERS.find(m => m.name === managerName);
     const id = Date.now().toString();
+
+    // Visual feedback
+    const originalValue = text;
+    input.value = "Saving...";
+    input.disabled = true;
 
     const payload = { 
         action: "add", 
@@ -165,50 +173,61 @@
         date: new Date().toLocaleString() 
     };
     
-    input.value = "Saving...";
-    input.disabled = true;
-
     try {
-      await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-      if(window.NovusCore && NovusCore.Toast) NovusCore.Toast.success(`Play assigned to ${managerName}`);
-      
-      // Update local data immediately for speed
+      // Optimistic update (show it immediately)
       taskData.push({ id, owner: managerName, text });
-      localStorage.setItem('novus_playcall_cache', JSON.stringify(taskData));
       render();
+
+      await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
       
-      fetchData(); // Sync in background
+      if(window.NovusCore && NovusCore.Toast) NovusCore.Toast.success(`Play assigned`);
+      input.value = "";
     } catch (e) {
       alert("Error saving.");
+      input.value = originalValue;
     } finally {
-      input.value = ""; input.disabled = false; input.focus();
+      input.disabled = false;
+      input.focus();
     }
   }
 
   async function completeTask(id, el) {
-    el.classList.add('checked');
-    const row = el.closest('.task-item');
-    try {
-      // Remove from UI immediately for speed
+    const row = document.getElementById(`task-${id}`);
+    if (row) {
+      el.classList.add('checked');
       row.classList.add('removing');
+      
+      // Remove from data and UI after animation
       setTimeout(() => {
-        row.remove();
         taskData = taskData.filter(t => t.id !== id);
-        localStorage.setItem('novus_playcall_cache', JSON.stringify(taskData));
+        render();
       }, 400);
+    }
 
-      await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "delete", sheet: "PlayCall", id: id }) });
+    try {
+      await fetch(SCRIPT_URL, { 
+        method: 'POST', 
+        mode: 'no-cors', 
+        body: JSON.stringify({ action: "delete", sheet: "PlayCall", id: id }) 
+      });
     } catch (e) {
-      el.classList.remove('checked');
+      console.error("Delete failed on server");
     }
   }
 
-  // Draw cached data immediately
-  render();
-  // Start fetch immediately
+  // Initial Load
+  initGrid();
+  
+  try {
+    const cache = localStorage.getItem('novus_playcall_cache');
+    if (cache) {
+      taskData = JSON.parse(cache);
+      render();
+    }
+  } catch (e) {}
+
   fetchData();
-  // Set auto-refresh
-  setInterval(fetchData, 60000);
+  setInterval(fetchData, 60000); // Background sync every minute
 </script>
 </body>
 </html>
