@@ -1,3 +1,4 @@
+<!-- START OF UPDATED FILE -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,12 +64,9 @@
     .metric-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 10px;flex:1;text-align:center;transition:border-color .15s,box-shadow .15s;}
     .metric-box:hover{border-color:var(--blue-l);box-shadow:0 0 0 3px var(--blue-glow);}
     .metric-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:5px;}
-    
-    /* EDITABLE STYLES */
     .metric-value{font-size:1.6rem;font-weight:700;letter-spacing:-.03em;color:var(--ink);line-height:1.1;outline:none;transition:background 0.2s;}
     .metric-value[contenteditable="true"]:focus{background:var(--blue-ll);border-radius:4px;}
     .metric-value[contenteditable="true"]:hover{cursor: text; background: rgba(37,99,235,0.05);}
-
     .section-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--blue-l);margin-bottom:4px;}
     .drivers-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:.82rem;font-family:'DM Mono',monospace;color:var(--ink2);white-space:pre-wrap;line-height:1.6;min-height:40px;}
     .drivers-box.alert{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25);color:var(--red);}
@@ -80,8 +78,6 @@
     .td-green{background:rgba(16,185,129,.12)!important;color:var(--green)!important;font-weight:600;}
     .td-amber{background:rgba(245,158,11,.12)!important;color:var(--amber)!important;font-weight:600;}
     .td-red{background:rgba(239,68,68,.12)!important;color:var(--red-l)!important;font-weight:600;}
-
-    /* Optimized Command Center Split */
     .prod-command-split { display: grid; grid-template-columns: 1fr 1.8fr; gap: 24px; }
     .timeframe-block { padding: 10px 14px; border-radius: var(--radius-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 12px; width: 100%; }
     .timeframe-yesterday { background: var(--ink); color: white; }
@@ -98,15 +94,11 @@
     .pill-yes { background: rgba(16, 185, 129, 0.1); color: var(--green); }
     .pill-no { background: rgba(239, 68, 68, 0.1); color: var(--red-l); }
     .pill-label { opacity: 0.6; font-size: 0.58rem; }
-
     .chart-wrap{position:relative;width:100%;border-radius:var(--radius-sm);overflow:hidden;background:var(--surface2);border:1px solid var(--border);padding:10px;}
     .chart-wrap canvas{display:block;}
-
-    /* Plan Card Styling */
     .plan-card{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
     .plan-card-body{padding:16px;min-height:220px;outline:none;white-space:pre-wrap;color:var(--ink2);font-size:.95rem;background:var(--surface2);font-family:'DM Sans',sans-serif;line-height:1.6;}
     .plan-card-body:focus{background:var(--surface);box-shadow: inset 0 0 0 1px var(--blue-l);}
-
     #data-status{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--ink3);}
     #data-status.ok{color:var(--green);}
     #data-status.error{color:var(--red);}
@@ -175,21 +167,17 @@
       <div class="resizer"></div>
     </div>
 
-    <!-- PRODUCTION (FULL WIDTH COMMAND CENTER LAYOUT) -->
+    <!-- PRODUCTION -->
     <div class="panel" style="grid-column:span 12; position:relative;" id="panel-production">
       <div class="panel-header"><span class="panel-title">Production Summary</span></div>
       <div class="panel-date" id="date-production" style="display:none;">—</div>
       <div class="panel-body">
-        
         <div class="prod-command-split">
-          
-          <!-- LEFT: TODAY -->
           <div class="prod-col-today">
             <div class="timeframe-block timeframe-today">
               <div class="timeframe-title">Today's Operational Status</div>
               <div class="timeframe-date" id="today-date-label">Loading...</div>
             </div>
-
             <div class="split-row">
               <div class="split-col">
                 <div class="col-label">Salsa Lines</div>
@@ -201,14 +189,11 @@
               </div>
             </div>
           </div>
-
-          <!-- RIGHT: YESTERDAY -->
           <div class="prod-col-yesterday">
             <div class="timeframe-block timeframe-yesterday">
               <div class="timeframe-title">Yesterday's Performance</div>
               <div class="timeframe-date" id="yesterday-date-label">Loading...</div>
             </div>
-
             <div class="metric-row">
               <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red" contenteditable="true" oninput="saveManualMetric(this.id)">—</div></div>
               <div class="metric-box"><div class="metric-label">Code Yellow</div><div class="metric-value" id="code-yellow" contenteditable="true" oninput="saveManualMetric(this.id)">—</div></div>
@@ -217,7 +202,6 @@
                 <div class="drivers-box alert" id="top-drivers" style="min-height:46px; font-size: 0.75rem;">Scanning data…</div>
               </div>
             </div>
-
             <div class="split-row" style="margin-top:12px;">
               <div class="split-col">
                 <div class="col-label">Salsa Lines</div>
@@ -235,11 +219,8 @@
               </div>
             </div>
           </div>
-
         </div>
-
         <div class="chart-wrap" style="height:200px; margin-top:10px;"><canvas id="production-chart"></canvas></div>
-
       </div>
       <div class="resizer"></div>
     </div>
@@ -323,6 +304,29 @@
       <div class="resizer"></div>
     </div>
 
+    <!-- SANITATION (NEW SECTION) -->
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-sanitation">
+      <div class="panel-header"><span class="panel-title">Sanitation</span></div>
+      <div class="panel-date" id="date-sanitation">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box">
+            <div class="metric-label">Pre-Op %</div>
+            <div class="metric-value" id="san-preop" contenteditable="true" oninput="saveManualMetric(this.id)">—</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">MSS Completion %</div>
+            <div class="metric-value" id="san-mss" contenteditable="true" oninput="saveManualMetric(this.id)">—</div>
+          </div>
+        </div>
+        <div>
+          <div class="section-label">Sanitation Notes</div>
+          <div class="drivers-box" id="san-notes" contenteditable="true" oninput="saveManualMetric(this.id)" style="min-height: 80px;">Scanning notes…</div>
+        </div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+
     <!-- INVENTORY -->
     <div class="panel" style="grid-column:span 4;position:relative;" id="panel-inventory">
       <div class="panel-header"><span class="panel-title">Inventory Control</span></div>
@@ -344,7 +348,6 @@
 
   </div>
 
-  <!-- MERGED DAILY PLAN / GEMBA WALK -->
   <div class="panel" style="margin-bottom:24px;">
     <div class="panel-header" style="cursor:default;">
       <span class="panel-title">Daily Plan/Gemba Walk</span>
@@ -414,8 +417,8 @@ function renderDashboard(){
   const dSAP=updateSectionDate('date-sap',getLatestDateForSheet(sap));
   const dWarehouse=updateSectionDate('date-warehouse',getLatestDateForSheet(bpWarehouse));
   const dInventory=updateSectionDate('date-inventory',getLatestDateForSheet(inventory));
+  const dSanitation=updateSectionDate('date-sanitation',getLatestDateForSheet(qa));
 
-  // Timeframe date labels
   const todayDateStr = TODAY_OBJ.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
   document.getElementById('today-date-label').textContent = todayDateStr;
   if(dProd) {
@@ -424,9 +427,8 @@ function renderDashboard(){
   }
 
   document.getElementById('current-date-display').textContent=`Today: ${TODAY_OBJ.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
-  [['date-safety',dSafety],['date-quality',dQA],['date-production',dProd],['date-costs',dCosts],['date-hr',dHR],['date-sap',dSAP],['date-warehouse',dWarehouse],['date-inventory',dInventory]].forEach(([id,d])=>checkStaleness(id,d));
+  [['date-safety',dSafety],['date-quality',dQA],['date-production',dProd],['date-costs',dCosts],['date-hr',dHR],['date-sap',dSAP],['date-warehouse',dWarehouse],['date-inventory',dInventory],['date-sanitation',dSanitation]].forEach(([id,d])=>checkStaleness(id,d));
 
-  // Safety / HR
   document.getElementById('days-incident').textContent=getTargetValue(hr,'Days Without Incident',dHR)??'—';
   document.getElementById('near-misses').textContent=getTargetValue(hr,'Near Miss Reports',dHR)??'—';
   document.getElementById('safety-audits').textContent=getTargetValue(hr,'Safety Audits',dHR)??'—';
@@ -436,13 +438,16 @@ function renderDashboard(){
   const hcd=Number(getTargetValue(hr,'Head Count - Direct',dHR)||0),hci=Number(getTargetValue(hr,'Head Count - Indirect',dHR)||0);
   document.getElementById('headcount').textContent=(hcd+hci)>0?(hcd+hci):'—';
 
-  // Quality
   document.getElementById('holds').textContent=getTargetValue(qa,'Holds',dQA)??'—';
   document.getElementById('holds-coa').textContent=getTargetValue(qa,'Holds/COA',dQA)??'—';
   document.getElementById('pem').textContent=fmtPercent(getTargetValue(qa,'PEM %',dQA),1);
   document.getElementById('complaints').textContent=getTargetValue(qa,'Number of Complaints',dQA)??'—';
 
-  // Costs
+  // SANITATION DATA
+  document.getElementById('san-preop').textContent = fmtPercent(getTargetValue(qa, 'Pre-Op %', dSanitation) || getTargetValue(qa, 'Pre-Op', dSanitation), 1);
+  document.getElementById('san-mss').textContent = fmtPercent(getTargetValue(qa, 'MSS Completion %', dSanitation) || getTargetValue(qa, 'MSS %', dSanitation) || getTargetValue(qa, 'MSS', dSanitation), 1);
+  document.getElementById('san-notes').textContent = getTargetValue(qa, 'Sanitation Notes', dSanitation) || 'No sanitation notes reported.';
+
   document.getElementById('cost-direct').textContent=getTargetValue(finance,'$/Pound - Direct',dCosts)??'—';
   document.getElementById('cost-indirect').textContent=getTargetValue(finance,'$/Pound - Indirect',dCosts)??'—';
   document.getElementById('pound-hr-direct').textContent=getTargetValue(finance,'Pounds/hour - Direct',dCosts)??'—';
@@ -450,7 +455,6 @@ function renderDashboard(){
   document.getElementById('conversion-costs').textContent=getTargetValue(finance,'Conversion Cost',dCosts)??'—';
   document.getElementById('pounds-prod').textContent=getTargetValue(finance,'Pounds Produced',dCosts)??'—';
 
-  // PRODUCTION BALANCED VERTICAL SPLIT
   const salsaLines = ['2A', 'PL1', 'MP4', 'PXM6'];
   const layerLines = ['PL2', '2E'];
   const tbodySalsa = document.getElementById('prod-tbody-salsa'); tbodySalsa.innerHTML = '';
@@ -471,7 +475,6 @@ function renderDashboard(){
         <td>${s.downtime !== null ? s.downtime.toFixed(0) + 'm' : '—'}</td>
       `;
       tbody.appendChild(tr);
-
       const card = document.createElement('div');
       card.className = 'readiness-card';
       card.innerHTML = `
@@ -486,19 +489,15 @@ function renderDashboard(){
       grid.appendChild(card);
     });
   };
-
   processCol(salsaLines, tbodySalsa, readinessSalsa);
   processCol(layerLines, tbodyLayer, readinessLayer);
 
   document.getElementById('code-red').textContent=getTargetValue(maintenance,'Code Red',getLatestDateForSheet(maintenance)?.str)??'—';
   document.getElementById('code-yellow').textContent=getTargetValue(maintenance,'Code Yellow',getLatestDateForSheet(maintenance)?.str)??'—';
-
-  // Downtime drivers
   const driverCounts={};
   prod.filter(r=>toDateString(parseDate(r.Date))===dProd).forEach(r=>{['Mechanical Downtime Drivers','Material Downtime Drivers'].forEach(col=>{const v=r[col];if(v&&v!=='DNR'&&v!=='None'&&v!=='')String(v).split(/[;,]/).forEach(d=>{const c=d.trim();if(c.length>2)driverCounts[c]=(driverCounts[c]||0)+1;});});});
   document.getElementById('top-drivers').textContent=Object.entries(driverCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,c])=>`• ${n} (${c})`).join('\n')||`No drivers reported for ${dProd}.`;
 
-  // Charts
   const pd=getAggregatedProductionData(prod,30,dProd);
   if(pd.labels.length){mkChart('production-chart','line',pd.labels,[{label:'OEE',data:pd.oeeData,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true},{label:'Attainment',data:pd.attainmentData,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',fill:true},{label:'Downtime',data:pd.downtimeData,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.5)',type:'bar',fill:true,yAxisID:'y1'}],{title:'OEE & Attainment Trend (Last 30 Days)',y:{max:100},y1:{position:'right',grid:{drawOnChartArea:false}}});}
 
@@ -508,10 +507,8 @@ function renderDashboard(){
   if(costKeys.length){mkChart('costs-ot-chart','line',costKeys.map(k=>new Date(dateMapCosts.get(k).raw).toLocaleDateString()),[{label:'QA',data:costKeys.map(k=>dateMapCosts.get(k).qa),borderColor:'#64748b'},{label:'Prod',data:costKeys.map(k=>dateMapCosts.get(k).prod),borderColor:'#ef4444'},{label:'WH',data:costKeys.map(k=>dateMapCosts.get(k).wh),borderColor:'#d97706'},{label:'Maint',data:costKeys.map(k=>dateMapCosts.get(k).maint),borderColor:'#3b82f6'},{label:'Trend',data:calcRegression(costKeys.map(k=>dateMapCosts.get(k).total)),borderColor:'#10b981',borderDash:[8,4]}],{title:'OT Hours by Department', legendPos:'right'});}
 
   createDoughnutChart('hr-chart',trainingsVal,'Complete');
-
   [{id:'sap-open-orders-chart',field:'Open Process Orders',color:'#d97706',title:'Open Process Orders'},{id:'sap-teco-chart',field:'TECO',color:'#3b82f6',title:'TECO'},{id:'sap-cogi-chart',field:'COGI',color:'#ef4444',title:'COGI'}].forEach(c=>{const d=getHistoricalData(sap,c.field,30,dSAP);if(d.labels.length)mkChart(c.id,'line',d.labels,[{label:c.field,data:d.values,borderColor:c.color,fill:false}],{title:c.title});});
 
-  // Warehouse
   const whBP=bpWarehouse.find(r=>toDateString(parseDate(r.Date))===dWarehouse);
   const whCE=warehouse.find(r=>toDateString(parseDate(r.Date))===dWarehouse&&String(valByKey(r,'City')||'').toLowerCase().trim()==='cerritos');
   document.getElementById('wh-bp-fill').textContent=fmtPercent(whBP?valByKey(whBP,'Fill Rate %'):null,1);
@@ -538,7 +535,6 @@ function renderDashboard(){
     });
   }
 
-  // Inventory
   const invBP=inventory.find(r=>toDateString(parseDate(r.Date))===dInventory&&String(valByKey(r,'City')||'').toLowerCase().trim()==='buena park');
   const invCE=inventory.find(r=>toDateString(parseDate(r.Date))===dInventory&&String(valByKey(r,'City')||'').toLowerCase().trim()==='cerritos');
   document.getElementById('inv-bp-completion').textContent=fmtPercent(invBP?valByKey(invBP,'Completion %'):null,1);
@@ -550,18 +546,15 @@ function renderDashboard(){
   accEl.textContent=fmtPercent(accVal,2);
   if(accVal!==null){const n=parseFloat(accVal)>2?parseFloat(accVal)/100:parseFloat(accVal);accEl.style.color=n<0.999?'var(--red-l)':'var(--green-l)';}
   document.getElementById('inv-notes').textContent=(invBP?valByKey(invBP,'Notes'):null)||'No inventory notes for this date.';
-
   document.getElementById('proc-orders').textContent=getTargetValue(sap,'Open Process Orders',dSAP)??'—';
   document.getElementById('warehouse-tasks').textContent=getTargetValue(sap,'Warehouse Tasks',dSAP)??'—';
 
-  // Load manual overrides after rendering Excel data
   loadManualMetrics();
 }
 
 function initDraggable(){if(window.Sortable){new Sortable(document.getElementById('main-sortable'),{animation:250,handle:'.panel-header',ghostClass:'sortable-ghost'});}}
 function initResizable(){document.querySelectorAll('.panel[style*="grid-column"]').forEach(panel=>{const resizer=panel.querySelector('.resizer');if(!resizer)return;resizer.addEventListener('mousedown',e=>{e.preventDefault();const startX=e.pageX,startY=e.pageY,startW=panel.offsetWidth,startH=panel.offsetHeight;const grid=document.querySelector('.dash-grid'),rect=grid.getBoundingClientRect(),colW=rect.width/12;function onMove(e){panel.style.width=`${startW+(e.pageX-startX)}px`;panel.style.height=`${startH+(e.pageY-startY)}px`;}function onUp(e){window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);const newCols=Math.max(2,Math.min(12,Math.round((startW+(e.pageX-startX))/colW)));panel.style.gridColumn=`span ${newCols}`;panel.style.width='';panel.style.height='';window.dispatchEvent(new Event('resize'));}window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);});});}
 
-// MANUAL EDITING LOGIC
 function savePlan(id){localStorage.setItem('dds_'+id,document.getElementById(id).innerText);}
 function saveManualMetric(id){localStorage.setItem('dds_manual_'+id, document.getElementById(id).innerText);}
 
@@ -572,7 +565,8 @@ function loadManualMetrics() {
     'pound-hr-indirect', 'conversion-costs', 'pounds-prod', 'trainings', 'headcount', 
     'safety-audits', 'meal-penalties', 'proc-orders', 'warehouse-tasks', 'wh-bp-fill', 
     'wh-ce-fill', 'wh-bp-scheduled', 'wh-bp-shipped', 'wh-bp-cpmh', 'inv-bp-completion', 
-    'inv-cerritos-completion', 'inv-critical', 'inv-variants', 'inv-accuracy'
+    'inv-cerritos-completion', 'inv-critical', 'inv-variants', 'inv-accuracy',
+    'san-preop', 'san-mss', 'san-notes'
   ];
   metrics.forEach(id => {
     const val = localStorage.getItem('dds_manual_'+id);
@@ -587,7 +581,7 @@ function clearManualMetrics() {
   if(confirm('Clear all meeting updates and revert to Excel data?')) {
     const keys = Object.keys(localStorage);
     keys.forEach(key => { if(key.startsWith('dds_manual_')) localStorage.removeItem(key); });
-    renderDashboard(); // Re-render from workbook
+    renderDashboard();
   }
 }
 
