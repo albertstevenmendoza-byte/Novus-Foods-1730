@@ -50,6 +50,86 @@
     /* Resizer handle */
     .resizer { position:absolute; right:0; bottom:0; width:18px; height:18px; cursor:nwse-resize; clip-path:polygon(100% 0,100% 100%,0 100%); background:linear-gradient(135deg,var(--border2),var(--green)); opacity:0; transition:opacity .2s; border-radius:0 0 var(--radius) 0; }
     .panel:hover .resizer { opacity:.4; }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       DEPARTMENT PANEL — CARD TREATMENT
+       Gives each department a clean, corporate-ready card container.
+       Panel headers already have department-specific gradient treatment
+       from novus-styles.css — these rules simply give the outer shell
+       its surface, border, shadow, and structure.
+    ═══════════════════════════════════════════════════════════════════════ */
+    .panel {
+      background: var(--surface);
+      border: 1px solid rgba(0,0,0,.09);
+      border-radius: var(--radius);
+      box-shadow:
+        0 1px 2px rgba(0,0,0,.04),
+        0 3px 8px rgba(0,0,0,.05),
+        0 0 0 1px rgba(0,0,0,.02);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: box-shadow .2s var(--ease), border-color .2s;
+    }
+    .panel:hover {
+      box-shadow:
+        0 2px 4px rgba(0,0,0,.05),
+        0 6px 20px rgba(0,0,0,.07),
+        0 0 0 1px rgba(0,0,0,.04);
+      border-color: rgba(0,0,0,.13);
+    }
+
+    /* Panel header — already styled per department in novus-styles.css.
+       Just enforce consistent height and no radius bleed. */
+    .panel-header {
+      flex-shrink: 0;
+      border-radius: 0;
+    }
+
+    /* Metric rows — consistent vertical rhythm */
+    .metric-row { align-items: stretch; }
+
+    /* Metric boxes — soft, clearly delineated */
+    .metric-box {
+      background: var(--surface);
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+      padding: 14px 12px;
+    }
+    .metric-box:hover {
+      border-color: rgba(0,0,0,.14);
+      box-shadow: 0 2px 6px rgba(0,0,0,.07);
+    }
+
+    /* Section labels — cleaner separation */
+    .section-label {
+      margin-top: 4px;
+    }
+
+    /* Drivers / notes box */
+    .drivers-box {
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: var(--radius-sm);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,.03);
+    }
+
+    /* Data table — softer row borders */
+    .data-table th {
+      background: var(--surface-2);
+      border-bottom: 1.5px solid rgba(0,0,0,.08);
+    }
+    .data-table td {
+      border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+
+    /* Chart wrap — consistent card treatment */
+    .chart-wrap {
+      border: 1px solid rgba(0,0,0,.07);
+      border-radius: var(--radius-sm);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,.03);
+    }
+
   </style>
 </head>
 <body>
@@ -66,6 +146,8 @@
       <a class="cmd-tab" href="dds-announcements.html">Announcements</a>
       <a class="cmd-tab active" href="dds-dashboard.html">Dashboard</a>
       <a class="cmd-tab" href="play-call.html">Play Call</a>
+      <a class="cmd-tab" href="needs-action.html">Needs Action</a>
+      <a class="cmd-tab" href="lean-initiatives.html">Lean</a>
     </nav>
   </div>
 
