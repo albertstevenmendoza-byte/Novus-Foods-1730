@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>DDS Dashboard – Novus Foods Ops Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="novus-styles.css">
+  <script src="sharepoint-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="novus-core.js"></script>
+  <script>
+    window.__libs={chartjs:false,xlsx:false};
+    function _checkLibsReady(){if(window.__libs.chartjs&&window.__libs.xlsx&&window.__libsCallback)window.__libsCallback();}
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/chart.js" onload="window.__libs.chartjs=true;_checkLibsReady()"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onload="window.__libs.xlsx=true;_checkLibsReady()"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <style>
+    /* ── Dashboard-specific layout ── */
+    .dash-grid { display:grid; grid-template-columns:repeat(12,1fr); gap:12px; margin:16px 0; }
+
+    /* Toggle switch (in settings dropdown) */
+    .toggle { width:30px; height:17px; background:var(--border2); border-radius:9px; position:relative; cursor:pointer; border:none; padding:0; transition:background .2s; flex-shrink:0; }
+    .toggle.on { background:var(--green); }
+    .toggle::after { content:''; position:absolute; top:2px; left:2px; width:13px; height:13px; background:white; border-radius:50%; transition:transform .2s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+    .toggle.on::after { transform:translateX(13px); }
+    .interval-sel { font-family:var(--font); font-size:.72rem; border:1px solid var(--border); border-radius:var(--radius-xs); padding:2px 6px; background:var(--surface2); color:var(--ink2); }
+
+    /* Production */
+    .prod-split { display:grid; grid-template-columns:1fr 1.8fr; gap:20px; }
+    .timeframe-block { padding:9px 14px; border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; margin-bottom:12px; }
+    .tf-today { background:linear-gradient(135deg,var(--green-d),var(--green)); color:white; }
+    .tf-yesterday { background:linear-gradient(135deg,var(--ink2),var(--ink)); color:white; }
+    .timeframe-title { font-size:.8rem; font-weight:800; text-transform:uppercase; letter-spacing:.07em; }
+    .timeframe-date  { font-family:var(--mono); font-size:.67rem; opacity:.75; margin-top:2px; }
+    .split-row { display:flex; gap:12px; }
+    .split-col { flex:1; display:flex; flex-direction:column; gap:8px; }
+    .col-label { background:var(--surface2); padding:4px; border-radius:var(--radius-xs); border:1px solid var(--border); text-align:center; font-weight:700; font-size:.64rem; color:var(--ink3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+    .readiness-stack { background:var(--green-xll); border:1px solid var(--green-ll); border-radius:var(--radius-sm); padding:8px; display:flex; flex-direction:column; gap:6px; }
+    .readiness-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px; text-align:center; }
+    .readiness-line { font-weight:700; font-size:.73rem; color:var(--green-d); margin-bottom:4px; border-bottom:1px solid var(--border); padding-bottom:3px; }
+    .status-pill { font-size:.62rem; font-weight:700; padding:3px 6px; border-radius:3px; display:flex; justify-content:space-between; align-items:center; margin-top:3px; }
+    .pill-yes { background:rgba(22,163,74,.1); color:#15803d; }
+    .pill-no  { background:rgba(220,38,38,.08); color:var(--red-l); }
+    .pill-label { opacity:.55; font-size:.56rem; }
+
+    /* Resizer handle */
+    .resizer { position:absolute; right:0; bottom:0; width:18px; height:18px; cursor:nwse-resize; clip-path:polygon(100% 0,100% 100%,0 100%); background:linear-gradient(135deg,var(--border2),var(--green)); opacity:0; transition:opacity .2s; border-radius:0 0 var(--radius) 0; }
+    .panel:hover .resizer { opacity:.4; }
+  </style>
+</head>
+<body>
+<!-- ══ COMMAND CENTER HEADER ══════════════════════════════════════════════ -->
+<header class="cmd-header">
+
+  <!-- Left: Logo + divider + nav -->
+  <div class="cmd-left">
+    <a href="dds-announcements.html">
+      <img src="novus-logo.png" alt="Novus Foods" class="cmd-logo">
+    </a>
+    <div class="cmd-divider"></div>
+    <nav class="cmd-nav">
+      <a class="cmd-tab" href="dds-announcements.html">Announcements</a>
+      <a class="cmd-tab active" href="dds-dashboard.html">Dashboard</a>
+      <a class="cmd-tab" href="staff-meeting-dashboard.html">Personal Dashboard</a>
+      <a class="cmd-tab" href="play-call.html">Play Call</a>
+    </nav>
+  </div>
+
+  <!-- Right: freshness badge + refresh + settings + logout -->
+  <div class="cmd-right">
+
+    <!-- Data freshness badge -->
+    <div class="freshness-badge" id="freshness-badge" title="Data freshness">
+      <div class="freshness-dot" id="freshness-dot"></div>
+      <span id="freshness-text">No data</span>
+    </div>
+
+    <!-- Refresh -->
+    <button class="btn-cmd btn-cmd-primary" id="btn-sp" onclick="fetchFromSharePoint()" title="Sync latest data from SharePoint">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 0-.08-5.96"/></svg>
+      Sync Data
+    </button>
+
+    <!-- ··· More menu (all secondary actions) -->
+    <div class="cmd-more-wrap" id="more-wrap">
+      <button class="btn-cmd-icon" id="btn-more" onclick="toggleMore(event)" title="More options">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+      </button>
+
+      <div class="more-dropdown hidden" id="more-dropdown">
+
+        <!-- Quick actions -->
+        <div class="sd-group-label">Quick Access</div>
+        <button class="sd-item" onclick="NovusCore.showNeedsAction();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Needs Action
+        </button>
+        <button class="sd-item" onclick="NovusCore.showRules();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Rules of Engagement
+        </button>
+        <button class="sd-item" onclick="NovusCore.showCoreValues();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Core Values
+        </button>
+        <button class="sd-item" onclick="NovusCore.showHelp();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Help & FAQ
+        </button>
+
+        <div class="sd-divider"></div>
+
+        <!-- Data settings -->
+        <div class="sd-group-label">Data</div>
+        <label class="sd-item" style="cursor:pointer;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload XLSX (fallback)
+          <input type="file" id="file-upload" accept=".xlsx,.xls" style="display:none" onchange="handleUpload(event);closeMore()">
+        </label>
+        <button class="sd-item sd-item-danger" onclick="clearManuals();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.65"/></svg>
+          Clear Manual Overrides
+        </button>
+
+        <div class="sd-divider"></div>
+
+        <!-- Auto-refresh -->
+        <div class="sd-group-label">Auto-refresh</div>
+        <div class="sd-item" style="cursor:default;gap:10px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem;">
+            <button class="toggle" id="auto-toggle" onclick="toggleAutoRefresh()" style="flex-shrink:0;"></button>
+            Enable
+          </label>
+          <select class="interval-sel" id="interval-sel" onchange="updateInterval()" style="width:auto;padding:3px 6px;font-size:.75rem;flex:1;">
+            <option value="5">5 min</option>
+            <option value="10">10 min</option>
+            <option value="15" selected>15 min</option>
+            <option value="30">30 min</option>
+          </select>
+        </div>
+
+        <div class="sd-divider"></div>
+
+        <!-- Session -->
+        <button class="sd-item" onclick="NovusCore.showMaintenance();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          Maintenance
+        </button>
+        <div class="sd-group-label">Session</div>
+        <button class="sd-item sd-item-danger" onclick="NovusCore.logout()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<!-- ══ PLANT STATUS BAR ═══════════════════════════════════════════════════ -->
+<div class="plant-status-bar" id="plant-status-bar" data-status="loading">
+  <div class="psb-inner">
+    <div class="psb-left">
+      <div class="psb-dot" id="psb-dot"></div>
+      <span class="psb-plant-label">Plant 1730</span>
+      <span class="psb-status-sep">·</span>
+      <span class="psb-status-text" id="psb-status-text">Loading…</span>
+    </div>
+    <div class="psb-right">
+      <div class="psb-metric">
+        <span class="psb-metric-label">Avg OEE</span>
+        <span class="psb-metric-val" id="psb-oee">—</span>
+      </div>
+      <span class="psb-metric-sep">·</span>
+      <div class="psb-metric">
+        <span class="psb-metric-label">Code Red</span>
+        <span class="psb-metric-val" id="psb-codered">—</span>
+      </div>
+      <span class="psb-metric-sep">·</span>
+      <div class="psb-metric">
+        <span class="psb-metric-label">Lines</span>
+        <span class="psb-metric-val" id="psb-lines">—</span>
+      </div>
+      <span class="psb-metric-sep">·</span>
+      <span style="font-size:.7rem;font-family:var(--mono);color:var(--ink4);" id="psb-clock">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- SharePoint status bar -->
+<div class="sp-bar" id="sp-bar">
+  <div class="sp-bar-left"><div class="sp-spinner" id="sp-spinner"></div><span id="sp-msg">Ready</span></div>
+  <span style="font-size:.7rem;opacity:.85;font-family:var(--mono);" id="sp-time"></span>
+</div>
+
+<div class="page">
+  <div class="dash-grid" id="main-sortable">
+
+    <!-- SAFETY -->
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-safety">
+      <div class="panel-header ph-safety"><span class="panel-title">🦺 Safety</span></div>
+      <div class="panel-date" id="date-safety">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Days Without Incident</div><div class="metric-value" id="days-incident" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Near Misses</div><div class="metric-value" id="near-misses" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Safety Audits</div><div class="metric-value" id="safety-audits" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+
+    <!-- QUALITY -->
+    <div class="panel" style="grid-column:span 8;position:relative;" id="panel-quality">
+      <div class="panel-header ph-quality"><span class="panel-title">✅ Quality</span></div>
+      <div class="panel-date" id="date-quality">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Holds</div><div class="metric-value" id="holds" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Holds / COA</div><div class="metric-value" id="holds-coa" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">PEM %</div><div class="metric-value" id="pem" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Complaints</div><div class="metric-value" id="complaints" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+
+    <!-- PRODUCTION -->
+    <div class="panel" style="grid-column:span 12;position:relative;" id="panel-production">
+      <div class="panel-header ph-production"><span class="panel-title">⚙️ Production Summary</span></div>
+      <div class="panel-body">
+        <div class="prod-split">
+          <div>
+            <div class="timeframe-block tf-today"><div class="timeframe-title">Today's Operational Status</div><div class="timeframe-date" id="today-date-label">—</div></div>
+            <div class="split-row">
+              <div class="split-col"><div class="col-label">Salsa Lines</div><div class="readiness-stack" id="readiness-salsa"></div></div>
+              <div class="split-col"><div class="col-label">Layer Lines</div><div class="readiness-stack" id="readiness-layer"></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="timeframe-block tf-yesterday"><div class="timeframe-title">Yesterday's Performance</div><div class="timeframe-date" id="yesterday-date-label">—</div></div>
+            <div class="metric-row">
+              <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+              <div class="metric-box"><div class="metric-label">Code Yellow</div><div class="metric-value" id="code-yellow" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+              <div style="flex:2"><div class="section-label">Top Downtime Drivers</div><div class="drivers-box alert" id="top-drivers">Scanning data…</div></div>
+            </div>
+            <div class="split-row" style="margin-top:12px;">
+              <div class="split-col"><div class="col-label">Salsa Lines</div><table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attainment</th><th>DT</th></tr></thead><tbody id="tbody-salsa"></tbody></table></div>
+              <div class="split-col"><div class="col-label">Layer Lines</div><table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attainment</th><th>DT</th></tr></thead><tbody id="tbody-layer"></tbody></table></div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:195px;margin-top:12px;"><canvas id="production-chart"></canvas></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+
+    <!-- SANITATION — after Production -->
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-sanitation">
+      <div class="panel-header ph-sanitation"><span class="panel-title">🧼 Sanitation</span></div>
+      <div class="panel-date" id="date-sanitation">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Pre-Op %</div><div class="metric-value" id="san-preop" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">MSS %</div><div class="metric-value" id="san-mss" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="section-label">Sanitation Notes</div>
+        <div class="drivers-box" id="san-notes" contenteditable="true" oninput="saveManual(this.id)" style="min-height:60px;">—</div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+
+    <!-- COSTS -->
+    <div class="panel" style="grid-column:span 4;position:relative;">
+      <div class="panel-header ph-costs"><span class="panel-title">💰 Costs</span></div>
+      <div class="panel-date" id="date-costs">—</div>
+      <div class="panel-body">
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>Direct</th><th>Indirect</th></tr></thead>
+          <tbody>
+            <tr><td>Cost / Lb</td><td id="cost-direct" contenteditable="true" oninput="saveManual(this.id)">—</td><td id="cost-indirect" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+            <tr><td>Lb / hr</td><td id="pound-hr-direct" contenteditable="true" oninput="saveManual(this.id)">—</td><td id="pound-hr-indirect" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+            <tr><td>Proj. Conversion</td><td colspan="2" id="conversion-costs" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+            <tr><td>Lbs Produced</td><td colspan="2" id="pounds-prod" contenteditable="true" oninput="saveManual(this.id)">—</td></tr>
+          </tbody>
+        </table>
+        <div><div class="section-label">OT Trend by Dept — Last 30 Days</div><div class="chart-wrap" style="height:185px;"><canvas id="costs-ot-chart"></canvas></div></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+
+    <!-- HR -->
+    <div class="panel" style="grid-column:span 4;position:relative;">
+      <div class="panel-header ph-hr"><span class="panel-title">👥 HR | Training</span></div>
+      <div class="panel-date" id="date-hr">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Trainings Complete</div><div class="metric-value" id="trainings" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Headcount Total</div><div class="metric-value" id="headcount" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Meal Penalties</div><div class="metric-value" id="meal-penalties" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="section-label">Trainings Completion</div>
+        <div class="chart-wrap" style="height:155px;"><canvas id="hr-chart"></canvas></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+
+    <!-- SAP -->
+    <div class="panel" style="grid-column:span 4;position:relative;">
+      <div class="panel-header ph-sap"><span class="panel-title">📊 SAP</span></div>
+      <div class="panel-date" id="date-sap">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Open Process Orders</div><div class="metric-value" id="proc-orders" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Warehouse Tasks</div><div class="metric-value" id="warehouse-tasks" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="chart-wrap" style="height:115px;"><canvas id="sap-orders-chart"></canvas></div>
+        <div class="chart-wrap" style="height:115px;"><canvas id="sap-teco-chart"></canvas></div>
+        <div class="chart-wrap" style="height:115px;"><canvas id="sap-cogi-chart"></canvas></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+
+    <!-- WAREHOUSE -->
+    <div class="panel" style="grid-column:span 4;position:relative;">
+      <div class="panel-header ph-warehouse"><span class="panel-title">🏭 Warehouse</span></div>
+      <div class="panel-date" id="date-warehouse">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Overall Fill Rate %</div><div class="metric-value" id="wh-fill" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Walmart Fill Rate %</div><div class="metric-value" id="wh-ce-fill" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Cases Scheduled</div><div class="metric-value" id="wh-scheduled" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Cases Shipped</div><div class="metric-value" id="wh-shipped" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="metric-box" style="background:var(--green-xll);border-color:var(--green-ll);text-align:center;padding:10px;">
+          <div class="metric-label" style="color:var(--green-d);font-weight:800;">CPMH — Cases / Man Hour</div>
+          <div class="metric-value" id="wh-cpmh" style="color:var(--green-d);" contenteditable="true" oninput="saveManual(this.id)">—</div>
+        </div>
+        <div class="chart-wrap" style="height:115px;"><canvas id="wh-fill-chart"></canvas></div>
+        <div class="chart-wrap" style="height:115px;"><canvas id="wh-ce-chart"></canvas></div>
+        <div class="chart-wrap" style="height:195px;"><canvas id="wh-cpmh-chart"></canvas></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="panel" style="grid-column:span 4;position:relative;">
+      <div class="panel-header ph-inventory"><span class="panel-title">📦 Inventory Control</span></div>
+      <div class="panel-date" id="date-inventory">—</div>
+      <div class="panel-body">
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Buena Park Completion</div><div class="metric-value" id="inv-bp" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Cerritos Completion</div><div class="metric-value" id="inv-ce" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="metric-label">Critical Items</div><div class="metric-value" id="inv-critical" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Variants</div><div class="metric-value" id="inv-variants" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">Bin Accuracy</div><div class="metric-value" id="inv-accuracy" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+        </div>
+        <div><div class="section-label">Inventory Notes</div><div class="drivers-box" id="inv-notes">—</div></div>
+      </div>
+      <div class="resizer"></div>
+    </div>
+
+  </div><!-- /dash-grid -->
+
+  <!-- Clear Overrides utility -->
+  <div style="text-align:right;margin-bottom:24px;">
+    <button class="btn btn-ghost" onclick="clearManuals()" style="font-size:.75rem;">↺ Clear Manual Overrides</button>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let workbook=null,GLOBAL_MAX_DATE=null;
+const TODAY=new Date();
+let autoRefreshTimer=null,autoRefreshOn=false;
+
+// ── Date utils ──
+const p2=n=>String(n).padStart(2,'0');
+function toDS(d){if(!d||isNaN(d.getTime()))return null;return`${d.getUTCFullYear()}-${p2(d.getUTCMonth()+1)}-${p2(d.getUTCDate())}`;}
+function parseDate(val){if(val==null||val==='')return null;const n=Number(val);if(!isNaN(n)&&val!=='')return new Date((n-25569)*86400*1000);const d=new Date(val);return isNaN(d.getTime())?null:new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));}
+function valByKey(row,field){if(!row)return null;const key=Object.keys(row).find(k=>k.trim().toLowerCase()===field.toLowerCase()||k.trim().toLowerCase().replace(/\s/g,'')===field.toLowerCase().replace(/\s/g,''));const v=row[key??field];if(v===''||v==null||String(v).includes('#')||v==='DNR')return null;return v;}
+function getLatestDate(data,reqField=null){let max=0;const limit=new Date();limit.setDate(limit.getDate()+7);data.forEach(row=>{const d=parseDate(row.Date);if(!d||isNaN(d.getTime())||d>=limit)return;if(reqField&&(valByKey(row,reqField)==null||valByKey(row,reqField)===''))return;if(d.getTime()>max)max=d.getTime();});if(!max)return null;const obj=new Date(max);return{str:toDS(obj),obj};}
+function setDateEl(id,result){const el=document.getElementById(id);if(!el)return null;if(!result){el.textContent='No Data';el.classList.add('stale');return null;}if(!GLOBAL_MAX_DATE||result.str>GLOBAL_MAX_DATE)GLOBAL_MAX_DATE=result.str;const d=new Date(result.obj.getUTCFullYear(),result.obj.getUTCMonth(),result.obj.getUTCDate());el.textContent=`Data: ${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;return result.str;}
+function checkStale(id,ds){if(!GLOBAL_MAX_DATE||!ds)return;const el=document.getElementById(id);if(!el)return;if(ds<GLOBAL_MAX_DATE){const mD=new Date(GLOBAL_MAX_DATE),sD=new Date(ds),diff=Math.ceil(Math.abs(mD-sD)/864e5);if(mD.getUTCDay()===1&&sD.getUTCDay()===5&&diff<=3)return;el.classList.add('stale');el.textContent+=' ⚠';}else el.classList.remove('stale');}
+function getVal(data,field,ds){if(!ds)return null;const rows=data.filter(r=>toDS(parseDate(r.Date))===ds);if(!rows.length)return null;return valByKey(rows[rows.length-1],field);}
+function pct(val,dec=0){if(val==null||val===''||val==='DNR')return'—';const n=Number(val);return isNaN(n)?'—':(n<=2?n*100:n).toFixed(dec)+'%';}
+function yn(val){if(val==null)return'—';return['YES','Y','TRUE','1'].includes(String(val).toUpperCase())?'Yes':'No';}
+function set(id,val){const el=document.getElementById(id);if(el)el.textContent=(val==null?'—':val);}
+
+function getProdMetrics(prod,ds,line){
+  const rows=prod.filter(r=>toDS(parseDate(r.Date))===ds&&String(valByKey(r,'Line')||'').trim().toUpperCase()===line);
+  if(!rows.length)return{oee:null,att:null,dt:null,startup:'—',cil:'—'};
+  let os=0,as=0,dt=0,oc=0,ac=0,su='Yes',cil='Yes';
+  rows.forEach(r=>{const o=valByKey(r,'OEE');if(o!=null){const v=Number(o);if(!isNaN(v)){os+=v;oc++;}}const a=valByKey(r,'Attainment');if(a!=null){const v=Number(a);if(!isNaN(v)){as+=v;ac++;}}const d=Number(valByKey(r,'Downtime'));if(!isNaN(d))dt+=d;if(yn(valByKey(r,'Start Up'))==='No')su='No';if(yn(valByKey(r,'CIL'))==='No')cil='No';});
+  return{oee:oc?os/oc:null,att:ac?as/ac:null,dt,startup:su,cil};
+}
+
+function getAggProd(prod,maxPts=30,limitDs){
+  const m=new Map();
+  prod.forEach(row=>{const d=parseDate(row.Date);if(!d)return;const ds=toDS(d);if(limitDs&&ds>limitDs)return;if(!m.has(ds))m.set(ds,{oee:[],att:[],dt:[],raw:d});const e=m.get(ds);const ov=Number(valByKey(row,'OEE'));if(!isNaN(ov))e.oee.push(ov<=2?ov*100:ov);const av=Number(valByKey(row,'Attainment'));if(!isNaN(av))e.att.push(av<=2?av*100:av);const dv=Number(valByKey(row,'Downtime'));if(!isNaN(dv))e.dt.push(dv);});
+  const keys=[...m.keys()].sort().slice(-maxPts);
+  const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;
+  return{labels:keys.map(k=>{const r=m.get(k).raw;return new Date(r.getUTCFullYear(),r.getUTCMonth(),r.getUTCDate()).toLocaleDateString();}),oee:keys.map(k=>avg(m.get(k).oee)),att:keys.map(k=>avg(m.get(k).att)),dt:keys.map(k=>m.get(k).dt.reduce((a,b)=>a+b,0))};
+}
+
+function getHist(data,field,maxPts=30,limitDs){
+  const m=new Map();
+  data.forEach(row=>{const d=parseDate(row.Date);if(!d)return;const ds=toDS(d);if(limitDs&&ds>limitDs)return;m.set(ds,{val:Number(valByKey(row,field))||0,raw:d});});
+  const keys=[...m.keys()].sort().slice(-maxPts);
+  return{labels:keys.map(k=>{const r=m.get(k).raw;return new Date(r.getUTCFullYear(),r.getUTCMonth(),r.getUTCDate()).toLocaleDateString();}),values:keys.map(k=>m.get(k).val)};
+}
+
+function getHistFiltered(data,filterFn,field,maxPts=30,limitDs){
+  const m=new Map();
+  data.filter(filterFn).forEach(row=>{const d=parseDate(row.Date);if(!d)return;const ds=toDS(d);if(limitDs&&ds>limitDs)return;const v=Number(valByKey(row,field));if(!isNaN(v)&&v!==0)m.set(ds,{val:v,raw:d});});
+  const keys=[...m.keys()].sort().slice(-maxPts);
+  return{labels:keys.map(k=>{const r=m.get(k).raw;return new Date(r.getUTCFullYear(),r.getUTCMonth(),r.getUTCDate()).toLocaleDateString();}),values:keys.map(k=>m.get(k).val)};
+}
+
+function regression(y){const n=y.length;if(n<2)return y;let sx=0,sy=0,sxy=0,sx2=0;for(let i=0;i<n;i++){sx+=i;sy+=y[i];sxy+=i*y[i];sx2+=i*i;}const sl=(n*sxy-sx*sy)/(n*sx2-sx*sx),ic=(sy-sl*sx)/n;return Array.from({length:n},(_,i)=>sl*i+ic);}
+
+// [migrated above]
+
+
+
+// [migrated above]
+
+function renderDashboard(){
+  if(!workbook)return;
+  GLOBAL_MAX_DATE=null;
+  const hr=sheet('HR | Training'),qa=sheet('QA'),prod=sheet('Production'),fin=sheet('Finance'),sap=sheet('SAP'),wh=sheet('Warehouse'),inv=sheet('Inventory Control'),maint=sheet('Maintenance');
+  const isBP=r=>String(valByKey(r,'City')||'').toLowerCase().trim()==='buena park';
+  const isCE=r=>String(valByKey(r,'City')||'').toLowerCase().trim()==='cerritos';
+  const bpWH=wh.filter(isBP);
+
+  const dHR=setDateEl('date-hr',getLatestDate(hr)),dQA=setDateEl('date-quality',getLatestDate(qa)),dProd=setDateEl('date-production'||'dummy',getLatestDate(prod,'OEE'));
+  setDateEl('date-sanitation',getLatestDate(qa)); // Sanitation data lives in the QA sheet
+  const dProdStr=getLatestDate(prod,'OEE')?.str;
+  const dFin=setDateEl('date-costs',getLatestDate(fin)),dSAP=setDateEl('date-sap',getLatestDate(sap)),dWH=setDateEl('date-warehouse',getLatestDate(bpWH)),dInv=setDateEl('date-inventory',getLatestDate(inv));
+  const safEl=document.getElementById('date-safety');if(safEl&&dHR){safEl.textContent=document.getElementById('date-hr')?.textContent||'';}
+
+  const hdrEl=document.getElementById('date-header');if(hdrEl)hdrEl.textContent=`Today: ${TODAY.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
+  const todEl=document.getElementById('today-date-label');if(todEl)todEl.textContent=TODAY.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  if(dProdStr){const yEl=document.getElementById('yesterday-date-label');if(yEl)yEl.textContent=new Date(dProdStr).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
+
+  [['date-safety',dHR],['date-quality',dQA],['date-costs',dFin],['date-hr',dHR],['date-sap',dSAP],['date-warehouse',dWH],['date-inventory',dInv]].forEach(([id,d])=>checkStale(id,d));
+
+  // Safety/HR
+  set('days-incident',getVal(hr,'Days Without Incident',dHR));set('near-misses',getVal(hr,'Near Miss Reports',dHR));set('safety-audits',getVal(hr,'Safety Audits',dHR));set('meal-penalties',getVal(hr,'Number of Meal Penalties',dHR));
+  const trainVal=getVal(hr,'Trainings Complete',dHR)??0;set('trainings',pct(trainVal));
+  const hcd=Number(getVal(hr,'Head Count - Direct',dHR)||0),hci=Number(getVal(hr,'Head Count - Indirect',dHR)||0);set('headcount',(hcd+hci)>0?hcd+hci:null);
+  // Quality
+  set('holds',getVal(qa,'Holds',dQA));set('holds-coa',getVal(qa,'Holds/COA',dQA));set('pem',pct(getVal(qa,'PEM %',dQA),1));set('complaints',getVal(qa,'Number of Complaints',dQA));
+  set('san-preop',pct(getVal(qa,'Pre-Op %',dQA)??getVal(qa,'Pre-Op',dQA),1));set('san-mss',pct(getVal(qa,'MSS Completion %',dQA)??getVal(qa,'MSS %',dQA)??getVal(qa,'MSS',dQA),1));
+  const snEl=document.getElementById('san-notes');if(snEl)snEl.textContent=getVal(qa,'Sanitation Notes',dQA)||'No sanitation notes reported.';
+  // Costs
+  set('cost-direct',getVal(fin,'$/Pound - Direct',dFin));set('cost-indirect',getVal(fin,'$/Pound - Indirect',dFin));set('pound-hr-direct',getVal(fin,'Pounds/hour - Direct',dFin));set('pound-hr-indirect',getVal(fin,'Pounds/hour - Indirect',dFin));set('conversion-costs',getVal(fin,'Conversion Cost',dFin));set('pounds-prod',getVal(fin,'Pounds Produced',dFin));
+  // Maintenance
+  const dMaint=getLatestDate(maint)?.str;set('code-red',getVal(maint,'Code Red',dMaint));set('code-yellow',getVal(maint,'Code Yellow',dMaint));
+  // Production tables
+  function buildProdSection(lines,tbodyId,readId){
+    const tbody=document.getElementById(tbodyId),grid=document.getElementById(readId);tbody.innerHTML='';grid.innerHTML='';
+    lines.forEach(line=>{
+      const m=getProdMetrics(prod,dProdStr,line);
+      const oeeN=m.oee!=null?(Number(m.oee)<=2?Number(m.oee):Number(m.oee)/100):null;
+      const cls=oeeN==null?'':oeeN<=.60?'td-red':oeeN<.65?'td-amber':'td-green';
+      const tr=document.createElement('tr');tr.innerHTML=`<td style="font-weight:700">${line}</td><td class="${cls}">${pct(m.oee)}</td><td>${pct(m.att,1)}</td><td>${m.dt!=null?m.dt.toFixed(0)+'m':'—'}</td>`;tbody.appendChild(tr);
+      const card=document.createElement('div');card.className='readiness-card';card.innerHTML=`<div class="readiness-line">${line}</div><div class="status-pill ${m.startup==='Yes'?'pill-yes':'pill-no'}"><span class="pill-label">STARTUP</span><span>${m.startup==='Yes'?'✓':'✗'}</span></div><div class="status-pill ${m.cil==='Yes'?'pill-yes':'pill-no'}"><span class="pill-label">CIL</span><span>${m.cil==='Yes'?'✓':'✗'}</span></div>`;grid.appendChild(card);
+    });
+  }
+  buildProdSection(['2A','PL1','MP4','PXM6'],'tbody-salsa','readiness-salsa');buildProdSection(['PL2','2E'],'tbody-layer','readiness-layer');
+  // Top drivers
+  const counts={};prod.filter(r=>toDS(parseDate(r.Date))===dProdStr).forEach(r=>{['Mechanical Downtime Drivers','Material Downtime Drivers'].forEach(col=>{const v=r[col];if(v&&v!=='DNR'&&v!=='None'&&v!=='')String(v).split(/[;,]/).forEach(d=>{const c=d.trim();if(c.length>2)counts[c]=(counts[c]||0)+1;});});});
+  const tdEl=document.getElementById('top-drivers');if(tdEl)tdEl.textContent=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,c])=>`• ${n} (${c})`).join('\n')||`No drivers reported.`;
+  // SAP
+  set('proc-orders',getVal(sap,'Open Process Orders',dSAP));set('warehouse-tasks',getVal(sap,'Warehouse Tasks',dSAP));
+  // Warehouse
+  const whBP=bpWH.find(r=>toDS(parseDate(r.Date))===dWH),whCE=wh.filter(isCE).find(r=>toDS(parseDate(r.Date))===dWH);
+  set('wh-fill',pct(whBP?valByKey(whBP,'Fill Rate %'):null,1));set('wh-ce-fill',pct(whCE?valByKey(whCE,'Fill Rate %'):null,1));set('wh-scheduled',whBP?valByKey(whBP,'Number of cases scheduled to ship'):null);set('wh-shipped',whBP?valByKey(whBP,'Number of cases shipped'):null);
+  const cpmhVal=whBP?valByKey(whBP,'CPMH'):null;set('wh-cpmh',cpmhVal!=null?Number(cpmhVal).toFixed(2):null);
+  // Inventory
+  const invBP=inv.filter(isBP).find(r=>toDS(parseDate(r.Date))===dInv),invCE=inv.filter(isCE).find(r=>toDS(parseDate(r.Date))===dInv);
+  set('inv-bp',pct(invBP?valByKey(invBP,'Completion %'):null,1));set('inv-ce',pct(invCE?valByKey(invCE,'Completion %'):null,1));set('inv-critical',invBP?valByKey(invBP,'Critical Items'):'0');set('inv-variants',invBP?valByKey(invBP,'Variants'):'0');
+  const accVal=invBP?valByKey(invBP,'Bin Accuracy'):null;set('inv-accuracy',pct(accVal,2));
+  const accEl=document.getElementById('inv-accuracy');if(accVal!=null&&accEl){const n=parseFloat(accVal)>2?parseFloat(accVal)/100:parseFloat(accVal);accEl.style.color=n<.999?'var(--red-l)':'var(--green)';}
+  const inEl=document.getElementById('inv-notes');if(inEl)inEl.textContent=(invBP?valByKey(invBP,'Notes'):null)||'No inventory notes for this date.';
+  loadManuals();
+  setTimeout(()=>drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal),60);
+}
+
+function drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal){
+  const pd=getAggProd(prod,30);
+  if(pd.labels.length)mkChart('production-chart','line',pd.labels,[{label:'OEE',data:pd.oee,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',fill:true},{label:'Attainment',data:pd.att,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true},{label:'Downtime',data:pd.dt,borderColor:'#ef4444',type:'bar',fill:true,yAxisID:'y1'}],{title:'OEE & Attainment — 30 Days',y:{max:100},y1:{position:'right',grid:{drawOnChartArea:false}}});
+
+  const dtMap=new Map();fin.forEach(r=>{const d=parseDate(r.Date);if(!d)return;const ds=toDS(d);if(!dtMap.has(ds))dtMap.set(ds,{raw:d,qa:0,prod:0,wh:0,maint:0});const e=dtMap.get(ds);e.qa+=parseFloat(valByKey(r,'OT - QA'))||0;e.prod+=parseFloat(valByKey(r,'OT-Production'))||0;e.wh+=parseFloat(valByKey(r,'OT - Warehouse'))||0;e.maint+=parseFloat(valByKey(r,'OT - Maintenance'))||0;});
+  const ck=[...dtMap.keys()].sort().slice(-30);
+  if(ck.length)mkChart('costs-ot-chart','line',ck.map(k=>new Date(dtMap.get(k).raw).toLocaleDateString()),[{label:'QA',data:ck.map(k=>dtMap.get(k).qa),borderColor:'#8ea99d'},{label:'Prod',data:ck.map(k=>dtMap.get(k).prod),borderColor:'#ef4444'},{label:'WH',data:ck.map(k=>dtMap.get(k).wh),borderColor:'#b45309'},{label:'Maint',data:ck.map(k=>dtMap.get(k).maint),borderColor:'#3b82f6'},{label:'Trend',data:regression(ck.map(k=>dtMap.get(k).qa+dtMap.get(k).prod+dtMap.get(k).wh+dtMap.get(k).maint)),borderColor:'#059669',borderDash:[8,4]}],{title:'OT Hours by Department',legendPos:'right'});
+
+  mkDoughnut('hr-chart',trainVal,'Complete');
+  [['sap-orders-chart','Open Process Orders','#b45309'],['sap-teco-chart','TECO','#3b82f6'],['sap-cogi-chart','COGI','#ef4444']].forEach(([id,field,color])=>{const d=getHist(sap,field,30);if(d.labels.length)mkChart(id,'line',d.labels,[{label:field,data:d.values,borderColor:color,fill:false}],{title:field});});
+
+  mkDoughnut('wh-fill-chart',whBP?valByKey(whBP,'Fill Rate %'):0,'Overall Fill Rate %');mkDoughnut('wh-ce-chart',whCE?valByKey(whCE,'Fill Rate %'):0,'Walmart Fill Rate %');
+  const cpmhH=getHistFiltered(bpWH,()=>true,'CPMH',30);
+  if(cpmhH.labels.length){const el=document.getElementById('wh-cpmh-chart');if(el){const e=Chart.getChart(el);if(e)e.destroy();}new Chart(el.getContext('2d'),{data:{labels:cpmhH.labels,datasets:[{type:'bar',label:'CPMH',data:cpmhH.values,backgroundColor:'rgba(5,150,105,.7)',borderRadius:3,borderWidth:0},{type:'line',label:'Target (450)',data:Array(cpmhH.labels.length).fill(450),borderColor:'#ef4444',borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},plugins:{title:{display:true,text:'CPMH — Cases Per Man Hour',font:{family:"'DM Sans'",size:11,weight:'700'},color:'#2d4438',padding:{bottom:6}},legend:{display:true,position:'bottom',labels:{font:CD.font,color:CD.tick,boxWidth:10,padding:8}},tooltip:{backgroundColor:'rgba(13,31,24,.9)',padding:10,cornerRadius:8}},scales:{x:{grid:{color:CD.grid},ticks:{font:CD.mono,color:CD.tick,maxTicksLimit:8,maxRotation:40}},y:{beginAtZero:true,grid:{color:CD.grid},ticks:{font:CD.mono,color:CD.tick}}}}});}
+}
+
+// ── Manual overrides ──
+const MANUAL_IDS=['days-incident','near-misses','safety-audits','meal-penalties','holds','holds-coa','pem','complaints','san-preop','san-mss','san-notes','code-red','code-yellow','cost-direct','cost-indirect','pound-hr-direct','pound-hr-indirect','conversion-costs','pounds-prod','trainings','headcount','proc-orders','warehouse-tasks','wh-fill','wh-ce-fill','wh-scheduled','wh-shipped','wh-cpmh','inv-bp','inv-ce','inv-critical','inv-variants','inv-accuracy'];
+function saveManual(id){localStorage.setItem('dds_m_'+id,document.getElementById(id).innerText);}
+function loadManuals(){MANUAL_IDS.forEach(id=>{const v=localStorage.getItem('dds_m_'+id);if(v){const el=document.getElementById(id);if(el)el.innerText=v;}});}
+function clearManuals(){if(!confirm('Clear all manual overrides?'))return;MANUAL_IDS.forEach(id=>localStorage.removeItem('dds_m_'+id));renderDashboard();}
+
+// ── Auto-refresh ──
+function updateClock(){
+  const t=new Date().toLocaleTimeString();
+  const el=document.getElementById('psb-clock');
+  if(el)el.textContent=t;
+}
+function toggleAutoRefresh(){autoRefreshOn=!autoRefreshOn;document.getElementById('auto-toggle').classList.toggle('on',autoRefreshOn);if(autoRefreshOn)scheduleRefresh();else{clearTimeout(autoRefreshTimer);autoRefreshTimer=null;}}
+function updateInterval(){if(autoRefreshOn){clearTimeout(autoRefreshTimer);scheduleRefresh();}}
+function scheduleRefresh(){const mins=parseInt(document.getElementById('interval-sel').value,10);autoRefreshTimer=setTimeout(()=>{if(autoRefreshOn){fetchFromSharePoint();scheduleRefresh();}},mins*60*1000);}
+
+// toggleMore/closeMore defined in novus-core.js
+
+// ══ FRESHNESS BADGE ══════════════════════════════════════════════════════
+function updateFreshnessBadge(){
+  const badge=document.getElementById('freshness-badge');
+  const text=document.getElementById('freshness-text');
+  if(!badge||!text)return;
+
+  if(!GLOBAL_MAX_DATE){
+    badge.className='freshness-badge';
+    text.textContent='No data';
+    return;
+  }
+
+  // Parse the latest data date from the workbook
+  const dateParts=GLOBAL_MAX_DATE.split('-');
+  const dataDate=new Date(Date.UTC(+dateParts[0],+dateParts[1]-1,+dateParts[2]));
+  const now=new Date();
+  const hoursOld=(now-dataDate)/(1000*60*60);
+
+  const fmt=d=>d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+  if(hoursOld<24){
+    badge.className='freshness-badge fresh';
+    text.textContent=`Updated ${fmt(dataDate)}`;
+  } else if(hoursOld<48){
+    badge.className='freshness-badge stale';
+    text.textContent=`${Math.round(hoursOld)}h old — review`;
+  } else {
+    badge.className='freshness-badge old';
+    text.textContent=`${Math.floor(hoursOld/24)}d old — stale data`;
+  }
+}
+
+// ══ PLANT STATUS BAR ═════════════════════════════════════════════════════
+function updatePlantStatusBar(){
+  if(!workbook)return;
+
+  const prod=sheet('Production');
+  const maint=sheet('Maintenance');
+
+  // Latest OEE date → average across all lines
+  const latestProdDate=getLatestDate(prod,'OEE');
+  const dProd=latestProdDate?.str;
+  let avgOEE=null;
+
+  if(dProd){
+    const rows=prod.filter(r=>toDS(parseDate(r.Date))===dProd);
+    const vals=rows
+      .map(r=>{const v=Number(valByKey(r,'OEE'));return isNaN(v)?null:(v<=2?v*100:v);})
+      .filter(v=>v!==null&&v>0);
+    if(vals.length) avgOEE=vals.reduce((a,b)=>a+b,0)/vals.length;
+  }
+
+  // Code Red from Maintenance sheet
+  const dMaint=getLatestDate(maint)?.str;
+  const codeRed=dMaint?Number(getVal(maint,'Code Red',dMaint))||0:0;
+
+  // Lines active today
+  const activeLines=dProd
+    ? [...new Set(prod.filter(r=>toDS(parseDate(r.Date))===dProd).map(r=>valByKey(r,'Line')).filter(Boolean))]
+    : [];
+
+  // ── Status logic ──
+  // Green:  OEE ≥ 65% AND Code Red = 0
+  // Amber:  OEE ≥ 55% OR Code Red = 1
+  // Red:    OEE < 55% OR Code Red > 1
+  let status,statusText;
+  if(avgOEE!==null&&avgOEE>=65&&codeRed===0){
+    status='green'; statusText='Running Normal';
+  } else if((avgOEE!==null&&avgOEE>=55)||codeRed===1){
+    status='amber'; statusText='Attention Required';
+  } else {
+    status='red'; statusText='Action Required';
+  }
+
+  // Apply to DOM
+  const bar=document.getElementById('plant-status-bar');
+  if(bar) bar.dataset.status=status;
+
+  const stEl=document.getElementById('psb-status-text');
+  if(stEl) stEl.textContent=statusText;
+
+  const oeeEl=document.getElementById('psb-oee');
+  if(oeeEl) oeeEl.textContent=avgOEE!==null?avgOEE.toFixed(1)+'%':'—';
+
+  const crEl=document.getElementById('psb-codered');
+  if(crEl){
+    crEl.textContent=codeRed;
+    crEl.style.color=codeRed>1?'var(--red)':codeRed===1?'var(--amber-l)':'inherit';
+  }
+
+  const lnEl=document.getElementById('psb-lines');
+  if(lnEl) lnEl.textContent=activeLines.length?`${activeLines.length} / ${['2A','PL1','MP4','PXM6','PL2','2E'].length}`:'—';
+}
+
+// ══ ROLE-BASED INTERACTION ════════════════════════════════════════════════
+function applyRoleAccess(){
+  const isAdmin=NovusCore.isAdmin();
+  document.querySelectorAll('[contenteditable]').forEach(el=>{
+    if(isAdmin){
+      el.contentEditable='true';
+      el.classList.add('admin-edit');
+      el.classList.remove('viewer-lock');
+    } else {
+      el.contentEditable='false';
+      el.classList.add('viewer-lock');
+      el.classList.remove('admin-edit');
+    }
+  });
+}
+
+function markManualOverrides(){
+  MANUAL_IDS.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.classList.toggle('has-override',localStorage.getItem('dds_m_'+id)!==null);
+  });
+}
+
+// ── Data chart helpers (update font references) ──
+const CD={font:{family:"Inter,system-ui,sans-serif",size:10},mono:{family:"'JetBrains Mono',monospace",size:10},grid:'rgba(0,0,0,.04)',tick:'#94a3b8'};
+function mkChart(id,type,labels,datasets,extra={}){const el=document.getElementById(id);if(!el)return;const ex=Chart.getChart(el);if(ex)ex.destroy();new Chart(el.getContext('2d'),{type,data:{labels,datasets:datasets.map(ds=>({tension:.35,pointRadius:0,borderWidth:2,...ds}))},options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},plugins:{title:{display:!!extra.title,text:extra.title||'',font:{family:'Inter,system-ui,sans-serif',size:11,weight:'700'},color:CD.tick,padding:{bottom:6}},legend:{display:datasets.length>1,position:extra.legendPos||'bottom',labels:{font:CD.font,color:CD.tick,boxWidth:10,padding:8}},tooltip:{backgroundColor:'rgba(15,23,42,.92)',padding:10,cornerRadius:6,titleFont:{family:'Inter,system-ui,sans-serif',size:11,weight:'600'},bodyFont:{family:"'JetBrains Mono',monospace",size:11}}},scales:{x:{grid:{color:CD.grid},ticks:{font:CD.mono,color:CD.tick,maxTicksLimit:8,maxRotation:40}},y:{beginAtZero:true,grid:{color:CD.grid},ticks:{font:CD.mono,color:CD.tick}},...(extra.y1?{y1:{position:'right',grid:{drawOnChartArea:false}}}:{})}}});}
+function mkDoughnut(id,value,label){const el=document.getElementById(id);if(!el)return;let n=parseFloat(value)||0;if(n>0&&n<=2)n*=100;const color=n>=90?'#059669':n>=70?'#d97706':'#ef4444';const short=label.includes('Overall')?'Overall':label.includes('Walmart')?'Walmart':label;const ex=Chart.getChart(el);if(ex)ex.destroy();new Chart(el.getContext('2d'),{type:'doughnut',data:{datasets:[{data:[n,100-n],backgroundColor:[color,'#e2e8f0'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'76%',animation:{duration:300},plugins:{legend:{display:false}}},plugins:[{id:'center',beforeDraw:chart=>{const{width,height,ctx}=chart;ctx.restore();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`600 10px Inter,system-ui,sans-serif`;ctx.fillStyle=CD.tick;ctx.fillText(short,width/2,height/2-12);ctx.font=`bold 18px Inter,system-ui,sans-serif`;ctx.fillStyle=color;ctx.fillText(`${n.toFixed(1)}%`,width/2,height/2+8);ctx.save();}}]});}
+
+// ── Sheet accessor (XLSX workbook) ──
+function sheet(name){const s=workbook.Sheets[name];return s?XLSX.utils.sheet_to_json(s,{defval:'',raw:true,blankrows:false}):[];}
+
+function applyBuffer(buf,sourceName){
+  workbook=XLSX.read(buf,{type:'array',cellDates:false,raw:true});
+  renderDashboard();
+  updatePlantStatusBar();
+  updateFreshnessBadge();
+  applyRoleAccess();
+  markManualOverrides();
+  if(window.Sortable)initDraggable();
+  initResizable();
+  const st=document.getElementById('data-status');if(st){st.className='ok';st.textContent='✓ '+(sourceName||'workbook');}
+}
+
+function setSpBar(msg,state='',spin=false){const bar=document.getElementById('sp-bar'),sp=document.getElementById('sp-spinner'),msgEl=document.getElementById('sp-msg');bar.className='sp-bar visible'+(state?' '+state:'');msgEl.textContent=msg;sp.classList.toggle('on',spin);}
+
+async function fetchFromSharePoint(){
+  const btn=document.getElementById('btn-sp');
+  btn.disabled=true;
+  setSpBar('Connecting to SharePoint…','',true);
+  try{
+    const buf=await NovusSP.fetchWorkbook();
+    setSpBar('Parsing workbook…','',true);
+    applyBuffer(buf,'all_department_data_2026.xlsx');
+    try{
+      const bytes=new Uint8Array(buf);let b='';
+      for(let i=0;i<bytes.byteLength;i++)b+=String.fromCharCode(bytes[i]);
+      sessionStorage.setItem('novus1730_sp_wb',btoa(b));
+      sessionStorage.setItem('novus1730_sp_time',new Date().toLocaleTimeString());
+    }catch(_){}
+    const name=await NovusSP.getDisplayName();
+    document.getElementById('sp-time').textContent=`Fetched ${new Date().toLocaleTimeString()}`;
+    setSpBar(`✓ Live data from SharePoint${name?' · '+name:''}`, 'success',false);
+    NovusCore.Toast.success('Dashboard updated ✓');
+  }catch(err){
+    console.error(err);
+    setSpBar(`⚠ ${err.message}`,'error',false);
+    NovusCore.Toast.error('SharePoint fetch failed — see console.');
+  }finally{btn.disabled=false;}
+}
+
+async function handleUpload(evt){
+  const file=evt.target.files[0];if(!file)return;
+  try{
+    const buf=await NovusCore.WorkbookCache.save(file);
+    applyBuffer(buf,file.name);
+    setSpBar(`✓ Loaded from upload: ${file.name}`,'success',false);
+    NovusCore.Toast.success('Workbook loaded ✓');
+  }catch(err){NovusCore.Toast.error('Failed to read file.');}
+}
+
+function initDraggable(){new Sortable(document.getElementById('main-sortable'),{animation:200,handle:'.panel-header',ghostClass:'sortable-ghost'});}
+function initResizable(){document.querySelectorAll('#main-sortable .panel').forEach(panel=>{const r=panel.querySelector('.resizer');if(!r)return;r.addEventListener('mousedown',e=>{e.preventDefault();const sx=e.pageX,sy=e.pageY,sw=panel.offsetWidth,sh=panel.offsetHeight,colW=document.querySelector('.dash-grid').getBoundingClientRect().width/12;function mv(e){panel.style.width=`${sw+(e.pageX-sx)}px`;panel.style.height=`${sh+(e.pageY-sy)}px`;}function up(e){window.removeEventListener('mousemove',mv);window.removeEventListener('mouseup',up);const cols=Math.max(2,Math.min(12,Math.round((sw+(e.pageX-sx))/colW)));panel.style.gridColumn=`span ${cols}`;panel.style.width='';panel.style.height='';window.dispatchEvent(new Event('resize'));}window.addEventListener('mousemove',mv);window.addEventListener('mouseup',up);});});}
+
+window.__libsCallback=async()=>{
+  NovusCore.requireAuth();
+  updateClock();setInterval(updateClock,1000);
+
+  // Restore session cache (instant back-navigation)
+  try{
+    const cached=sessionStorage.getItem('novus1730_sp_wb');
+    if(cached){
+      const bytes=Uint8Array.from(atob(cached),c=>c.charCodeAt(0));
+      applyBuffer(bytes.buffer,'SharePoint (cached)');
+      const t=sessionStorage.getItem('novus1730_sp_time');
+      setSpBar(`✓ Cached data — fetched ${t||'earlier'}. Click Refresh for latest.`,'success',false);
+      return;
+    }
+  }catch(_){
+    // Corrupt cache — clear it and fall through to prompt
+    sessionStorage.removeItem('novus1730_sp_wb');
+    sessionStorage.removeItem('novus1730_sp_time');
+  }
+
+  // No cache — prompt user to click Refresh (ensures popup is from a user gesture)
+  setSpBar('Click Refresh to load live data from SharePoint.','info',false);
+  document.getElementById('plant-status-bar').dataset.status='loading';
+};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(window.__libs.chartjs&&window.__libs.xlsx)window.__libsCallback();});
+
+// ── SharePoint data path ──
+
+</script>
+<script src="novus-interactions.js" defer></script>
+</body>
+</html>

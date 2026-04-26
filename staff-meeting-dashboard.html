@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Dashboard – Novus Foods Plant 1730</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="novus-styles.css">
+  <script src="sharepoint-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="novus-core.js"></script>
+  <script>window.__libs={chartjs:false,xlsx:false};function _checkLibsReady(){if(window.__libs.chartjs&&window.__libs.xlsx&&window.__libsCallback)window.__libsCallback();}</script>
+  <script async src="https://cdn.jsdelivr.net/npm/chart.js" onload="window.__libs.chartjs=true;_checkLibsReady()"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onload="window.__libs.xlsx=true;_checkLibsReady()"></script>
+
+  <style>
+/* ─── RESET & TOKENS ─────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#f0fdf4;}
+:root{
+  --green:#059669;--gd:#065f46;--gl:#6ee7b7;--gll:#a7f3d0;--gxll:#ecfdf5;
+  --blue:#3b82f6;--blue-l:#bfdbfe;--blue-d:#1d4ed8;--blue-xll:#eff6ff;
+  --ink:#1a2e25;--ink2:#374151;--ink3:#6b7280;--ink4:#9ca3af;
+  --border:#d1fae5;--border2:#e5e7eb;
+  --surface:#fff;--surface2:#f9fafb;--surface3:#f3f4f6;
+  --red:#ef4444;--amber:#d97706;
+  --r:14px;--rs:10px;
+  --sh:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.05);
+  --sh-lg:0 20px 48px rgba(0,0,0,.14),0 8px 16px rgba(0,0,0,.06);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+button{font-family:'Inter',sans-serif;cursor:pointer;}
+input{font-family:'Inter',sans-serif;color:var(--ink);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+@keyframes pulse-ring{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:.3;transform:scale(1.05)}}
+
+/* ─── SHARED BUTTON STYLES ───────────────────────────── */
+.btn-primary{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:10px;background:var(--gd);border:2px solid var(--gd);color:#fff;font-size:.85rem;font-weight:800;transition:.18s;box-shadow:0 3px 10px rgba(5,150,105,.3);}
+.btn-primary:hover{background:#047857;transform:translateY(-1px);box-shadow:0 5px 16px rgba(5,150,105,.38);}
+.btn-ghost-sm{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:8px;background:transparent;border:1.5px solid var(--border2);color:var(--ink3);font-size:.78rem;font-weight:700;transition:.15s;}
+.btn-ghost-sm:hover{background:var(--surface3);color:var(--ink2);border-color:var(--ink4);}
+
+/* ─── TOP BAR ────────────────────────────────────────── */
+.top-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.top-bar-left{display:flex;align-items:center;gap:8px;}
+.top-bar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.filter-lbl{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);white-space:nowrap;}
+.fp{font-size:.75rem;font-weight:700;padding:5px 13px;border-radius:20px;border:1.5px solid var(--border2);background:transparent;color:var(--ink2);cursor:pointer;white-space:nowrap;transition:.15s;}
+.fp:hover{background:var(--gxll);border-color:var(--gl);color:var(--gd);}
+.fp.active{background:var(--gd);border-color:var(--gd);color:#fff;}
+.fc{display:flex;align-items:center;gap:6px;}
+.fc input[type=date]{padding:5px 9px;border-radius:8px;border:1.5px solid var(--border2);font-size:.74rem;font-family:'JetBrains Mono',monospace;background:var(--surface);}
+.fc input[type=date]:focus{outline:none;border-color:var(--green);}
+.filter-range{font-size:.69rem;font-family:'JetBrains Mono',monospace;color:var(--ink3);white-space:nowrap;}
+.data-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:.71rem;font-weight:700;white-space:nowrap;}
+.data-pill.ok{background:var(--gxll);color:var(--gd);}
+.data-pill.loading{background:#fefce8;color:var(--amber);}
+.data-pill.error{background:#fef2f2;color:var(--red);}
+.data-pill-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.data-pill.loading .data-pill-dot{animation:pulse-ring 1.2s infinite;}
+
+/* ─── GHOST CARD ─────────────────────────────────────── */
+.ghost-card{
+  background:var(--surface);
+  border:2px dashed var(--gl);
+  border-radius:var(--r);
+  margin-bottom:22px;
+  overflow:hidden;
+  animation:fadeUp .32s var(--ease) both;
+  box-shadow:0 2px 12px rgba(5,150,105,.08);
+}
+.ghost-canvas-area{position:relative;height:300px;overflow:hidden;background:linear-gradient(160deg,#f0fdf4,#f9fafb);}
+.ghost-canvas-area canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+
+/* Axis zones (shown when not configured) */
+.ghost-zones{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:16px;padding:24px;pointer-events:none;z-index:2;}
+.ghost-zone{
+  flex:1;max-width:260px;min-height:140px;
+  border-radius:14px;border:2px dashed;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
+  cursor:pointer;pointer-events:all;
+  background:rgba(255,255,255,.88);
+  backdrop-filter:blur(6px);
+  transition:all .2s;text-align:center;padding:20px 16px;
+}
+.ghost-zone-y{border-color:var(--gl);color:var(--gd);}
+.ghost-zone-x{border-color:var(--blue-l);color:var(--blue-d);}
+.ghost-zone:hover{transform:scale(1.03);box-shadow:0 6px 20px rgba(0,0,0,.1);}
+.ghost-zone-y:hover{border-color:var(--green);background:rgba(236,253,245,.95);}
+.ghost-zone-x:hover{border-color:var(--blue);background:rgba(239,246,255,.95);}
+.gz-icon{font-size:1.8rem;line-height:1;animation:pulse-ring 2.8s ease-in-out infinite;}
+.gz-title{font-size:.88rem;font-weight:800;line-height:1.2;}
+.gz-sub{font-size:.72rem;opacity:.65;font-weight:500;}
+.gz-hint{font-size:.67rem;margin-top:3px;padding:3px 9px;border-radius:20px;background:rgba(0,0,0,.06);display:inline-block;}
+.ghost-zone.hidden{display:none;}
+
+/* Badges shown after axis is configured */
+.ghost-badges{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none;z-index:3;}
+.ghost-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:20px;
+  font-size:.75rem;font-weight:700;
+  cursor:pointer;pointer-events:all;
+  transition:.15s;
+  backdrop-filter:blur(8px);
+  opacity:0;visibility:hidden;
+  transform:translateY(-4px);
+  transition:opacity .2s, transform .2s, visibility .2s;
+}
+.ghost-badge.visible{opacity:1;visibility:visible;transform:none;}
+.ghost-badge-y{background:rgba(236,253,245,.92);color:var(--gd);border:1.5px solid var(--gl);}
+.ghost-badge-x{background:rgba(239,246,255,.92);color:var(--blue-d);border:1.5px solid var(--blue-l);}
+.ghost-badge:hover{transform:scale(1.05)!important;}
+.ghost-badge-edit{font-size:.65rem;opacity:.55;}
+
+/* Toolbar at the bottom of the ghost card */
+.ghost-toolbar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface2);border-top:1.5px solid var(--border2);flex-wrap:wrap;}
+.ghost-ct-btns{display:flex;gap:5px;align-items:center;}
+.ghost-ct-btn{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:8px;
+  border:1.5px solid var(--border2);background:transparent;
+  font-size:.74rem;font-weight:700;color:var(--ink3);
+  transition:.15s;
+}
+.ghost-ct-btn svg{width:16px;height:12px;}
+.ghost-ct-btn:hover{border-color:var(--gl);background:var(--gxll);color:var(--gd);}
+.ghost-ct-btn.active{border-color:var(--gd);background:var(--gd);color:#fff;}
+.ghost-ct-sep{width:1px;height:22px;background:var(--border2);margin:0 4px;}
+.ghost-commit-area{display:flex;align-items:center;gap:7px;margin-left:auto;flex-wrap:wrap;}
+.ghost-name-inp{
+  padding:6px 11px;border-radius:8px;border:1.5px solid var(--border2);
+  font-size:.8rem;width:180px;background:var(--surface);
+  transition:.15s;
+}
+.ghost-name-inp:focus{outline:none;border-color:var(--green);}
+.ghost-name-inp::placeholder{color:var(--ink4);}
+.btn-ghost-commit{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 16px;border-radius:9px;
+  background:var(--gd);border:2px solid var(--gd);color:#fff;
+  font-size:.8rem;font-weight:800;transition:.18s;white-space:nowrap;
+}
+.btn-ghost-commit:disabled{background:var(--border2);border-color:var(--border2);color:var(--ink4);cursor:not-allowed;}
+.btn-ghost-commit:not(:disabled):hover{background:#047857;transform:translateY(-1px);}
+.btn-ghost-cancel{background:none;border:1.5px solid var(--border2);border-radius:8px;color:var(--ink4);font-size:1rem;width:30px;height:30px;display:flex;align-items:center;justify-content:center;transition:.15s;}
+.btn-ghost-cancel:hover{background:#fef2f2;border-color:#fca5a5;color:var(--red);}
+.ghost-toolbar-hint{font-size:.68rem;color:var(--ink4);font-style:italic;white-space:nowrap;}
+
+/* ─── CONTEXTUAL POPOVER ─────────────────────────────── */
+#ax-popover{
+  position:fixed;z-index:8000;
+  width:280px;max-height:400px;
+  background:var(--surface);
+  border:1.5px solid var(--border2);
+  border-radius:13px;
+  box-shadow:var(--sh-lg);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  animation:fadeIn .14s ease both;
+}
+#ax-popover.hidden{display:none;}
+.pop-header{
+  display:flex;align-items:center;gap:6px;
+  padding:10px 12px;
+  border-bottom:1.5px solid var(--border2);
+  background:var(--surface2);
+  flex-shrink:0;
+}
+.pop-back{background:none;border:none;color:var(--ink3);font-size:.8rem;font-weight:700;padding:3px 7px;border-radius:6px;transition:.12s;flex-shrink:0;}
+.pop-back:hover{background:var(--surface3);color:var(--ink2);}
+.pop-back.hidden{visibility:hidden;pointer-events:none;}
+.pop-search-wrap{flex:1;position:relative;}
+.pop-search{width:100%;padding:5px 10px 5px 28px;border-radius:7px;border:1.5px solid var(--border2);font-size:.8rem;background:var(--surface);transition:.15s;}
+.pop-search:focus{outline:none;border-color:var(--green);}
+.pop-search-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none;}
+.pop-close{background:none;border:none;color:var(--ink4);font-size:1.1rem;line-height:1;padding:3px 5px;border-radius:5px;flex-shrink:0;transition:.12s;}
+.pop-close:hover{color:var(--red);background:#fef2f2;}
+.pop-crumb{padding:5px 12px 0;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--ink4);}
+.pop-crumb.hidden{display:none;}
+.pop-list{overflow-y:auto;flex:1;padding:5px;}
+.pop-list::-webkit-scrollbar{width:4px;}.pop-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.pop-item{
+  display:flex;align-items:center;gap:9px;width:100%;
+  padding:8px 10px;border-radius:9px;border:none;
+  background:transparent;text-align:left;
+  font-size:.82rem;color:var(--ink2);
+  cursor:pointer;transition:.12s;
+}
+.pop-item:hover{background:var(--gxll);color:var(--gd);}
+.pop-item.focused{background:var(--gxll);color:var(--gd);}
+.pop-item-icon{font-size:1rem;flex-shrink:0;width:22px;text-align:center;}
+.pop-item-content{flex:1;min-width:0;}
+.pop-item-label{font-weight:600;font-size:.82rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pop-item-desc{font-size:.68rem;color:var(--ink3);margin-top:1px;}
+.pop-item-arrow{color:var(--ink4);font-size:.85rem;flex-shrink:0;}
+.pop-item.recommended{background:var(--gxll);}
+.pop-item.recommended .pop-item-label::after{content:'  ✓ recommended';font-size:.62rem;font-weight:700;color:var(--gd);opacity:.7;}
+.pop-section{padding:5px 10px 2px;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--ink4);}
+.pop-divider{height:1px;background:var(--border2);margin:4px 8px;}
+.pop-empty{padding:16px;text-align:center;color:var(--ink4);font-size:.8rem;}
+
+/* ─── COMMITTED WIDGETS & GROUPS ─────────────────────── */
+.group{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);margin-bottom:22px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05);animation:fadeUp .28s var(--ease) both;}
+.group-header{background:linear-gradient(135deg,var(--gxll),#d1fae5);border-bottom:1.5px solid var(--border);padding:11px 18px;display:flex;justify-content:space-between;align-items:center;}
+.group-title{color:var(--gd);font-weight:800;font-size:.9rem;}
+.group-widgets{display:grid;grid-template-columns:repeat(var(--cols,4),1fr);gap:14px;padding:16px;}
+@media(max-width:900px){.group-widgets{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:560px){.group-widgets{grid-template-columns:1fr!important}}
+
+.widget{background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--rs);padding:14px;display:flex;flex-direction:column;gap:9px;min-height:300px;animation:fadeUp .22s var(--ease) both;transition:box-shadow .2s,border-color .2s,transform .18s;}
+.widget:hover{box-shadow:var(--sh);border-color:var(--gl);transform:translateY(-1px);}
+.widget-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding-bottom:10px;border-bottom:1.5px solid var(--border2);}
+.widget-title{font-size:.87rem;font-weight:700;color:var(--ink);line-height:1.3;}
+.widget-badges{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px;}
+.widget-actions{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.btn-act{background:none;border:1.5px solid var(--border2);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--ink3);display:inline-flex;align-items:center;gap:4px;transition:.15s;font-size:.64rem;font-weight:700;}
+.btn-act:hover{background:var(--gxll);border-color:var(--gl);color:var(--gd);}
+.btn-rm{background:none;border:none;color:var(--ink4);font-size:1.1rem;line-height:1;cursor:pointer;padding:3px 5px;border-radius:5px;transition:.12s;}
+.btn-rm:hover{color:var(--red);background:#fef2f2;}
+.chart-type-tag{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:5px;background:var(--surface);border:1px solid var(--border2);color:var(--ink3);}
+.trend-pill{display:inline-flex;align-items:center;gap:3px;font-size:.6rem;font-weight:800;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:20px;}
+.trend-up{background:#dcfce7;color:#16a34a;}
+.trend-down{background:#fee2e2;color:#dc2626;}
+.trend-flat{background:#f3f4f6;color:#6b7280;}
+.widget-chart-wrap{position:relative;flex:1;min-height:210px;width:100%;}
+.metric-big{font-size:2.8rem;font-weight:700;letter-spacing:-.04em;text-align:center;padding:16px 0 4px;line-height:1;}
+.metric-sub{text-align:center;font-size:.7rem;font-family:'JetBrains Mono',monospace;color:var(--ink3);padding-bottom:8px;}
+.metric-trend{font-size:.73rem;font-weight:700;text-align:center;padding:3px 12px 6px;display:flex;align-items:center;justify-content:center;gap:5px;}
+.metric-trend.trend-up{color:#16a34a;}.metric-trend.trend-down{color:#dc2626;}
+.sparkline-wrap{padding:4px 8px 0;opacity:.5;transition:opacity .22s;}
+.widget:hover .sparkline-wrap{opacity:1;}
+.drill-hint{text-align:center;font-size:.62rem;font-family:'JetBrains Mono',monospace;color:var(--ink4);padding:3px 0 0;opacity:0;transition:opacity .22s;user-select:none;}
+.widget:hover .drill-hint{opacity:1;}
+
+/* Empty state */
+.empty-state{text-align:center;padding:80px 24px;}
+.empty-state-icon{font-size:3rem;margin-bottom:16px;opacity:.25;display:block;}
+.empty-state h3{font-size:1.05rem;font-weight:700;color:var(--ink2);margin-bottom:8px;}
+.empty-state p{font-size:.85rem;color:var(--ink3);line-height:1.7;max-width:380px;margin:0 auto 20px;}
+
+/* Skeleton */
+.skel{background:linear-gradient(90deg,#e6ece9 25%,#eff4f1 50%,#e6ece9 75%);background-size:600px 100%;animation:shimmer 1.4s infinite linear;border-radius:var(--r);}
+.skel-group{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:22px;}
+.skel-hdr{height:44px;border-radius:calc(var(--r) - 2px) calc(var(--r) - 2px) 0 0;margin:-16px -16px 16px;}
+.skel-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;}
+.skel-card{height:280px;border-radius:var(--rs);}
+
+/* Saved layouts */
+.layouts-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 18px 10px;border-top:1px solid var(--border2);background:var(--surface2);}
+.layouts-lbl{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--ink4);}
+.layout-chip{font-size:.72rem;font-weight:700;padding:3px 12px;border-radius:6px;background:var(--gxll);color:var(--gd);border:1px solid var(--border);cursor:pointer;transition:.15s;}
+.layout-chip:hover{background:var(--gll);}
+.layout-chip.active{background:var(--gd);color:#fff;border-color:var(--gd);}
+
+/* Drill-down modal */
+.drill-overlay{position:fixed;inset:0;background:rgba(4,18,10,.6);backdrop-filter:blur(3px);z-index:1200;display:flex;align-items:flex-start;justify-content:center;padding:44px 16px 24px;overflow-y:auto;animation:fadeIn .18s ease both;}
+.drill-overlay.hidden{display:none;}
+.drill-panel{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-lg);width:100%;max-width:960px;overflow:hidden;animation:fadeUp .22s var(--ease) both;flex-shrink:0;}
+.drill-hdr{background:linear-gradient(135deg,var(--gxll),#d1fae5);border-bottom:1.5px solid var(--border);padding:14px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.drill-title{font-weight:800;font-size:.95rem;color:var(--gd);}
+.drill-sub{font-size:.7rem;color:var(--green);margin-top:2px;font-family:'JetBrains Mono',monospace;}
+.drill-hdr-r{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.dtbl-wrap{overflow-x:auto;max-height:58vh;overflow-y:auto;}
+.dtbl-wrap::-webkit-scrollbar{width:5px;height:5px}.dtbl-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.dtbl{width:100%;border-collapse:collapse;font-size:.78rem;}
+.dtbl thead th{position:sticky;top:0;background:var(--surface2);border-bottom:2px solid var(--border2);padding:9px 13px;text-align:left;font-weight:800;font-size:.63rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);white-space:nowrap;z-index:1;}
+.dtbl thead th.hl{background:var(--gxll);color:var(--gd);}
+.dtbl tbody td{padding:8px 13px;border-bottom:1px solid var(--border2);color:var(--ink2);font-family:'JetBrains Mono',monospace;font-size:.73rem;white-space:nowrap;}
+.dtbl tbody td.hl{color:var(--gd);font-weight:700;}
+.dtbl tbody tr:last-child td{border-bottom:none;}
+.dtbl tbody tr:hover td{background:var(--gxll)!important;}
+.drill-nodata{padding:36px;text-align:center;color:var(--ink3);font-size:.85rem;}
+
+/* Print */
+@media print{
+  .cmd-header,.sp-bar,.top-bar,.ghost-card,.layouts-bar,.btn-rm,.btn-act,.group-header .btn,.drill-overlay,.drill-hint{display:none!important}
+  body{background:#fff!important}.page{margin:0!important;padding:6px!important;max-width:100%!important}
+  .group{break-inside:avoid;box-shadow:none!important;border:1px solid #ccc!important;margin-bottom:14px!important}
+  .widget{break-inside:avoid;box-shadow:none!important;border:1px solid #ddd!important;min-height:220px!important;transform:none!important}
+  @page{margin:.65in;size:landscape}
+}
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────── -->
+<header class="cmd-header">
+  <div class="cmd-left">
+    <a href="dds-announcements.html"><img src="novus-logo.png" alt="Novus Foods" class="cmd-logo"></a>
+    <div class="cmd-divider"></div>
+    <nav class="cmd-nav">
+      <a class="cmd-tab" href="dds-announcements.html">Announcements</a>
+      <a class="cmd-tab" href="dds-dashboard.html">Dashboard</a>
+      <a class="cmd-tab active" href="staff-meeting-dashboard.html">Personal Dashboard</a>
+      <a class="cmd-tab" href="play-call.html">Play Call</a>
+    </nav>
+  </div>
+  <div class="cmd-right">
+    <div class="cmd-more-wrap" id="more-wrap">
+      <button class="btn-cmd-icon" id="btn-more" onclick="toggleMore(event)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+      </button>
+      <div class="more-dropdown hidden" id="more-dropdown">
+        <div class="sd-group-label">Quick Access</div>
+        <button class="sd-item" onclick="NovusCore.showNeedsAction();closeMore()">Needs Action</button>
+        <button class="sd-item" onclick="NovusCore.showRules();closeMore()">Rules of Engagement</button>
+        <button class="sd-item sd-item-danger" onclick="NovusCore.logout()">Logout</button>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="sp-bar" id="sp-bar">
+  <div class="sp-bar-left"><div class="sp-spinner" id="sp-spinner"></div><span id="sp-msg">Ready</span></div>
+  <span style="font-size:.67rem;opacity:.85;font-family:'JetBrains Mono',monospace;" id="sp-time"></span>
+</div>
+
+<!-- ── CONTEXTUAL AXIS POPOVER (global singleton) ─────── -->
+<div id="ax-popover" class="hidden" role="listbox" aria-label="Choose data">
+  <div class="pop-header">
+    <button class="pop-back hidden" id="pop-back" onclick="popGoBack()">← Back</button>
+    <div class="pop-search-wrap">
+      <svg class="pop-search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="pop-search" class="pop-search" type="text" placeholder="Search…" oninput="popFilter(this.value)" autocomplete="off"/>
+    </div>
+    <button class="pop-close" onclick="closePopover()">×</button>
+  </div>
+  <div class="pop-crumb hidden" id="pop-crumb"></div>
+  <div class="pop-list" id="pop-list"></div>
+</div>
+
+<!-- ── DRILL-DOWN MODAL ───────────────────────────────── -->
+<div id="drill-overlay" class="drill-overlay hidden" onclick="handleDrillClick(event)">
+  <div class="drill-panel" role="dialog">
+    <div class="drill-hdr">
+      <div><div class="drill-title" id="drill-title">Row Details</div><div class="drill-sub" id="drill-sub"></div></div>
+      <div class="drill-hdr-r">
+        <button class="btn-act" onclick="exportDrillCSV()">⬇ Export CSV</button>
+        <button class="btn-rm" style="font-size:1.4rem;" onclick="closeDrillDown()">×</button>
+      </div>
+    </div>
+    <div class="dtbl-wrap">
+      <table class="dtbl" id="drill-table"></table>
+      <div class="drill-nodata hidden" id="drill-nodata">No records found for this period.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE ───────────────────────────────────────────── -->
+<div class="page">
+
+  <!-- Top bar: date filter + Add a Graph button -->
+  <div class="top-bar">
+    <span class="filter-lbl">📅 Show:</span>
+    <button class="fp active" onclick="applyPreset('all',this)">All Time</button>
+    <button class="fp" onclick="applyPreset('7d',this)">Last 7 days</button>
+    <button class="fp" onclick="applyPreset('mtd',this)">This month</button>
+    <button class="fp" onclick="applyPreset('30d',this)">Last 30 days</button>
+    <button class="fp" onclick="applyPreset('ytd',this)">This year</button>
+    <button class="fp" id="gf-cust" onclick="applyPreset('custom',this)">Custom ▾</button>
+    <div class="fc hidden" id="gf-cw">
+      <input type="date" id="gf-cs" onchange="onCustomDate()"/>
+      <span style="color:var(--ink4)">to</span>
+      <input type="date" id="gf-ce" onchange="onCustomDate()"/>
+    </div>
+    <div class="top-bar-right">
+      <span class="filter-range" id="gf-range"></span>
+      <span id="data-status" class="data-pill loading"><span class="data-pill-dot"></span>Loading…</span>
+      <button class="btn-ghost-sm" onclick="window.print()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+      <button class="btn-primary" onclick="addGhostCard()" id="btn-add-graph">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+        Add a Graph
+      </button>
+    </div>
+  </div>
+
+  <!-- Ghost cards (in-progress) -->
+  <div id="drafts" style="display:none;"></div>
+
+  <!-- Committed widget groups -->
+  <div id="output"></div>
+
+  <!-- Saved layouts strip -->
+  <div class="layouts-bar" id="layouts-bar" style="display:none;border-radius:var(--r);background:var(--surface);border:1.5px solid var(--border);margin-bottom:20px;">
+    <span class="layouts-lbl">Saved layouts:</span>
+    <div id="layout-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    <button class="btn-ghost-sm" style="margin-left:auto;" onclick="saveLayout()">💾 Save current</button>
+    <button class="btn-ghost-sm" onclick="clearAll()">🗑 Clear all</button>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ════════════════════════════════════════════════════════ -->
+<script>
+// ─────────────────────────────────────────────────────────
+//  CONSTANTS
+// ─────────────────────────────────────────────────────────
+const STORAGE_KEY='novus_dash_v4', LAYOUTS_KEY='novus_dash_layouts_v4';
+const DEPT_CAT_COL={'Production':'Line','Inventory Control':'City','Warehouse':'City','SAP PSA Tracking':'PSA Bin','In | Out':'Item'};
+const NON_METRIC=new Set(['Date','City','Line','Notes','Near Miss','Department','PSA Bin','_jsDate','Item','Flow','Supplier Lot','Month','Season','Week #']);
+const AVG_METRICS=new Set(['OEE','Availability','Performance','Quality Rate','Attainment','Attainment %','Fill Rate %','Fill Rate','Completion %','Bin Accuracy','PEM %','Variance (%)','Scrap Rate (%)','Cost / Usable Lb']);
+const AVG_KW=['oee','rate','efficiency','attainment','completion','accuracy','yield','availability','performance'];
+const WEIGHT_COLS=['Planned Production Time','Scheduled Time','Runtime Hours','Available Time','Shift Hours','Hours'];
+const PALETTE=['#059669','#3b82f6','#b45309','#ef4444','#7c3aed','#0d9488','#db2777','#0ea5e9','#f59e0b','#84cc16','#6366f1','#ec4899'];
+
+const GHOST_CHART_TYPES=[
+  {key:'line',  label:'Line',    icon:`<svg viewBox="0 0 22 14"><polyline points="1,11 5,6 9,8 14,3 21,5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`},
+  {key:'bar',   label:'Bar',     icon:`<svg viewBox="0 0 22 14"><rect x="1" y="5" width="4" height="8" rx="1" fill="currentColor"/><rect x="7" y="2" width="4" height="11" rx="1" fill="currentColor"/><rect x="13" y="6" width="4" height="7" rx="1" fill="currentColor"/><rect x="19" y="4" width="2" height="9" rx="1" fill="currentColor"/></svg>`},
+  {key:'area',  label:'Area',    icon:`<svg viewBox="0 0 22 14"><path d="M1,10 L5,5 L9,7 L14,2 L21,4 L21,13 L1,13 Z" fill="currentColor" opacity=".25"/><polyline points="1,10 5,5 9,7 14,2 21,4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`},
+  {key:'scatter',label:'Scatter',icon:`<svg viewBox="0 0 22 14"><circle cx="3" cy="10" r="1.8" fill="currentColor"/><circle cx="8" cy="4" r="1.8" fill="currentColor"/><circle cx="13" cy="8" r="1.8" fill="currentColor"/><circle cx="6" cy="11" r="1.8" fill="currentColor"/><circle cx="17" cy="2" r="1.8" fill="currentColor"/><circle cx="11" cy="6" r="1.8" fill="currentColor"/></svg>`},
+  {key:'pie',   label:'Pie',     icon:`<svg viewBox="0 0 22 14"><path d="M11,7 L11,1 A6,6,0,0,1,17,7 Z" fill="currentColor"/><path d="M11,7 L17,7 A6,6,0,0,1,6.3,12 Z" fill="currentColor" opacity=".6"/><path d="M11,7 L6.3,12 A6,6,1,1,1,11,1 Z" fill="currentColor" opacity=".35"/></svg>`},
+];
+
+// ─────────────────────────────────────────────────────────
+//  CORE STATE
+// ─────────────────────────────────────────────────────────
+let deptData={}, groups=[], charts={}, widgetMeta={}, drillCSVData='', uid=1;
+let output, draftsEl;
+
+const ghostCards={};
+const popState={ghostId:null, axis:null, step:'dept', dept:'', query:''};
+
+// ─────────────────────────────────────────────────────────
+//  DUMMY DATA GENERATOR
+// ─────────────────────────────────────────────────────────
+function makeDummyData(n=12){
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now=new Date();
+  const labels=Array.from({length:n},(_,i)=>{
+    const d=new Date(now.getFullYear(),now.getMonth()-n+i+1,1);
+    return months[d.getMonth()]+"'"+String(d.getFullYear()).slice(2);
+  });
+  let v=45+Math.random()*25;
+  const data=labels.map(()=>{v=Math.max(12,Math.min(92,v+(Math.random()-.5)*22));return Math.round(v);});
+  return{labels,data};
+}
+
+// ─────────────────────────────────────────────────────────
+//  GHOST CARD — ADD
+// ─────────────────────────────────────────────────────────
+function addGhostCard(){
+  const id='g'+uid++;
+  const colorIdx=Object.keys(ghostCards).length;
+  ghostCards[id]={
+    id, dept:'', metric:'',
+    color:PALETTE[colorIdx%PALETTE.length],
+    xMode:'date', xGroupBy:'month', xCatFld:'',
+    chartType:'line',
+    chart:null,
+    dummyData:makeDummyData(),
+  };
+  renderGhostCards();
+  setTimeout(()=>document.getElementById('gc-'+id)?.scrollIntoView({behavior:'smooth',block:'center'}),80);
+}
+
+// ─────────────────────────────────────────────────────────
+//  GHOST CARD — RENDER ALL
+// ─────────────────────────────────────────────────────────
+function renderGhostCards(){
+  const ids=Object.keys(ghostCards);
+  draftsEl.style.display=ids.length?'':'none';
+  ids.forEach(id=>{
+    if(!document.getElementById('gc-'+id)){
+      const el=buildGhostCardEl(ghostCards[id]);
+      draftsEl.appendChild(el);
+    } else {
+      refreshGhostCardUI(id);
+    }
+  });
+  [...draftsEl.children].forEach(el=>{
+    const id=el.dataset.gid;
+    if(id&&!ghostCards[id]) el.remove();
+  });
+  ids.forEach(id=>updateGhostChart(id));
+}
+
+// ─────────────────────────────────────────────────────────
+//  GHOST CARD — BUILD DOM
+// ─────────────────────────────────────────────────────────
+function buildGhostCardEl(g){
+  const el=document.createElement('div');
+  el.className='ghost-card'; el.id='gc-'+g.id; el.dataset.gid=g.id;
+  el.innerHTML=ghostCardHTML(g);
+  return el;
+}
+
+function ghostCardHTML(g){
+  const hasY=!!(g.dept&&g.metric);
+  const hasX=!!(g.xMode==='date'||(g.xMode==='category'&&g.xCatFld));
+  const ready=hasY&&hasX;
+  const xLabel=g.xMode==='date'?`By ${g.xGroupBy}`:(g.xCatFld?`By ${g.xCatFld}`:'');
+
+  const ctBtns=GHOST_CHART_TYPES.map(ct=>
+    `<button class="ghost-ct-btn${g.chartType===ct.key?' active':''}" onclick="setGhostChartType('${g.id}','${ct.key}')" title="${ct.label}">${ct.icon}<span>${ct.label}</span></button>`
+  ).join('');
+
+  return `
+    <div class="ghost-canvas-area">
+      <canvas id="gcanvas-${g.id}"></canvas>
+      <div class="ghost-zones">
+        <button class="ghost-zone ghost-zone-y${hasY?' hidden':''}" id="gzy-${g.id}" onclick="openYPopover(event,'${g.id}')">
+          <span class="gz-icon">📊</span>
+          <span class="gz-title">What to measure?</span>
+          <span class="gz-sub">Sets the height of the bars or line</span>
+          <span class="gz-hint">Click to choose</span>
+        </button>
+        <button class="ghost-zone ghost-zone-x${hasX?' hidden':''}" id="gzx-${g.id}" onclick="openXPopover(event,'${g.id}')">
+          <span class="gz-icon">📅</span>
+          <span class="gz-title">How to group it?</span>
+          <span class="gz-sub">Sets what goes across the bottom</span>
+          <span class="gz-hint">Click to choose</span>
+        </button>
+      </div>
+      <div class="ghost-badges">
+        <button class="ghost-badge ghost-badge-y${hasY?' visible':''}" id="gbgy-${g.id}" onclick="openYPopover(event,'${g.id}')">
+          📊 ${hasY?`<strong>${esc(g.metric)}</strong> <span style="opacity:.6">· ${esc(g.dept)}</span>`:''}
+          <span class="ghost-badge-edit">✎</span>
+        </button>
+        <button class="ghost-badge ghost-badge-x${hasX?' visible':''}" id="gbgx-${g.id}" onclick="openXPopover(event,'${g.id}')">
+          📅 <strong>${xLabel}</strong>
+          <span class="ghost-badge-edit">✎</span>
+        </button>
+      </div>
+    </div>
+    <div class="ghost-toolbar">
+      <div class="ghost-ct-btns">${ctBtns}</div>
+      <div class="ghost-ct-sep"></div>
+      <span class="ghost-toolbar-hint">${!hasY?'← Set what to measure first':(!hasX?'← Set grouping to preview':ready?'Looking good!':'')}</span>
+      <div class="ghost-commit-area">
+        <input class="ghost-name-inp" id="gname-${g.id}" type="text" placeholder="Name this chart… (optional)" oninput="ghostCards['${g.id}'].name=this.value"/>
+        <button class="btn-ghost-commit" id="gcommit-${g.id}" onclick="commitGhost('${g.id}')" ${ready?'':' disabled'}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          Add to Dashboard
+        </button>
+        <button class="btn-ghost-cancel" onclick="cancelGhost('${g.id}')" title="Discard">×</button>
+      </div>
+    </div>`;
+}
+
+function refreshGhostCardUI(id){
+  const g=ghostCards[id]; if(!g) return;
+  const el=document.getElementById('gc-'+id); if(!el) return;
+  el.innerHTML=ghostCardHTML(g);
+}
+
+// ─────────────────────────────────────────────────────────
+//  GHOST CARD — LIVE CHART UPDATE
+// ─────────────────────────────────────────────────────────
+function updateGhostChart(id){
+  const g=ghostCards[id]; if(!g) return;
+  const canvas=document.getElementById('gcanvas-'+id);
+  if(!canvas||!canvas.isConnected) return;
+
+  if(g.chart){try{g.chart.destroy();}catch(_){}g.chart=null;}
+
+  const hasY=!!(g.dept&&g.metric);
+  const mode=g.xGroupBy||'month';
+
+  let labels=null, data=null;
+
+  if(hasY){
+    try{
+      const rows=filterRows(deptData[g.dept]||[]);
+      const res=aggregateMetric(rows,g.metric,mode);
+      if(res.labels.length){labels=res.labels;data=res.data;}
+    }catch(_){}
+  }
+
+  const isReal=!!(labels&&labels.length);
+  if(!isReal){labels=g.dummyData.labels;data=g.dummyData.data;}
+
+  const alpha=isReal?0.85:0.15;
+  const color=g.color;
+  const ct=g.chartType;
+  const cjsType=ct==='pie'?'doughnut':ct==='scatter'?'scatter':ct==='bar'?'bar':'line';
+  const isFill=ct==='area';
+
+  let cdata, scales;
+
+  if(ct==='scatter'){
+    cdata={datasets:[{data:labels.map((l,i)=>({x:i+1,y:data[i]})),backgroundColor:hexToRgba(color,alpha*.7),borderColor:hexToRgba(color,alpha),pointRadius:5}]};
+    scales={x:{display:isReal,ticks:{font:{size:10},color:'#9ca3af'},grid:{color:'rgba(0,0,0,.04)'}},y:{display:isReal,ticks:{font:{size:10,family:"'JetBrains Mono'"},color:'#9ca3af'},grid:{color:'rgba(0,0,0,.04)'}}};
+  } else if(ct==='pie'){
+    const n=Math.min(labels.length,6);
+    cdata={labels:labels.slice(0,n),datasets:[{data:data.slice(0,n),backgroundColor:PALETTE.slice(0,n).map(c=>hexToRgba(c,alpha)),borderColor:'rgba(255,255,255,.8)',borderWidth:2}]};
+    scales=undefined;
+  } else {
+    cdata={labels,datasets:[{data,borderColor:hexToRgba(color,alpha),backgroundColor:hexToRgba(color,isFill?alpha*.2:alpha*.35),fill:isFill,tension:.38,borderWidth:isReal?2:1.5,pointRadius:isReal&&data.length<=30?3:0}]};
+    scales={x:{display:isReal,ticks:{maxTicksLimit:7,font:{size:10},color:'#9ca3af'},grid:{color:'rgba(0,0,0,.04)'}},y:{display:isReal,beginAtZero:true,ticks:{maxTicksLimit:5,font:{size:10,family:"'JetBrains Mono'"},color:'#9ca3af'},grid:{color:'rgba(0,0,0,.04)'}}};
+  }
+
+  try{
+    g.chart=new Chart(canvas.getContext('2d'),{
+      type:cjsType,
+      data:cdata,
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        animation:{duration:isReal?500:0,easing:'easeOutQuart'},
+        plugins:{legend:{display:ct==='pie'&&isReal},tooltip:{enabled:isReal}},
+        ...(scales?{scales}:{}),
+      },
+    });
+  }catch(_){}
+}
+
+// ─────────────────────────────────────────────────────────
+//  GHOST CARD — SET CHART TYPE
+// ─────────────────────────────────────────────────────────
+function setGhostChartType(id,ct){
+  const g=ghostCards[id]; if(!g) return;
+  g.chartType=ct;
+  document.querySelectorAll(`#gc-${id} .ghost-ct-btn`).forEach((b,i)=>{
+    b.classList.toggle('active',GHOST_CHART_TYPES[i].key===ct);
+  });
+  updateGhostChart(id);
+}
+
+// ─────────────────────────────────────────────────────────
+//  GHOST CARD — COMMIT / CANCEL
+// ─────────────────────────────────────────────────────────
+function commitGhost(id){
+  const g=ghostCards[id]; if(!g) return;
+  if(!g.dept||!g.metric){NovusCore.Toast.warning('Set a measurement first.');return;}
+
+  const title=g.name||`${g.metric} · ${g.xMode==='date'?`By ${g.xGroupBy}`:g.xCatFld||'Category'}`;
+  const gName=g.dept||'Dashboard';
+
+  const widget={
+    id:uid++, name:title, chartType:g.chartType,
+    series:[{id:uid++,dept:g.dept,metric:g.metric,color:g.color,axis:'y1',catFld:null,filterVal:null,targetValue:null,bubbleMetric:null,displayType:'line',_splitPalIdx:0}],
+    xMode:g.xMode, xCatFld:g.xCatFld, xCatAgg:'sum',
+    xMetric:'', xDept:'',
+    groupBy:g.xGroupBy||'month',
+    showLegend:true, showDataLabels:false, stacked:false, histBins:10,
+    y1Label:'', y2Label:'',
+  };
+
+  let grp=groups.find(x=>x.name===gName);
+  if(!grp){grp={id:uid++,name:gName,widgets:[]};groups.push(grp);}
+  grp.widgets.push(widget);
+
+  if(g.chart){try{g.chart.destroy();}catch(_){}}
+  delete ghostCards[id];
+  persist(); renderGhostCards(); render();
+  NovusCore.Toast.success('Chart added to your dashboard ✓');
+}
+
+function cancelGhost(id){
+  const g=ghostCards[id]; if(!g) return;
+  if(g.chart){try{g.chart.destroy();}catch(_){}}
+  delete ghostCards[id];
+  const el=document.getElementById('gc-'+id);
+  if(el){el.style.animation='none';el.style.opacity='0';el.style.transform='translateY(-6px)';el.style.transition='opacity .2s,transform .2s';setTimeout(()=>el.remove(),220);}
+  draftsEl.style.display=Object.keys(ghostCards).length?'':'none';
+}
+
+// ─────────────────────────────────────────────────────────
+//  POPOVER — OPEN
+// ─────────────────────────────────────────────────────────
+function openYPopover(evt,id){
+  evt.stopPropagation();
+  popState.ghostId=id; popState.axis='y'; popState.step='dept'; popState.dept=''; popState.query='';
+  document.getElementById('pop-search').value='';
+  renderPopDept();
+  positionPopover(evt.clientX,evt.clientY);
+}
+
+function openXPopover(evt,id){
+  evt.stopPropagation();
+  popState.ghostId=id; popState.axis='x'; popState.step='x'; popState.query='';
+  document.getElementById('pop-search').value='';
+  renderPopX();
+  positionPopover(evt.clientX,evt.clientY);
+}
+
+function positionPopover(cx,cy){
+  const pop=document.getElementById('ax-popover');
+  pop.classList.remove('hidden');
+  pop.style.visibility='hidden'; pop.style.display='flex';
+  requestAnimationFrame(()=>{
+    const pw=pop.offsetWidth||280, ph=pop.offsetHeight||360;
+    const vw=window.innerWidth, vh=window.innerHeight;
+    let left=cx+14, top=cy-16;
+    if(left+pw>vw-12) left=cx-pw-14;
+    if(left<12) left=12;
+    if(top+ph>vh-12) top=vh-ph-12;
+    if(top<12) top=12;
+    pop.style.left=left+'px'; pop.style.top=top+'px';
+    pop.style.visibility='visible';
+    document.getElementById('pop-search').focus();
+  });
+}
+
+function closePopover(){
+  document.getElementById('ax-popover').classList.add('hidden');
+  popState.ghostId=null;
+}
+
+// ─────────────────────────────────────────────────────────
+//  POPOVER — RENDER STATES
+// ─────────────────────────────────────────────────────────
+function renderPopDept(){
+  const q=popState.query.toLowerCase();
+  const back=document.getElementById('pop-back');
+  const crumb=document.getElementById('pop-crumb');
+  back.classList.add('hidden'); crumb.classList.add('hidden');
+  document.getElementById('pop-search').placeholder='Search data sources…';
+
+  const depts=Object.keys(deptData).filter(d=>!q||d.toLowerCase().includes(q));
+  const list=document.getElementById('pop-list');
+
+  if(!depts.length&&!Object.keys(deptData).length){
+    list.innerHTML=`<div class="pop-empty">⚠ No data loaded yet.<br><span style="font-size:.72rem;">Check the SharePoint connection.</span></div>`;
+    return;
+  }
+
+  list.innerHTML=depts.length
+    ?depts.map(d=>{
+        const metrics=Object.keys(deptData[d]?.[0]||{}).filter(k=>!NON_METRIC.has(k));
+        return `<button class="pop-item" data-action="dept" data-val="${esc(d)}">
+          <span class="pop-item-icon">🗂️</span>
+          <div class="pop-item-content">
+            <div class="pop-item-label">${esc(d)}</div>
+            <div class="pop-item-desc">${metrics.length} metric${metrics.length!==1?'s':''} available</div>
+          </div>
+          <span class="pop-item-arrow">›</span>
+        </button>`;
+      }).join('')
+    :`<div class="pop-empty">No sources match "${esc(popState.query)}"</div>`;
+}
+
+function renderPopMetric(){
+  const q=popState.query.toLowerCase();
+  const back=document.getElementById('pop-back');
+  const crumb=document.getElementById('pop-crumb');
+  back.classList.remove('hidden');
+  crumb.classList.remove('hidden');
+  crumb.textContent=popState.dept;
+  document.getElementById('pop-search').placeholder='Search metrics…';
+
+  const rows=deptData[popState.dept]||[];
+  const all=rows.length?Object.keys(rows[0]).filter(k=>!NON_METRIC.has(k)):[];
+  const metrics=all.filter(m=>!q||m.toLowerCase().includes(q));
+  const list=document.getElementById('pop-list');
+
+  list.innerHTML=metrics.length
+    ?metrics.map(m=>`<button class="pop-item" data-action="metric" data-val="${esc(m)}">
+        <span class="pop-item-icon">📈</span>
+        <div class="pop-item-content"><div class="pop-item-label">${esc(m)}</div></div>
+      </button>`).join('')
+    :`<div class="pop-empty">No metrics match "${esc(popState.query)}"</div>`;
+}
+
+function renderPopX(){
+  const q=popState.query.toLowerCase();
+  const g=ghostCards[popState.ghostId];
+  const back=document.getElementById('pop-back');
+  const crumb=document.getElementById('pop-crumb');
+  back.classList.add('hidden'); crumb.classList.add('hidden');
+  document.getElementById('pop-search').placeholder='Search options…';
+
+  const timeOpts=[
+    {mode:'date',groupBy:'month',label:'Over time — by Month',desc:'Most common, shows the big picture',recommended:true},
+    {mode:'date',groupBy:'week', label:'Over time — by Week', desc:'More detail, good for recent trends'},
+    {mode:'date',groupBy:'day',  label:'Over time — by Day',  desc:'Most detail, best for short date ranges'},
+  ];
+  const catFld=g?.dept&&DEPT_CAT_COL[g.dept];
+  const catOpts=catFld?[{mode:'category',groupBy:'',catFld,label:`Compare by ${catFld}`,desc:`One bar per ${catFld} — great for side-by-side comparison`}]:[];
+
+  const allOpts=[...timeOpts,...catOpts];
+  const filtered=allOpts.filter(o=>!q||o.label.toLowerCase().includes(q)||o.desc.toLowerCase().includes(q));
+
+  const list=document.getElementById('pop-list');
+  let html='';
+  if(filtered.some(o=>o.mode==='date')) html+=`<div class="pop-section">Over time</div>`;
+  html+=filtered.filter(o=>o.mode==='date').map(o=>
+    `<button class="pop-item${o.recommended?' recommended':''}" data-action="x" data-mode="${o.mode}" data-groupby="${o.groupBy}" data-catfld="">
+      <span class="pop-item-icon">📅</span>
+      <div class="pop-item-content">
+        <div class="pop-item-label">${o.label}</div>
+        <div class="pop-item-desc">${o.desc}</div>
+      </div>
+    </button>`).join('');
+  if(catOpts.length&&filtered.some(o=>o.mode==='category')){
+    html+=`<div class="pop-divider"></div><div class="pop-section">By group</div>`;
+    html+=filtered.filter(o=>o.mode==='category').map(o=>
+      `<button class="pop-item" data-action="x" data-mode="${o.mode}" data-groupby="" data-catfld="${esc(o.catFld||'')}">
+        <span class="pop-item-icon">📋</span>
+        <div class="pop-item-content">
+          <div class="pop-item-label">${o.label}</div>
+          <div class="pop-item-desc">${o.desc}</div>
+        </div>
+      </button>`).join('');
+  }
+  if(!filtered.length) html=`<div class="pop-empty">No options match</div>`;
+  list.innerHTML=html;
+}
+
+// ─────────────────────────────────────────────────────────
+//  POPOVER — EVENTS
+//
+//  FIX: capture ghostId into a local `gid` variable BEFORE
+//  calling closePopover(), which sets popState.ghostId = null.
+//  Previously, refreshGhostCardUI(popState.ghostId) and
+//  updateGhostChart(popState.ghostId) were called after
+//  closePopover(), so they always received null and silently
+//  did nothing — leaving the ghost card stuck in its empty
+//  placeholder state after every selection.
+// ─────────────────────────────────────────────────────────
+document.getElementById('pop-list').addEventListener('click',e=>{
+  const item=e.target.closest('.pop-item'); if(!item) return;
+  const action=item.dataset.action;
+
+  if(action==='dept'){
+    popState.dept=item.dataset.val; popState.step='metric'; popState.query='';
+    document.getElementById('pop-search').value='';
+    renderPopMetric();
+
+  } else if(action==='metric'){
+    const g=ghostCards[popState.ghostId]; if(!g) return;
+    const gid=popState.ghostId; // ← capture BEFORE closePopover() nulls popState.ghostId
+    g.dept=popState.dept; g.metric=item.dataset.val;
+    if(!g.xMode) g.xMode='date';
+    if(g.xMode==='date'&&g.chartType!=='bar'&&g.chartType!=='area') g.chartType='line';
+    closePopover();
+    refreshGhostCardUI(gid);  // ← uses captured id, not null
+    updateGhostChart(gid);    // ← uses captured id, not null
+
+  } else if(action==='x'){
+    const g=ghostCards[popState.ghostId]; if(!g) return;
+    const gid=popState.ghostId; // ← capture BEFORE closePopover() nulls popState.ghostId
+    g.xMode=item.dataset.mode;
+    g.xGroupBy=item.dataset.groupby||'month';
+    g.xCatFld=item.dataset.catfld||'';
+    if(g.xMode==='date'&&g.chartType==='pie') g.chartType='line';
+    if(g.xMode==='category'&&g.chartType==='line') g.chartType='bar';
+    closePopover();
+    refreshGhostCardUI(gid);  // ← uses captured id, not null
+    updateGhostChart(gid);    // ← uses captured id, not null
+  }
+});
+
+function popGoBack(){
+  popState.step='dept'; popState.query='';
+  document.getElementById('pop-search').value='';
+  renderPopDept();
+}
+
+function popFilter(val){
+  popState.query=val;
+  if(popState.axis==='x') renderPopX();
+  else if(popState.step==='dept') renderPopDept();
+  else renderPopMetric();
+}
+
+// Keyboard nav in popover
+document.getElementById('ax-popover').addEventListener('keydown',e=>{
+  const items=[...document.getElementById('pop-list').querySelectorAll('.pop-item')];
+  const cur=document.querySelector('.pop-item.focused');
+  let idx=cur?items.indexOf(cur):-1;
+  if(e.key==='ArrowDown'){e.preventDefault();items[Math.min(idx+1,items.length-1)]?.classList.add('focused');if(cur)cur.classList.remove('focused');}
+  else if(e.key==='ArrowUp'){e.preventDefault();if(idx>0){items[idx-1].classList.add('focused');cur?.classList.remove('focused');}}
+  else if(e.key==='Enter'){e.preventDefault();(document.querySelector('.pop-item.focused')||items[0])?.click();}
+  else if(e.key==='Escape'){closePopover();}
+});
+
+// Close popover when clicking outside
+document.addEventListener('click',e=>{
+  const pop=document.getElementById('ax-popover');
+  if(!pop.classList.contains('hidden')&&!pop.contains(e.target)&&!e.target.closest('.ghost-zone')&&!e.target.closest('.ghost-badge')) closePopover();
+});
+
+// ─────────────────────────────────────────────────────────
+//  WIDGET / GROUP MANAGEMENT
+// ─────────────────────────────────────────────────────────
+function removeWidget(gId,wId){const g=groups.find(g=>g.id===gId);if(!g)return;g.widgets=g.widgets.filter(w=>w.id!==wId);if(!g.widgets.length)groups=groups.filter(x=>x.id!==gId);persist();render();}
+function removeGroup(gId){groups=groups.filter(g=>g.id!==gId);persist();render();}
+function clearAll(){if(!confirm('Remove all charts from your dashboard?'))return;groups=[];try{localStorage.removeItem(STORAGE_KEY);}catch(_){}render();}
+function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(groups));}catch(_){}}
+
+// ─────────────────────────────────────────────────────────
+//  SAVED LAYOUTS
+// ─────────────────────────────────────────────────────────
+function getLayouts(){try{return JSON.parse(localStorage.getItem(LAYOUTS_KEY)||'{}');}catch(_){return{};}}
+function saveLayout(){const name=prompt('Name this layout:');if(!name)return;const l=getLayouts();l[name]=JSON.parse(JSON.stringify(groups));localStorage.setItem(LAYOUTS_KEY,JSON.stringify(l));renderLayoutChips(name);NovusCore.Toast.success(`"${name}" saved`);}
+function loadLayout(name){const l=getLayouts();if(!l[name])return;groups=l[name];uid=Math.max(...groups.flatMap(g=>[g.id,...g.widgets.map(w=>w.id)]),uid)+1;persist();render();renderLayoutChips(name);}
+function renderLayoutChips(active=''){
+  const c=document.getElementById('layout-chips'),l=getLayouts();
+  c.innerHTML=Object.keys(l).map(n=>`<span class="layout-chip${n===active?' active':''}" onclick="loadLayout('${n}')">${n}</span>`).join('');
+  document.getElementById('layouts-bar').style.display=Object.keys(l).length||groups.length?'':'none';
+}
+
+// ─────────────────────────────────────────────────────────
+//  FILTER BAR
+// ─────────────────────────────────────────────────────────
+function applyPreset(preset,btn){
+  document.querySelectorAll('.fp').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('gf-cw').classList.toggle('hidden',preset!=='custom');
+  if(preset==='custom'){updateRangeDisplay('custom');return;}
+  const now=new Date(),todayUTC=new Date(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()));
+  let s=null,e=todayUTC;
+  switch(preset){case '7d':s=new Date(todayUTC-6*86400000);break;case 'mtd':s=new Date(Date.UTC(now.getFullYear(),now.getMonth(),1));break;case '30d':s=new Date(todayUTC-29*86400000);break;case 'ytd':s=new Date(Date.UTC(now.getFullYear(),0,1));break;default:s=null;e=null;}
+  setDateInputs(s,e);updateRangeDisplay(preset,s,e);render();
+  Object.keys(ghostCards).forEach(id=>updateGhostChart(id));
+}
+function setDateInputs(s,e){document.getElementById('gf-cs').value=s?s.toISOString().slice(0,10):'';document.getElementById('gf-ce').value=e?e.toISOString().slice(0,10):'';}
+function onCustomDate(){updateRangeDisplay('custom',document.getElementById('gf-cs').value?new Date(document.getElementById('gf-cs').value):null,document.getElementById('gf-ce').value?new Date(document.getElementById('gf-ce').value):null);render();Object.keys(ghostCards).forEach(id=>updateGhostChart(id));}
+function updateRangeDisplay(preset,s,e){const el=document.getElementById('gf-range');if(preset==='all'||(!s&&!e)){el.textContent='';return;}const fmt=d=>d?d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';el.textContent=`${fmt(s)} → ${fmt(e)}`;}
+
+// ─────────────────────────────────────────────────────────
+//  DATA LOADING
+// ─────────────────────────────────────────────────────────
+function excelToUTC(v){if(v==null||v==='')return null;if(typeof v==='number'){const d=new Date((v-(v>59?25569:25568))*86400000);return isNaN(d)?null:d;}const s=String(v).trim();let m;if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/)))return new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));if((m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)))return new Date(Date.UTC(+m[3],+m[1]-1,+m[2]));return null;}
+const p2=n=>String(n).padStart(2,'0');
+function aggKey(d,mode){if(!d)return null;const y=d.getUTCFullYear(),mo=d.getUTCMonth(),day=d.getUTCDate();if(mode==='month')return`${y}-${p2(mo+1)}`;if(mode==='week'){const t=new Date(Date.UTC(y,mo,day)),dow=t.getUTCDay()||7;t.setUTCDate(day+4-dow);const ys=new Date(Date.UTC(t.getUTCFullYear(),0,1));return`${t.getUTCFullYear()}-W${p2(Math.ceil((((t-ys)/864e5)+1)/7))}`;}return`${y}-${p2(mo+1)}-${p2(day)}`;}
+
+function applyBuffer(buf){
+  const wb=XLSX.read(buf,{type:'array',cellDates:false,raw:true});deptData={};
+  wb.SheetNames.forEach(n=>{const s=wb.Sheets[n];const rows=s?XLSX.utils.sheet_to_json(s,{defval:null,raw:true,blankrows:false}):[];deptData[n]=rows.map(r=>({...r,_jsDate:excelToUTC(r.Date)}));});
+  const k=Object.keys(deptData).length;
+  const st=document.getElementById('data-status');
+  st.className='data-pill '+(k?'ok':'error');
+  st.innerHTML=`<span class="data-pill-dot"></span>${k?`${k} data sources ready`:'⚠ No data found'}`;
+  render();
+}
+
+function setSpBar(msg,state='',spin=false){const bar=document.getElementById('sp-bar'),sp=document.getElementById('sp-spinner'),msgEl=document.getElementById('sp-msg');bar.className='sp-bar visible'+(state?' '+state:'');msgEl.textContent=msg;sp.classList.toggle('on',spin);}
+
+async function fetchFromSharePoint(){
+  setSpBar('Connecting to SharePoint…','',true);
+  const st=document.getElementById('data-status');st.className='data-pill loading';st.innerHTML='<span class="data-pill-dot"></span>Loading…';
+  try{
+    const buf=await NovusSP.fetchWorkbook();setSpBar('Parsing data…','',true);applyBuffer(buf);
+    try{const bytes=new Uint8Array(buf);let b='';for(let i=0;i<bytes.byteLength;i++)b+=String.fromCharCode(bytes[i]);sessionStorage.setItem('novus1730_sp_wb',btoa(b));sessionStorage.setItem('novus1730_sp_time',new Date().toLocaleTimeString());}catch(_){}
+    const name=await NovusSP.getDisplayName();
+    document.getElementById('sp-time').textContent=`Fetched at ${new Date().toLocaleTimeString()}`;
+    setSpBar(`✓ Live data from SharePoint${name?' · '+name:''}`, 'success', false);
+    NovusCore.Toast.success('Data updated ✓');
+  }catch(err){
+    console.error(err);setSpBar(`⚠ ${err.message}`,'error',false);
+    const st2=document.getElementById('data-status');st2.className='data-pill error';st2.innerHTML='<span class="data-pill-dot"></span>Connection failed';
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+//  FILTERING + AGGREGATION
+// ─────────────────────────────────────────────────────────
+function filterRows(rows){const sv=document.getElementById('gf-cs').value,ev=document.getElementById('gf-ce').value;const s0=sv?Date.UTC(+sv.slice(0,4),+sv.slice(5,7)-1,+sv.slice(8,10)):null;const e0=ev?Date.UTC(+ev.slice(0,4),+ev.slice(5,7)-1,+ev.slice(8,10)):null;return rows.filter(r=>{if(!r._jsDate)return false;const t=r._jsDate.getTime();if(s0!==null&&t<s0)return false;if(e0!==null&&t>e0)return false;return true;});}
+function aggType(m){if(m==='Fill Rate %')return'fill-rate';if(AVG_METRICS.has(m))return'weighted-avg';if(AVG_KW.some(k=>m.toLowerCase().includes(k)))return'weighted-avg';return'sum';}
+function weightOf(row){for(const col of WEIGHT_COLS){const v=row[col];if(v!=null&&v!==''&&!isNaN(Number(v))){const n=Number(v);if(n>0)return n;}}return null;}
+function normRate(v,m){const n=num(v),lo=m.toLowerCase();const looks=lo.includes('oee')||lo.includes('rate')||lo.includes('attainment')||lo.includes('efficiency')||lo.includes('completion')||lo.includes('accuracy')||lo.includes('availability')||lo.includes('performance')||m.includes('%');return(looks&&n>0&&n<=1.5)?n*100:n;}
+
+function aggregateMetric(rows,metric,mode){
+  const type=aggType(metric);const map={};
+  rows.forEach(r=>{const k=aggKey(r._jsDate,mode);if(!k)return;if(!map[k])map[k]={sumV:0,ship:0,sched:0,ws:0,tw:0,ps:0,pc:0};const b=map[k];if(type==='fill-rate'){b.ship+=num(r['Number of cases shipped']);b.sched+=num(r['Number of cases scheduled to ship']);}else if(type==='weighted-avg'){const v=normRate(r[metric],metric),w=weightOf(r);if(!isNaN(v)){if(w!==null){b.ws+=v*w;b.tw+=w;}else{b.ps+=v;b.pc+=1;}}}else{b.sumV+=num(r[metric]);}});
+  const labels=Object.keys(map).sort();
+  const data=labels.map(k=>{const b=map[k];if(type==='fill-rate')return b.sched>0?(b.ship/b.sched)*100:0;if(type==='weighted-avg'){if(b.tw>0)return b.ws/b.tw;if(b.pc>0)return b.ps/b.pc;return 0;}return b.sumV;});
+  return{labels,data,type};
+}
+
+function expandSeries(seriesArr){const expanded=[];seriesArr.forEach((s,si)=>{if(s.filterVal==='__SPLIT__'&&s.catFld){const vals=[...new Set((deptData[s.dept]||[]).map(r=>str(r[s.catFld])))].filter(Boolean).sort();vals.forEach((v,vi)=>expanded.push({...s,filterVal:v,_splitPalIdx:si*12+vi}));}else{expanded.push({...s,_splitPalIdx:si});}});return expanded;}
+
+function getDateDatasets(widget){
+  const mode=widget.groupBy||'month';
+  const expanded=expandSeries(widget.series);const allLabelSet=new Set();
+  const entries=expanded.map(s=>{let rows=filterRows(deptData[s.dept]||[]);if(s.filterVal&&s.catFld)rows=rows.filter(r=>str(r[s.catFld])===s.filterVal);const{labels,data,type}=aggregateMetric(rows,s.metric,mode);labels.forEach(l=>allLabelSet.add(l));const lmap={};labels.forEach((l,i)=>lmap[l]=data[i]);return{s,lmap,rows,aggType:type};});
+  const labels=[...allLabelSet].sort();
+  const datasets=entries.map(({s,lmap,rows,aggType:at},di)=>{const color=s._splitPalIdx!==undefined?PALETTE[s._splitPalIdx%PALETTE.length]:s.color;const data=labels.map(l=>lmap[l]??0);const isPct=at!=='sum'||s.metric.includes('%');const type=widget.chartType==='combo'?s.displayType:(widget.chartType==='area'||s.displayType==='area')?'line':undefined;return buildDataset(s,data,color,type,widget,isPct,rows,di);});
+  return{labels,datasets,entries};
+}
+
+function getCategoryDatasets(widget){
+  const catFld=widget.xCatFld,aggMode=widget.xCatAgg||'sum';if(!catFld)return{labels:[],datasets:[],entries:[]};
+  const allCats=new Set();widget.series.forEach(s=>(deptData[s.dept]||[]).forEach(r=>{const v=str(r[catFld]);if(v)allCats.add(v);}));
+  const labels=[...allCats].sort();const expanded=expandSeries(widget.series);
+  const entries=expanded.map(s=>{let rows=filterRows(deptData[s.dept]||[]);if(s.filterVal&&s.catFld&&s.filterVal!=='__SPLIT__')rows=rows.filter(r=>str(r[s.catFld])===s.filterVal);return{s,rows};});
+  const datasets=entries.map(({s,rows},di)=>{const color=s._splitPalIdx!==undefined?PALETTE[s._splitPalIdx%PALETTE.length]:s.color;const data=labels.map(cat=>{const catRows=rows.filter(r=>str(r[catFld])===cat);if(!catRows.length)return 0;const vals=catRows.map(r=>num(r[s.metric])).filter(v=>!isNaN(v));if(!vals.length)return 0;if(aggMode==='avg')return vals.reduce((a,b)=>a+b,0)/vals.length;if(aggMode==='last')return vals[vals.length-1];return vals.reduce((a,b)=>a+b,0);});return buildDataset(s,data,color,undefined,widget,aggType(s.metric)!=='sum'||s.metric.includes('%'),rows,di);});
+  return{labels,datasets,entries};
+}
+
+function getPieDatasets(widget){
+  if(widget.xCatFld&&widget.series.length>0){const s=widget.series[0],rows=filterRows(deptData[s.dept]||[]);const cats=[...new Set(rows.map(r=>str(r[widget.xCatFld])))].filter(Boolean).sort();const data=cats.map(cat=>{const{data:d}=aggregateMetric(rows.filter(r=>str(r[widget.xCatFld])===cat),s.metric,'day');return d.reduce((a,b)=>a+b,0);});return{labels:cats,datasets:[{data,backgroundColor:cats.map((_,i)=>PALETTE[i%PALETTE.length]),borderColor:'var(--surface)',borderWidth:2.5,hoverOffset:10}],metric:s.metric};}
+  const labels=widget.series.map(s=>s.metric+(s.filterVal&&s.filterVal!=='__SPLIT__'?` (${s.filterVal})`:''));const data=widget.series.map(s=>{let rows=filterRows(deptData[s.dept]||[]);if(s.filterVal&&s.catFld)rows=rows.filter(r=>str(r[s.catFld])===s.filterVal);const{data:d}=aggregateMetric(rows,s.metric,'day');return d.reduce((a,b)=>a+b,0);});
+  return{labels,datasets:[{data,backgroundColor:widget.series.map(s=>s.color),borderColor:'var(--surface)',borderWidth:2.5,hoverOffset:10}],metric:widget.series[0]?.metric};
+}
+
+function buildDataset(s,data,color,typeOverride,widget,isPct,rows){
+  const isFill=widget.chartType==='area'||s.displayType==='area';
+  const ds={label:s.metric+(s.filterVal&&s.filterVal!=='__SPLIT__'?` (${s.filterVal})`:''),data,borderColor:color,backgroundColor:hexToRgba(color,isFill?.22:.45),yAxisID:s.axis==='y2'?'y2':'y',fill:isFill,tension:.35,borderWidth:2,pointRadius:data.length>80?0:3,pointHoverRadius:6,pointHoverBackgroundColor:color,pointHoverBorderColor:'#fff',pointHoverBorderWidth:2,_color:color,_isPct:isPct,_rows:rows,_metric:s.metric,_targetValue:s.targetValue};
+  if(typeOverride)ds.type=typeOverride;return ds;
+}
+
+// ─────────────────────────────────────────────────────────
+//  RENDER COMMITTED CHARTS
+// ─────────────────────────────────────────────────────────
+function render(){
+  Object.values(charts).forEach(c=>{try{c.destroy();}catch(_){}});charts={};widgetMeta={};output.innerHTML='';
+  renderLayoutChips();
+  if(!groups.length){
+    output.innerHTML=`<div class="empty-state">
+      <span class="empty-state-icon">📊</span>
+      <h3>Your dashboard is empty</h3>
+      <p>Click <strong>Add a Graph</strong> above to place a chart right on the canvas. Just click to choose what to show — no forms needed.</p>
+      <button class="btn-primary" onclick="addGhostCard()" style="margin:0 auto;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
+        Add your first graph
+      </button>
+    </div>`;
+    return;
+  }
+  groups.forEach((g,gi)=>{
+    const el=document.createElement('div');el.className='group';el.style.animationDelay=`${gi*40}ms`;
+    el.innerHTML=`<div class="group-header"><span class="group-title">${esc(g.name)}</span><button class="btn-act" style="font-size:.72rem;padding:4px 10px;" onclick="removeGroup(${g.id})">× Remove section</button></div><div class="group-widgets"></div>`;
+    const wc=el.querySelector('.group-widgets');wc.style.setProperty('--cols',Math.min(g.widgets.length,4));
+    g.widgets.forEach((w,wi)=>buildWidget(wc,g,w,wi));
+    output.appendChild(el);
+  });
+}
+
+function buildWidget(container,g,w,wi){
+  const cid=`c${g.id}_${w.id}`;
+  const title=w.name||w.series?.map(s=>s.metric).join(' + ')||'Chart';
+  const ct=w.chartType==='bar'?'Bar':w.chartType==='area'?'Area':w.chartType==='scatter'?'Scatter':w.chartType==='pie'?'Pie':'Line';
+  const card=document.createElement('div');card.className='widget';card.style.animationDelay=`${wi*30}ms`;
+  card.innerHTML=`<div class="widget-head"><div><div class="widget-title">${esc(title)}</div><div class="widget-badges"><span class="chart-type-tag">${ct}</span></div></div><div class="widget-actions"><button class="btn-act" onclick="exportWidgetCSV(${g.id},${w.id})">⬇ CSV</button>${w.chartType!=='metric'?`<button class="btn-act" onclick="exportWidgetPNG('${cid}','${esc(title)}')">🖼 PNG</button>`:''}<button class="btn-rm" onclick="removeWidget(${g.id},${w.id})">×</button></div></div>`;
+  switch(w.chartType){case 'pie':buildPieDonut(card,w,cid);break;case 'scatter':buildScatterWidget(card,w,cid);break;default:buildLineBarArea(card,w,w.groupBy||'month',cid);}
+  container.appendChild(card);
+}
+
+function buildLineBarArea(card,w,mode,cid){
+  let result;if(w.xMode==='category')result=getCategoryDatasets(w);else result=getDateDatasets(w);
+  const{labels,datasets,entries}=result;if(!datasets.length){appendNoData(card);return;}
+  const trend=calcTrend(datasets[0]?.data||[]);if(trend)card.querySelector('.widget-badges').insertAdjacentHTML('beforeend',trendPillHtml(trend));
+  widgetMeta[cid]={datasets,labels,mode:w.xMode,entries,widget:w};
+  const wrap=document.createElement('div');wrap.className='widget-chart-wrap';const canvas=document.createElement('canvas');canvas.id=cid;wrap.appendChild(canvas);card.appendChild(wrap);
+  const hint=document.createElement('div');hint.className='drill-hint';hint.textContent='↓ click any point to see the raw data';card.appendChild(hint);
+  requestAnimationFrame(()=>{
+    if(!canvas.isConnected)return;
+    try{
+      const cjsType=['bar','stacked-bar'].includes(w.chartType)?'bar':'line';const stacked=w.stacked||w.chartType==='stacked-bar';const hasY2=datasets.some(d=>d.yAxisID==='y2');
+      const tDS=(entries||[]).reduce((acc,entry)=>{const s=entry?.s||entry;if(s?.targetValue!=null){const color=s.color||PALETTE[0];acc.push({label:`${s.metric} Target`,data:labels.map(()=>s.targetValue),type:'line',borderColor:color,backgroundColor:'transparent',borderWidth:1.8,borderDash:[7,4],pointRadius:0,fill:false,yAxisID:s.axis==='y2'?'y2':'y',tension:0,_isTarget:true});}return acc;},[]);
+      const allDS=[...datasets,...tDS];const isPct=datasets[0]?._isPct;
+      charts[cid]=new Chart(canvas.getContext('2d'),{type:cjsType,data:{labels,datasets:allDS},options:{responsive:true,maintainAspectRatio:false,animation:{duration:400,easing:'easeOutQuart'},onClick:(evt,els)=>{if(!els.length||allDS[els[0].datasetIndex]?._isTarget)return;showDrillDown(cid,els[0].datasetIndex,labels[els[0].index],w.name||'Chart');},onHover:(evt,els,ch)=>{ch.canvas.style.cursor=els.length?'pointer':'default';},plugins:{legend:{display:w.showLegend!==false,position:'top',labels:{font:{size:11,family:"'Inter'"},color:'#374151',usePointStyle:true,pointStyleWidth:10,boxHeight:8}},tooltip:buildTooltipConfig(isPct,labels,datasets),datalabels:{display:false}},scales:{x:{stacked,grid:{color:'rgba(0,0,0,.04)'},ticks:{maxTicksLimit:14,maxRotation:42,font:{size:10,family:"'JetBrains Mono'"},color:'#9ca3af'}},y:{stacked,position:'left',beginAtZero:!isPct,...(isPct?{suggestedMax:100}:{}),title:{display:!!(w.y1Label),text:w.y1Label||'',font:{size:11},color:'#6b7280'},grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10,family:"'JetBrains Mono'"},color:'#9ca3af',callback:v=>isPct?v.toFixed(1)+'%':v.toLocaleString()}},...(hasY2?{y2:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false},ticks:{font:{size:10,family:"'JetBrains Mono'"},color:'#9ca3af'}}}:{})},}});}catch(e){wrap.innerHTML=`<div style="color:var(--red);padding:14px;font-size:.78rem;">⚠ ${esc(e.message)}</div>`;}
+  });
+}
+
+function buildScatterWidget(card,w,cid){
+  const s=w.series[0];if(!s){appendNoData(card);return;}
+  const mode=w.groupBy||'month';let rows=filterRows(deptData[s.dept]||[]);
+  const{labels,data}=aggregateMetric(rows,s.metric,mode);
+  const pts=labels.map((l,i)=>({x:i+1,y:data[i],_label:l}));
+  const ds=[{label:s.metric,data:pts,backgroundColor:hexToRgba(s.color,.65),borderColor:s.color,borderWidth:1.5,pointRadius:5}];
+  widgetMeta[cid]={datasets:ds,mode:'scatter',widget:w};
+  const wrap=document.createElement('div');wrap.className='widget-chart-wrap';const canvas=document.createElement('canvas');canvas.id=cid;wrap.appendChild(canvas);card.appendChild(wrap);
+  requestAnimationFrame(()=>{if(!canvas.isConnected)return;try{charts[cid]=new Chart(canvas.getContext('2d'),{type:'scatter',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,31,24,.92)',padding:12,cornerRadius:10,callbacks:{label:ctx=>`  ${s.metric}: ${ctx.parsed.y}${ctx.raw._label?' ('+ctx.raw._label+')':''}`}}},scales:{x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10,family:"'JetBrains Mono'"},color:'#9ca3af'}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10,family:"'JetBrains Mono'"},color:'#9ca3af'}}}}});}catch(e){wrap.innerHTML=`<div style="color:var(--red);padding:14px;font-size:.78rem;">⚠ ${esc(e.message)}</div>`;}});
+}
+
+function buildPieDonut(card,w,cid){
+  const{labels,datasets}=getPieDatasets(w);if(!labels.length){appendNoData(card);return;}widgetMeta[cid]={labels,datasets,mode:'pie',widget:w};const wrap=document.createElement('div');wrap.className='widget-chart-wrap';const canvas=document.createElement('canvas');canvas.id=cid;wrap.appendChild(canvas);card.appendChild(wrap);
+  requestAnimationFrame(()=>{if(!canvas.isConnected)return;try{charts[cid]=new Chart(canvas.getContext('2d'),{type:'doughnut',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},cutout:'0%',plugins:{legend:{display:true,position:'right',labels:{font:{size:11},usePointStyle:true,color:'#374151'}},tooltip:{backgroundColor:'rgba(13,31,24,.92)',padding:12,cornerRadius:10,callbacks:{label:ctx=>{const v=ctx.parsed,t=ctx.dataset.data.reduce((a,b)=>a+b,0);return ` ${ctx.label}: ${v.toLocaleString()} (${((v/t)*100).toFixed(1)}%)`;}}},}}});}catch(e){wrap.innerHTML=`<div style="color:var(--red);padding:14px;font-size:.78rem;">⚠ ${esc(e.message)}</div>`;}});
+}
+
+function buildTooltipConfig(isPct,labels,datasets){return{backgroundColor:'rgba(13,31,24,.92)',padding:12,cornerRadius:10,caretSize:6,titleFont:{family:"'Inter'",size:11,weight:'700'},bodyFont:{family:"'JetBrains Mono'",size:11},footerFont:{family:"'JetBrains Mono'",size:10,style:'italic'},titleColor:'#a7f3d0',bodyColor:'#d1fae5',footerColor:'#6ee7b7',borderColor:'rgba(5,150,105,.35)',borderWidth:1,callbacks:{title:ctx=>ctx[0].label,label:ctx=>{const v=ctx.parsed.y,ds=datasets[ctx.datasetIndex],fmt=ds?._isPct?n=>n.toFixed(2)+'%':n=>n.toLocaleString();return`  ${ctx.dataset.label}: ${fmt(v)}`;},footer:ctx=>{if(ctx.length<1)return'';const di=ctx[0].datasetIndex,idx=ctx[0].dataIndex,ds=datasets[di];if(!ds||ds._isTarget)return'';const prev=ds.data[idx-1],curr=ds.data[idx];if(prev==null||prev===0)return'';const delta=curr-prev,pct=((delta/Math.abs(prev))*100).toFixed(1),sign=delta>=0?'+':'';return`  ${sign}${ds._isPct?delta.toFixed(2)+'%':delta.toLocaleString()} (${sign}${pct}%) vs prior`;},}};}
+function appendNoData(card){const div=document.createElement('div');div.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:.84rem;text-align:center;padding:24px;line-height:1.6;';div.innerHTML='No data for the selected range.<br><span style="font-size:.75rem;opacity:.7;">Try adjusting the date filter.</span>';card.appendChild(div);}
+
+// ─────────────────────────────────────────────────────────
+//  DRILL-DOWN
+// ─────────────────────────────────────────────────────────
+function showDrillDown(cid,datasetIdx,label,title){
+  const meta=widgetMeta[cid];if(!meta)return;const w=meta.widget,ds=(meta.datasets||[])[datasetIdx];let rawRows=[];
+  if(ds?._rows){const gm=w?.groupBy||'month';rawRows=ds._rows.filter(r=>aggKey(r._jsDate,gm)===label);}
+  const nodata=document.getElementById('drill-nodata'),tbl=document.getElementById('drill-table'),metric=ds?._metric;
+  if(!rawRows.length){tbl.innerHTML='';nodata.classList.remove('hidden');nodata.textContent='No individual records found for this period.';drillCSVData='';}
+  else{nodata.classList.add('hidden');const cols=Object.keys(rawRows[0]).filter(k=>k!=='_jsDate');tbl.innerHTML=`<thead><tr>${cols.map(c=>`<th class="${c===metric?'hl':''}">${esc(c)}</th>`).join('')}</tr></thead><tbody>${rawRows.map(r=>`<tr>${cols.map(c=>`<td class="${c===metric?'hl':''}">${esc(str(r[c]))}</td>`).join('')}</tr>`).join('')}</tbody>`;drillCSVData=[cols,...rawRows.map(r=>cols.map(c=>r[c]))].map(row=>row.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');}
+  document.getElementById('drill-title').textContent=`${title} — ${label}`;document.getElementById('drill-sub').textContent=`${rawRows.length} record${rawRows.length!==1?'s':''} · ${label}`;document.getElementById('drill-overlay').classList.remove('hidden');document.body.style.overflow='hidden';
+}
+function closeDrillDown(){document.getElementById('drill-overlay').classList.add('hidden');document.body.style.overflow='';}
+function handleDrillClick(e){if(e.target===document.getElementById('drill-overlay'))closeDrillDown();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrillDown();});
+
+// ─────────────────────────────────────────────────────────
+//  EXPORTS
+// ─────────────────────────────────────────────────────────
+function exportWidgetCSV(gId,wId){const g=groups.find(g=>g.id===gId);if(!g)return;const w=g.widgets.find(w=>w.id===wId);if(!w)return;const mode=w.groupBy||'month';let csv='';if(w.chartType==='pie'){const{labels,datasets}=getPieDatasets(w);csv=['Label,Value',...labels.map((l,i)=>`"${l}",${datasets[0].data[i]}`)].join('\n');}else if(w.xMode==='category'){const{labels,datasets}=getCategoryDatasets(w);csv=[['Category',...datasets.map(d=>d.label)],...labels.map((l,i)=>[l,...datasets.map(d=>d.data[i])])].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');}else{const{labels,datasets}=getDateDatasets(w);const clean=datasets.filter(d=>!d._isTarget);csv=[['Period',...clean.map(d=>d.label)],...labels.map((l,i)=>[l,...clean.map(d=>d.data[i])])].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');}downloadBlob(csv,`${sanitize(w.name)}_${mode}.csv`,'text/csv');NovusCore.Toast.success('CSV downloaded ✓');}
+function exportWidgetPNG(cid,title){const ch=charts[cid];if(!ch){NovusCore.Toast.error('Chart not ready.');return;}try{const a=document.createElement('a');a.href=ch.toBase64Image('image/png',1);a.download=sanitize(title)+'.png';a.click();NovusCore.Toast.success('Image saved ✓');}catch(e){NovusCore.Toast.error('Could not export.');}}
+function exportDrillCSV(){if(!drillCSVData){NovusCore.Toast.warning('No data.');return;}downloadBlob(drillCSVData,'row_detail.csv','text/csv');NovusCore.Toast.success('CSV downloaded ✓');}
+function downloadBlob(content,filename,mime){const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
+function sanitize(s){return String(s||'chart').replace(/[^a-z0-9_\-]/gi,'_').replace(/_+/g,'_').slice(0,80);}
+
+// ─────────────────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────────────────
+function calcTrend(data){if(!data||data.length<2)return null;const curr=data[data.length-1],prev=data[data.length-2];if(prev===0)return null;const pct=((curr-prev)/Math.abs(prev))*100;return{pct,up:pct>0.05,flat:Math.abs(pct)<=0.05};}
+function trendPillHtml(trend){if(!trend)return'';if(trend.flat)return`<span class="trend-pill trend-flat">≈ flat</span>`;return`<span class="trend-pill ${trend.up?'trend-up':'trend-down'}">${trend.up?'▲':'▼'} ${Math.abs(trend.pct).toFixed(1)}%</span>`;}
+function sparklineSVG(data,color,n=10){const slice=data.slice(-n);if(slice.length<3)return'';const W=88,H=28,minV=Math.min(...slice),maxV=Math.max(...slice),range=maxV-minV||1;const pts=slice.map((v,i)=>((i/(slice.length-1))*W).toFixed(1)+','+(H-((v-minV)/range)*(H-4)-2).toFixed(1)).join(' ');const lx=W,ly=(H-((slice[slice.length-1]-minV)/range)*(H-4)-2).toFixed(1);return`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><polyline fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" points="${pts}" opacity=".75"/><circle cx="${lx}" cy="${ly}" r="2.5" fill="${color}"/></svg>`;}
+function getCatValues(dept,catFld){return[...new Set((deptData[dept]||[]).map(r=>str(r[catFld])))].filter(Boolean).sort();}
+function hexToRgba(hex,alpha){if(!hex||!hex.startsWith('#'))return`rgba(5,150,105,${alpha})`;const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${alpha})`;}
+function str(v){return v==null?'':String(v);}
+function num(v){if(v==null||v===''||v==='DNR')return 0;if(typeof v==='number')return isNaN(v)?0:v;const n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// ─────────────────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  output=document.getElementById('output');
+  draftsEl=document.getElementById('drafts');
+  updateRangeDisplay('all');
+  output.innerHTML=`<div class="skel-group"><div class="skel skel-hdr"></div><div class="skel-cards"><div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div></div></div>`;
+});
+
+window.__libsCallback=async()=>{
+  NovusCore.requireAuth();
+  try{const saved=localStorage.getItem(STORAGE_KEY);if(saved){groups=JSON.parse(saved);groups.forEach(g=>{if(!g.id)g.id=uid++;g.widgets.forEach(w=>{if(!w.id)w.id=uid++;});});}}catch(_){groups=[];}
+  renderLayoutChips();
+
+  try{const cached=sessionStorage.getItem('novus1730_sp_wb');if(cached){const bytes=Uint8Array.from(atob(cached),c=>c.charCodeAt(0));applyBuffer(bytes.buffer);const t=sessionStorage.getItem('novus1730_sp_time');setSpBar(`✓ Cached data from ${t||'earlier'} — refresh to get latest`,'success',false);return;}}catch(_){}
+
+  const signedIn=await NovusSP.hasAccount();
+  if(signedIn)fetchFromSharePoint();
+  else{setSpBar('Not connected to SharePoint','info',false);render();}
+};
+
+if(document.readyState==='loading')
+  document.addEventListener('DOMContentLoaded',()=>{if(window.__libs.chartjs&&window.__libs.xlsx)window.__libsCallback();});
+</script>
+<script src="novus-interactions.js" defer></script>
+</body>
+</html>
