@@ -99,8 +99,10 @@ body { display: flex; flex-direction: column; background: var(--bg); }
 
 /* Fullscreen chrome buttons — glass */
 #close-fs-btn, #flip-fs-btn {
+  /* Hidden by default — .visible class supplies display:flex when needed  */
   display: none; position: fixed; top: 18px; z-index: 360;
-  opacity: 0; transition: all .22s var(--spring);
+  opacity: 0; pointer-events: none;
+  transition: opacity .22s var(--spring);
 }
 #close-fs-btn {
   right: 18px; width: 42px; height: 42px; border-radius: 50%;
@@ -108,26 +110,28 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(0,0,0,0.1); color: var(--text-2);
   font-size: 1rem; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
+  /* No display:flex here — it would override the display:none above */
+  align-items: center; justify-content: center;
   box-shadow: 0 2px 12px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06);
 }
 #close-fs-btn:hover {
   background: #fef2f2; color: var(--red);
   border-color: rgba(220,38,38,0.2); transform: rotate(90deg);
 }
-#close-fs-btn.visible { display: flex; opacity: 1; }
+#close-fs-btn.visible { display: flex; opacity: 1; pointer-events: auto; }
 #flip-fs-btn {
   right: 70px; height: 42px; padding: 0 18px; border-radius: 21px;
   background: rgba(255,255,255,0.92);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(0,0,0,0.1); color: var(--text-2);
   font-size: .78rem; font-weight: 600; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
+  /* No display:flex here — it would override the display:none above */
+  align-items: center; justify-content: center; gap: 6px;
   font-family: var(--font);
   box-shadow: 0 2px 12px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06);
 }
 #flip-fs-btn:hover { background: var(--green-xll); color: var(--green-d); border-color: var(--green-ll); }
-#flip-fs-btn.visible { display: flex; opacity: 1; }
+#flip-fs-btn.visible { display: flex; opacity: 1; pointer-events: auto; }
 
 /* ── NAV ARROWS — Liquid glass ── */
 .nav-arrow {
