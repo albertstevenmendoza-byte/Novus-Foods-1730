@@ -1179,10 +1179,20 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
 .na-card-done:hover { opacity:.72; }
 
 .na-check { width:16px; height:16px; accent-color:var(--green); cursor:pointer; flex-shrink:0; }
-.na-card-desc { font-size:.86rem; color:rgba(255,255,255,.85); line-height:1.55; flex:1; font-weight:500; }
+.na-card-desc { font-size:.86rem; color:rgba(255,255,255,1); line-height:1.55; flex:1; font-weight:500; }
 .na-card-done .na-card-desc { text-decoration:line-through; color:rgba(255,255,255,.4); }
-.na-card-meta { font-size:.65rem; color:rgba(255,255,255,.28); font-family:var(--mono); white-space:nowrap; flex-shrink:0; }
-.na-card-owner { font-size:.72rem; font-weight:700; color:var(--green-l); flex-shrink:0; margin-top:1px; }
+.na-card-meta { font-size:.65rem; color:rgba(255,255,255,.55); font-family:var(--mono); white-space:nowrap; flex-shrink:0; }
+.na-card-owner { font-size:.72rem; font-weight:700; color:white; flex-shrink:0; margin-top:1px; }
+
+/* Actual class names rendered by _naRender() in novus-core.js */
+.na-card-body { flex:1; display:flex; flex-direction:column; min-width:0; }
+.na-desc { font-size:.86rem; color:rgba(255,255,255,1) !important; line-height:1.55; font-weight:500; outline:none; }
+.na-strike { text-decoration:line-through; color:rgba(255,255,255,.4) !important; }
+.na-meta { display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-top:4px; }
+.na-owner { font-size:.72rem; font-weight:700; color:white !important; outline:none; }
+.na-date-tag { font-size:.65rem; color:rgba(255,255,255,.55); font-family:var(--mono); }
+.na-open-tag { font-size:.62rem; font-weight:700; color:rgba(255,255,255,.55); text-transform:uppercase; letter-spacing:.04em; }
+.na-done-tag { font-size:.62rem; font-weight:700; color:var(--green-l); }
 
 /* Close buttons (shared) */
 .cv-close, .roe-close, .na-close, .maint-close, .help-close {
