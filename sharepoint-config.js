@@ -92,103 +92,56 @@ window.NovusSP = (function () {
     return popup.accessToken;
   }
 
-  // Cache the resolved driveId so we only look it up once per session
-  let _resolvedDriveId = sessionStorage.getItem('novus_sp_driveId') || null;
+  async function fetchWorkbook() {
+    const token = await _getToken();
 
-  async function _resolveDriveId(token) {
-    if (_resolvedDriveId) return _resolvedDriveId;
-
-    // Step 1: Ask Graph for the item metadata via the owner's user path.
-    // This only works for the file owner (Albert). For everyone else it
-    // returns 404, so we fall through to the shared-items search.
+    // ── Path 1: owner's drive (works for Albert) ──────────────────────────
     const ownerUrl = 'https://graph.microsoft.com/v1.0/users/'
                    + encodeURIComponent(SP_FILE_OWNER)
-                   + '/drive/items/' + SP_FILE_ID
-                   + '?$select=id,parentReference';
+                   + '/drive/items/' + SP_FILE_ID + '/content';
 
     let res = await fetch(ownerUrl, { headers: { Authorization: 'Bearer ' + token } });
+    if (res.ok) return res.arrayBuffer();
 
-    if (res.ok) {
-      const meta = await res.json();
-      _resolvedDriveId = meta.parentReference?.driveId || null;
-      if (_resolvedDriveId) {
-        sessionStorage.setItem('novus_sp_driveId', _resolvedDriveId);
-        return _resolvedDriveId;
-      }
-    }
+    const status1 = res.status;
 
-    // Step 2: For non-owner users — search their sharedWithMe list for the file.
-    // Graph returns items shared with the signed-in user regardless of where they live.
-    const sharedUrl = 'https://graph.microsoft.com/v1.0/me/drive/sharedWithMe?$select=id,name,remoteItem';
-    res = await fetch(sharedUrl, { headers: { Authorization: 'Bearer ' + token } });
-
-    if (res.ok) {
-      const body = await res.json();
-      const match = (body.value || []).find(i =>
-        i.name?.toLowerCase().includes('all_department_data')
-        || i.remoteItem?.id === SP_FILE_ID
-      );
-      if (match) {
-        const driveId = match.remoteItem?.parentReference?.driveId
-                      || match.parentReference?.driveId;
-        if (driveId) {
-          _resolvedDriveId = driveId;
-          sessionStorage.setItem('novus_sp_driveId', driveId);
-          return _resolvedDriveId;
+    // ── Path 2: sharedWithMe (works for other users the file is shared with) ──
+    // When Graph returns 404 on the owner path it means this user's token
+    // can't resolve the item via the owner's drive — but if the file is
+    // shared with them, it appears in /me/drive/sharedWithMe.
+    if (status1 === 404 || status1 === 403) {
+      try {
+        const sharedRes = await fetch(
+          'https://graph.microsoft.com/v1.0/me/drive/sharedWithMe?$select=id,name,remoteItem',
+          { headers: { Authorization: 'Bearer ' + token } }
+        );
+        if (sharedRes.ok) {
+          const body = await sharedRes.json();
+          const match = (body.value || []).find(i =>
+            i.name?.toLowerCase().includes('all_department_data') ||
+            (i.remoteItem?.id === SP_FILE_ID)
+          );
+          if (match) {
+            const driveId  = match.remoteItem?.parentReference?.driveId;
+            const realId   = match.remoteItem?.id || SP_FILE_ID;
+            if (driveId) {
+              const sharedUrl = 'https://graph.microsoft.com/v1.0/drives/'
+                              + driveId + '/items/' + realId + '/content';
+              const r2 = await fetch(sharedUrl, { headers: { Authorization: 'Bearer ' + token } });
+              if (r2.ok) return r2.arrayBuffer();
+            }
+          }
         }
-      }
+      } catch (_) { /* fall through to original error */ }
     }
 
-    // Step 3: Last resort — try the owner's drive root listing to locate the file
-    const searchUrl = 'https://graph.microsoft.com/v1.0/users/'
-                    + encodeURIComponent(SP_FILE_OWNER)
-                    + "/drive/root/search(q='all_department_data_2026')?$select=id,name,parentReference";
-    res = await fetch(searchUrl, { headers: { Authorization: 'Bearer ' + token } });
-    if (res.ok) {
-      const body = await res.json();
-      const match = (body.value || []).find(i => i.name?.toLowerCase().includes('all_department_data'));
-      if (match?.parentReference?.driveId) {
-        _resolvedDriveId = match.parentReference.driveId;
-        sessionStorage.setItem('novus_sp_driveId', _resolvedDriveId);
-        return _resolvedDriveId;
-      }
-    }
-
-    return null; // could not resolve — fetchWorkbook will handle the error
-  }
-
-  async function fetchWorkbook() {
-    const token   = await _getToken();
-    const driveId = await _resolveDriveId(token);
-
-    let url;
-    if (driveId) {
-      // Drive-agnostic: works for ANY authenticated user who has file access
-      url = 'https://graph.microsoft.com/v1.0/drives/'
-          + driveId + '/items/' + SP_FILE_ID + '/content';
-    } else {
-      // Fallback to owner path (works for Albert, 404 for others)
-      url = 'https://graph.microsoft.com/v1.0/users/'
-          + encodeURIComponent(SP_FILE_OWNER)
-          + '/drive/items/' + SP_FILE_ID + '/content';
-    }
-
-    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
-
-    if (!res.ok) {
-      const err = await res.text();
-      // Clear cached driveId so it re-resolves next attempt
-      sessionStorage.removeItem('novus_sp_driveId');
-      _resolvedDriveId = null;
-
-      let hint = '';
-      if (res.status === 404) hint = ' — File not found. Ensure the file is shared with this user in OneDrive.';
-      if (res.status === 403) hint = ' — Access denied. Ask your admin to grant Files.Read.All consent in Azure.';
-      if (res.status === 401) hint = ' — Auth failed. Try signing out and back in.';
-      throw new Error('Graph API ' + res.status + hint);
-    }
-
-    return res.arrayBuffer();
+    // ── Both paths failed — surface a clear error ─────────────────────────
+    let hint = '';
+    if (status1 === 404) hint = ' File not found or not shared with this account.';
+    if (status1 === 403) hint = ' Access denied — ask admin to grant Files.Read.All consent in Azure.';
+    if (status1 === 401) hint = ' Auth expired — sign out and back in.';
+    const errText = await res.text().catch(() => '');
+    throw new Error('SharePoint sync failed (' + status1 + ').' + hint);
   }
 
   async function getDisplayName() {
