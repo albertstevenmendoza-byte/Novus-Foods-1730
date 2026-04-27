@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * novus-core.js — Novus Foods 1730 Ops Hub
  * ==========================================
@@ -346,12 +347,16 @@ window.NovusCore = (() => {
     if (!list) return;
     const canEdit = isAdmin() && !!window.NovusDB;
     list.innerHTML = rules.map((r, i) => {
-      const txt = r.text.replace(/^([^:]+:)/, '<strong>$1</strong>');
+      // Split "🚀 Punctuality: description text" into name + desc
+      const colonIdx = r.text.indexOf(':');
+      const name = colonIdx > -1 ? r.text.slice(0, colonIdx).trim() : r.text;
+      const desc = colonIdx > -1 ? r.text.slice(colonIdx + 1).trim() : '';
       return `<div class="roe-card" style="animation-delay:${i * 0.06}s" data-id="${r.id}">
-        <div class="roe-card-body" ${canEdit ? `contenteditable="true" onblur="NovusCore._roeEdit('${r.id}',this.innerText)"` : ''}>${txt}</div>
         ${canEdit ? `<button class="roe-delete" onclick="NovusCore._roeDelete('${r.id}')" title="Delete rule">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
         </button>` : ''}
+        <span class="roe-card-name">${name}</span>
+        <div class="roe-card-body" ${canEdit ? `contenteditable="true" onblur="NovusCore._roeEdit('${r.id}',this.innerText)"` : ''}>${desc}</div>
       </div>`;
     }).join('') || '<p style="color:rgba(255,255,255,.4);text-align:center;padding:20px;">No rules found.</p>';
   }
@@ -638,7 +643,10 @@ window.NovusCore = (() => {
       q: 'The Needs Action / Rules / Core Values overlay is empty.',
       a: 'These features require an internet connection to the Supabase database. Check your network connection. If the network is fine, the Supabase project may be temporarily unavailable — Rules will fall back to the five default rules, and Needs Action will show empty until connectivity is restored.',
     },
-
+    {
+      q: 'My saved Staff Meeting layouts disappeared.',
+      a: 'Saved layouts are stored in your browser\'s local storage. They are lost if you clear your browser cache, switch computers, or use a different browser. Before clearing your cache, export your layouts by opening the browser console and running: localStorage.getItem(\'novus_dash_layouts\') — copy and save that text somewhere safe.',
+    },
     {
       q: 'How do I clear cached data if the app feels slow?',
       a: 'Three things can cause slowness. First, the workbook cache — run sessionStorage.removeItem(\'novus1730_sp_wb\') in the console, then reload and Refresh. Second, stale overrides — click ⚙ Settings → Clear Manual Overrides. Third, if the Needs Action or Announcements overlays are slow, the database tables may have grown large — contact your administrator to archive old records.',
@@ -776,11 +784,10 @@ window.NovusCore = (() => {
       why:       'The Needs Action table keeps every item ever created — open and completed — forever. After months of use this table can have hundreds of rows, slowing down the overlay. Announcements and play call items accumulate similarly.',
       steps: [
         { label: 'Go to Supabase → SQL Editor', code: null, note: 'Open app.supabase.com → project easfrwilbxypcdooawtt → SQL Editor.' },
-        { label: 'Check row counts', code: "SELECT 'announcements'     AS tbl, COUNT(*) AS rows FROM announcements\nUNION ALL SELECT 'needs_action',      COUNT(*) FROM needs_action\nUNION ALL SELECT 'rules',             COUNT(*) FROM rules\nUNION ALL SELECT 'play_call',         COUNT(*) FROM play_call\nUNION ALL SELECT 'lean_initiatives',  COUNT(*) FROM lean_initiatives\nUNION ALL SELECT 'lean_dept_state',   COUNT(*) FROM lean_dept_state\nORDER BY rows DESC;", note: 'If needs_action exceeds 200 rows, announcements exceeds 100, or lean_initiatives exceeds 300, run the cleanup steps below.' },
+        { label: 'Check row counts', code: "SELECT 'announcements' AS tbl, COUNT(*) AS rows FROM announcements\nUNION ALL SELECT 'needs_action', COUNT(*) FROM needs_action\nUNION ALL SELECT 'rules',        COUNT(*) FROM rules\nUNION ALL SELECT 'play_call',    COUNT(*) FROM play_call;", note: 'If needs_action exceeds 200 rows or announcements exceeds 100, run the cleanup below.' },
         { label: 'Archive old completed action items', code: "DELETE FROM needs_action\nWHERE (completed_date IS NOT NULL AND completed_date != '')\n  AND completed_date::date < CURRENT_DATE - INTERVAL '90 days';", note: 'Removes completed items older than 90 days.' },
         { label: 'Archive old announcements', code: "DELETE FROM announcements\nWHERE created_at < NOW() - INTERVAL '6 months';", note: 'Removes announcements older than 6 months.' },
         { label: 'Clear old play call items', code: "DELETE FROM play_call\nWHERE created_at < NOW() - INTERVAL '30 days';", note: 'Clears play call entries older than 30 days.' },
-        { label: 'Archive completed & rejected lean initiatives', code: "DELETE FROM lean_initiatives\nWHERE status IN ('Completed', 'Rejected')\n  AND created_at < NOW() - INTERVAL '6 months';", note: 'Keeps recent completed initiatives for reference; removes anything older than 6 months.' },
       ],
     },
     {
