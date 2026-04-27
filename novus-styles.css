@@ -1019,7 +1019,7 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
   display: block;
   font-family: 'Permanent Marker', cursive;
   font-size: 1.1rem;
-  color: var(--green-l);
+  color: #a7f3d0;
   letter-spacing: .02em;
   margin-bottom: 14px;
   position: relative; z-index: 1;
@@ -1027,7 +1027,7 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
 
 /* Description — matches .cv-card-desc */
 .roe-card-body {
-  color: rgba(255,255,255,.68);
+  color: rgba(255,255,255,.85);
   font-size: .78rem;
   line-height: 1.7;
   font-weight: 500;
