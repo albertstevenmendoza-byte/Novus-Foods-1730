@@ -966,51 +966,86 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
   background: #0d1f18;
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 20px;
-  padding: 32px 36px 36px;
-  width: min(680px, calc(100vw - 48px));
+  padding: 36px 40px 44px;
+  width: min(960px, calc(100vw - 48px));
   max-height: calc(100vh - 80px);
   overflow-y: auto;
   box-shadow: 0 40px 100px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.3),
               0 0 0 1px rgba(255,255,255,.06) inset;
   transform: translateY(24px) scale(.97);
   transition: transform var(--dur-slow) var(--spring);
-  display: flex; flex-direction: column; gap: 0;
 }
 #roe-overlay.roe-visible .roe-panel { transform: none; }
 
 .roe-panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
 .roe-panel-title  { display:flex; align-items:center; gap:12px; font-size:1.1rem; font-weight:700; color:white; letter-spacing:-.02em; }
-.roe-sub { font-size:.82rem; color:rgba(255,255,255,.38); margin-bottom:24px; }
-.roe-list { display:flex; flex-direction:column; gap:10px; }
+.roe-sub { font-size:.82rem; color:rgba(255,255,255,.38); margin-bottom:32px; }
 .roe-loading { color:rgba(255,255,255,.3); font-size:.82rem; padding:16px 0; text-align:center; }
 
+/* Grid layout — matches Core Values */
+.roe-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
 .roe-card {
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.09);
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
   border-radius: var(--radius);
-  padding: 16px 20px;
-  position: relative;
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
-  animation: cv-card-in .3s var(--ease-out) both;
-  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  padding: 28px 22px;
+  text-align: center;
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+  animation: cv-card-in .4s var(--ease-out) both;
+  transition: transform var(--dur-base) var(--spring),
+              border-color var(--dur-base) var(--ease),
+              background var(--dur-base) var(--ease);
 }
 .roe-card::before {
-  content: ''; position: absolute; top:0; left:0; right:0; height:2px;
-  background: linear-gradient(90deg, var(--green-d), var(--green));
-  border-radius: var(--radius) var(--radius) 0 0;
+  content: ''; position: absolute; top:-40px; right:-40px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(5,150,105,.18) 0%, transparent 70%);
+  pointer-events: none;
 }
-.roe-card:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); }
-.roe-card-body { font-size:.88rem; color:rgba(255,255,255,.85); line-height:1.65; outline:none; flex:1; }
-.roe-card-body strong { color: var(--green-l); font-weight:700; }
+.roe-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(16,185,129,.3);
+  background: rgba(255,255,255,.07);
+}
+
+/* Name — matches .cv-card-name */
+.roe-card-name {
+  display: block;
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.1rem;
+  color: var(--green-l);
+  letter-spacing: .02em;
+  margin-bottom: 14px;
+  position: relative; z-index: 1;
+}
+
+/* Description — matches .cv-card-desc */
+.roe-card-body {
+  color: rgba(255,255,255,.68);
+  font-size: .78rem;
+  line-height: 1.7;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  position: relative; z-index: 1;
+  outline: none; width: 100%;
+}
 .roe-card-body[contenteditable="true"]:hover { cursor:text; background:rgba(255,255,255,.04); border-radius:4px; }
 .roe-card-body[contenteditable="true"]:focus { background:rgba(255,255,255,.06); border-radius:4px; }
 
 .roe-delete {
+  position: absolute; top: 8px; right: 8px;
   background: none; border: none;
   color: rgba(255,255,255,.18);
   cursor: pointer; padding: 4px; border-radius: 4px;
   transition: color var(--dur-fast), background var(--dur-fast), transform var(--dur-fast) var(--spring-snap);
-  flex-shrink: 0; margin-top: 1px;
+  z-index: 2;
 }
 .roe-delete:hover { color: var(--red-l); background: rgba(220,38,38,.1); }
 .roe-delete:active { transform: scale(0.88); }
@@ -1025,6 +1060,9 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
 }
 .roe-add-btn:hover  { background: rgba(5,150,105,.25); box-shadow: 0 0 0 3px rgba(5,150,105,.12); }
 .roe-add-btn:active { transform: scale(0.97); }
+@media (max-width:800px) { .roe-list { grid-template-columns:repeat(2,1fr); } .roe-panel { padding:24px 20px 32px; } }
+@media (max-width:540px) { .roe-list { grid-template-columns:1fr; } }
+
 
 .btn-cmd-rules {
   background: rgba(255,255,255,.07); color: rgba(255,255,255,.8);
