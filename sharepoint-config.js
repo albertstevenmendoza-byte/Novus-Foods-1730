@@ -26,7 +26,7 @@ const _MSAL_CONFIG = {
   },
 };
 
-const _GRAPH_SCOPES = ['Files.Read', 'User.Read'];
+const _GRAPH_SCOPES = ['Files.Read.All', 'User.Read'];
 
 // ── Load MSAL via dynamic ES module import ────────────────────────────────
 // msal-browser.min.js from jsDelivr is the ESM build — it exports
