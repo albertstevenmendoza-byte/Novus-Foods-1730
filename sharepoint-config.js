@@ -14,7 +14,7 @@ const SP_FILE_OWNER = 'amendoza@novusfoods.com';
 const SP_FILE_ID    = 'D3AF0567-1205-48C6-A348-B8FA24C08639';
 // Paste your OneDrive "People in org" sharing link here (Right-click file → Share → Copy link)
 // Once filled in, ALL org users can sync without admin consent.
-const SP_SHARING_URL = '';  // ← e.g. 'https://novusfoods-my.sharepoint.com/:x:/g/...'
+const SP_SHARING_URL = 'https://lakeviewfarms1600-my.sharepoint.com/:x:/g/personal/amendoza_novusfoods_com/IQD4Vi14LkrpTplzH4SRd6lgAYSebOn-eSMaiIn4y_cnBW4?e=RiDTRf';
 // ──────────────────────────────────────────────────────────────────────────
 
 const _MSAL_CONFIG = {
