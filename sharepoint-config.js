@@ -11,7 +11,10 @@ const SP_TENANT_ID  = '56b8cda7-546e-49b1-ab41-957d6fafacdd';
 const SP_FILE_OWNER = 'amendoza@novusfoods.com';
 // Unique drive item ID from the SharePoint file URL (sourcedoc parameter)
 // This never changes even if the file is moved or renamed
-const SP_FILE_ID = 'D3AF0567-1205-48C6-A348-B8FA24C08639';
+const SP_FILE_ID    = 'D3AF0567-1205-48C6-A348-B8FA24C08639';
+// Paste your OneDrive "People in org" sharing link here (Right-click file → Share → Copy link)
+// Once filled in, ALL org users can sync without admin consent.
+const SP_SHARING_URL = '';  // ← e.g. 'https://novusfoods-my.sharepoint.com/:x:/g/...'
 // ──────────────────────────────────────────────────────────────────────────
 
 const _MSAL_CONFIG = {
@@ -26,7 +29,7 @@ const _MSAL_CONFIG = {
   },
 };
 
-const _GRAPH_SCOPES = ['Files.Read.All', 'User.Read'];
+const _GRAPH_SCOPES = ['Files.Read', 'User.Read'];
 
 // ── Load MSAL via dynamic ES module import ────────────────────────────────
 // msal-browser.min.js from jsDelivr is the ESM build — it exports
@@ -92,56 +95,73 @@ window.NovusSP = (function () {
     return popup.accessToken;
   }
 
+  // Encode a OneDrive sharing URL to a Graph share token
+  function _encodeSharingUrl(url) {
+    const b64 = btoa(url);
+    return 'u!' + b64.replace(/=/g, '').replace(/[+]/g, '-').replace(/[/]/g, '_');
+  }
+
   async function fetchWorkbook() {
     const token = await _getToken();
 
-    // ── Path 1: owner's drive (works for Albert) ──────────────────────────
+    // Path 1: Sharing link — works for ALL org users, no admin consent needed.
+    // Fill in SP_SHARING_URL above to enable this for your team.
+    if (SP_SHARING_URL) {
+      try {
+        const shareToken = _encodeSharingUrl(SP_SHARING_URL);
+        const r1 = await fetch(
+          'https://graph.microsoft.com/v1.0/shares/' + shareToken + '/driveItem/content',
+          { headers: { Authorization: 'Bearer ' + token } }
+        );
+        if (r1.ok) return r1.arrayBuffer();
+      } catch (_) {}
+    }
+
+    // Path 2: Owner drive path — always works for Albert.
     const ownerUrl = 'https://graph.microsoft.com/v1.0/users/'
                    + encodeURIComponent(SP_FILE_OWNER)
                    + '/drive/items/' + SP_FILE_ID + '/content';
-
-    let res = await fetch(ownerUrl, { headers: { Authorization: 'Bearer ' + token } });
+    const res = await fetch(ownerUrl, { headers: { Authorization: 'Bearer ' + token } });
     if (res.ok) return res.arrayBuffer();
 
-    const status1 = res.status;
+    const status = res.status;
 
-    // ── Path 2: sharedWithMe (works for other users the file is shared with) ──
-    // When Graph returns 404 on the owner path it means this user's token
-    // can't resolve the item via the owner's drive — but if the file is
-    // shared with them, it appears in /me/drive/sharedWithMe.
-    if (status1 === 404 || status1 === 403) {
+    // Path 3: sharedWithMe — fallback for other users when the file is shared with them.
+    if (status === 404 || status === 403) {
       try {
-        const sharedRes = await fetch(
+        const sr = await fetch(
           'https://graph.microsoft.com/v1.0/me/drive/sharedWithMe?$select=id,name,remoteItem',
           { headers: { Authorization: 'Bearer ' + token } }
         );
-        if (sharedRes.ok) {
-          const body = await sharedRes.json();
-          const match = (body.value || []).find(i =>
-            i.name?.toLowerCase().includes('all_department_data') ||
-            (i.remoteItem?.id === SP_FILE_ID)
-          );
-          if (match) {
-            const driveId  = match.remoteItem?.parentReference?.driveId;
-            const realId   = match.remoteItem?.id || SP_FILE_ID;
+        if (sr.ok) {
+          const body  = await sr.json();
+          const match = (body.value || []).find(function(i) {
+            return i.name && i.name.toLowerCase().indexOf('all_department_data') !== -1;
+          });
+          if (match && match.remoteItem) {
+            const driveId = match.remoteItem.parentReference && match.remoteItem.parentReference.driveId;
+            const realId  = match.remoteItem.id || SP_FILE_ID;
             if (driveId) {
-              const sharedUrl = 'https://graph.microsoft.com/v1.0/drives/'
-                              + driveId + '/items/' + realId + '/content';
-              const r2 = await fetch(sharedUrl, { headers: { Authorization: 'Bearer ' + token } });
-              if (r2.ok) return r2.arrayBuffer();
+              const r3 = await fetch(
+                'https://graph.microsoft.com/v1.0/drives/' + driveId + '/items/' + realId + '/content',
+                { headers: { Authorization: 'Bearer ' + token } }
+              );
+              if (r3.ok) return r3.arrayBuffer();
             }
           }
         }
-      } catch (_) { /* fall through to original error */ }
+      } catch (_) {}
     }
 
-    // ── Both paths failed — surface a clear error ─────────────────────────
-    let hint = '';
-    if (status1 === 404) hint = ' File not found or not shared with this account.';
-    if (status1 === 403) hint = ' Access denied — ask admin to grant Files.Read.All consent in Azure.';
-    if (status1 === 401) hint = ' Auth expired — sign out and back in.';
-    const errText = await res.text().catch(() => '');
-    throw new Error('SharePoint sync failed (' + status1 + ').' + hint);
+    // All paths failed
+    var hint = status === 404
+      ? ' Paste your OneDrive sharing link into SP_SHARING_URL in sharepoint-config.js.'
+      : status === 403
+        ? ' Share the file with this user in OneDrive.'
+        : status === 401
+          ? ' Auth expired — sign out and back in.'
+          : '';
+    throw new Error('SharePoint sync failed (' + status + ').' + hint);
   }
 
   async function getDisplayName() {
