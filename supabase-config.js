@@ -302,3 +302,39 @@ window.NovusDB.leanDeptState = {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lean_dept_state' }, callback)
       .subscribe(),
 };
+
+// ── Dashboard Data (Power Automate → Supabase pipeline) ───────────────────
+// Replaces the SharePoint/XLSX fetch in dds-dashboard.html.
+// Power Automate writes rows here; the dashboard reads them.
+window.NovusDB.dashboardData = {
+
+  /** Fetch all rows for a specific sheet, most recent first */
+  getSheet: (sheetName) =>
+    _sb.from('dashboard_data')
+      .select('row_date, row_index, data')
+      .eq('sheet', sheetName)
+      .order('row_date', { ascending: false })
+      .limit(500),
+
+  /** Fetch all sheets in one call — returns array of all rows */
+  getAll: () =>
+    _sb.from('dashboard_data')
+      .select('sheet, row_date, row_index, data')
+      .order('row_date', { ascending: false })
+      .limit(5000),
+
+  /** Called by Power Automate to upsert rows (via Supabase REST API directly) */
+  upsertRows: (rows) =>
+    _sb.from('dashboard_data')
+      .upsert(rows, { onConflict: 'sheet,row_date,row_index' }),
+
+  /** Check when data was last synced */
+  lastSynced: async () => {
+    const { data } = await _sb.from('dashboard_data')
+      .select('synced_at')
+      .order('synced_at', { ascending: false })
+      .limit(1)
+      .single();
+    return data?.synced_at || null;
+  },
+};
