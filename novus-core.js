@@ -274,7 +274,7 @@ window.NovusCore = (() => {
         <div class="cv-sub">The principles that guide everything we do at Plant 1730.</div>
         <div class="cv-grid">
           ${VALUES.map((v, i) => `
-            <div class="cv-card" style="animation-delay:${i * 0.06}s">
+            <div class="cv-card" style="animation-delay:${i * 0.06}s" onclick="NovusCore._bounceCard(this)">
               <span class="cv-card-name">${v.name}</span>
               <p class="cv-card-desc">${v.desc}</p>
             </div>`).join('')}
@@ -351,7 +351,7 @@ window.NovusCore = (() => {
       const colonIdx = r.text.indexOf(':');
       const name = colonIdx > -1 ? r.text.slice(0, colonIdx).trim() : r.text;
       const desc = colonIdx > -1 ? r.text.slice(colonIdx + 1).trim() : '';
-      return `<div class="roe-card" style="animation-delay:${i * 0.06}s" data-id="${r.id}">
+      return `<div class="roe-card" style="animation-delay:${i * 0.06}s" data-id="${r.id}" onclick="NovusCore._bounceCard(this)">
         ${canEdit ? `<button class="roe-delete" onclick="NovusCore._roeDelete('${r.id}')" title="Delete rule">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
         </button>` : ''}
@@ -925,7 +925,15 @@ window.NovusCore = (() => {
     document.body.style.overflow = '';
   }
 
-  return { requireAuth, navigateTo, logout, getUser, isAdmin, Toast, WorkbookCache,
+  // ── Card bounce — re-triggers animation on every click ──────────────────
+  function _bounceCard(el) {
+    el.style.animation = 'none';
+    void el.offsetWidth; // force reflow
+    el.style.animation = 'card-bounce .6s cubic-bezier(0.25,1,0.5,1) both';
+    el.addEventListener('animationend', () => { el.style.animation = ''; }, { once: true });
+  }
+
+  return { requireAuth, navigateTo, logout, getUser, isAdmin, Toast, WorkbookCache, _bounceCard,
            showCoreValues, hideCoreValues, showRules, hideRules,
            showNeedsAction, hideNeedsAction, showHelp, hideHelp,
            showMaintenance, hideMaintenance,
