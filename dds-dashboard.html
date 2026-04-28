@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&family=Permanent+Marker&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="novus-styles.css">
-  <script src="sharepoint-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="novus-core.js"></script>
@@ -16,7 +15,6 @@
     function _checkLibsReady(){if(window.__libs.chartjs&&window.__libsCallback)window.__libsCallback();}
   </script>
   <script async src="https://cdn.jsdelivr.net/npm/chart.js" onload="window.__libs.chartjs=true;_checkLibsReady()"></script>
-  <!-- XLSX removed — dashboard now reads from Supabase -->
   <script async src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
     /* ── Dashboard-specific layout ── */
@@ -86,7 +84,7 @@
     </div>
 
     <!-- Refresh -->
-    <button class="btn-cmd btn-cmd-primary" id="btn-sp" onclick="_loadDashboardFromSupabase()" title="Sync latest data from SharePoint">
+    <button class="btn-cmd btn-cmd-primary" id="btn-sp" onclick="fetchFromSharePoint()" title="Sync latest data from SharePoint">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 0-.08-5.96"/></svg>
       Sync Data
     </button>
@@ -661,8 +659,10 @@ function mkChart(id,type,labels,datasets,extra={}){const el=document.getElementB
 function mkDoughnut(id,value,label){const el=document.getElementById(id);if(!el)return;let n=parseFloat(value)||0;if(n>0&&n<=2)n*=100;const color=n>=90?'#059669':n>=70?'#d97706':'#ef4444';const short=label.includes('Overall')?'Overall':label.includes('Walmart')?'Walmart':label;const ex=Chart.getChart(el);if(ex)ex.destroy();new Chart(el.getContext('2d'),{type:'doughnut',data:{datasets:[{data:[n,100-n],backgroundColor:[color,'#e2e8f0'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'76%',animation:{duration:300},plugins:{legend:{display:false}}},plugins:[{id:'center',beforeDraw:chart=>{const{width,height,ctx}=chart;ctx.restore();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`600 10px Inter,system-ui,sans-serif`;ctx.fillStyle=CD.tick;ctx.fillText(short,width/2,height/2-12);ctx.font=`bold 18px Inter,system-ui,sans-serif`;ctx.fillStyle=color;ctx.fillText(`${n.toFixed(1)}%`,width/2,height/2+8);ctx.save();}}]});}
 
 // ── Sheet accessor (XLSX workbook) ──
-let _sbData={};
-function sheet(name){return (_sbData[name]||[]).map(r=>Object.assign({Date:r.row_date},r.data));}
+// Reads from JSON fetched from GitHub — populated by Power Automate every 15 min
+let _dashData = {};
+function sheet(name){ return _dashData[name] || []; }
+
 function applyBuffer(buf,sourceName){
   // Only parse the 8 sheets the dashboard actually reads — skips any
   // extra sheets in the workbook, reducing parse time significantly.
@@ -683,41 +683,49 @@ function applyBuffer(buf,sourceName){
 
 function setSpBar(msg,state='',spin=false){const bar=document.getElementById('sp-bar'),sp=document.getElementById('sp-spinner'),msgEl=document.getElementById('sp-msg');bar.className='sp-bar visible'+(state?' '+state:'');msgEl.textContent=msg;sp.classList.toggle('on',spin);}
 
-async function fetchFromSharePoint(){ return fetchFromSupabase(); } // redirected
-async function fetchFromSupabase(){
-  const btn=document.getElementById('btn-sp');
-  btn.disabled=true;
-  setSpBar('Connecting to SharePoint…','',true);
-  try{
-    const buf=await NovusSP.fetchWorkbook();
-    setSpBar('Parsing workbook…','',true);
-    applyBuffer(buf,'all_department_data_2026.xlsx');
-    // Show success immediately — don't block UI on cache write
-    const name=await NovusSP.getDisplayName();
-    document.getElementById('sp-time').textContent=`Fetched ${new Date().toLocaleTimeString()}`;
-    setSpBar(`✓ Live data from SharePoint${name?' · '+name:''}`, 'success',false);
-    NovusCore.Toast.success('Dashboard updated ✓');
+async function fetchFromSharePoint(){
+  const btn = document.getElementById('btn-sp');
+  if(btn) btn.disabled = true;
+  setSpBar('Loading dashboard data…', '', true);
+  try {
+    // Fetch JSON committed by Power Automate — works for all users, no auth
+    const res = await fetch(
+      'https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/dashboard-data.json',
+      { cache: 'no-cache' }
+    );
+    if(!res.ok) throw new Error('dashboard-data.json not found (' + res.status + '). Run your Power Automate flow first.');
+    const json = await res.json();
 
-    // Save to sessionStorage in the background after UI is painted.
-    // Uses chunked base64 encoding — avoids the O(n²) string concat loop
-    // that was blocking the main thread for several seconds on large files.
-    requestIdleCallback(()=>{
-      try{
-        const bytes=new Uint8Array(buf);
-        const CHUNK=8192;
-        let b='';
-        for(let i=0;i<bytes.length;i+=CHUNK){
-          b+=String.fromCharCode.apply(null,bytes.subarray(i,i+CHUNK));
-        }
-        sessionStorage.setItem('novus1730_sp_wb',btoa(b));
-        sessionStorage.setItem('novus1730_sp_time',new Date().toLocaleTimeString());
-      }catch(_){}
-    },{timeout:3000});
-  }catch(err){
+    // Populate _dashData — each key is a sheet name, value is array of row objects
+    _dashData = {};
+    Object.keys(json).forEach(k => {
+      if(k !== 'synced_at') _dashData[k] = json[k];
+    });
+
+    // Set workbook flag so renderDashboard() proceeds
+    workbook = { _json: true };
+
+    renderDashboard();
+    updatePlantStatusBar();
+    updateFreshnessBadge();
+    applyRoleAccess();
+    markManualOverrides();
+    if(window.Sortable) initDraggable();
+    initResizable();
+
+    const syncedAt = json.synced_at
+      ? new Date(json.synced_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
+      : 'unknown';
+    document.getElementById('sp-time').textContent = 'Loaded ' + new Date().toLocaleTimeString();
+    setSpBar('✓ Dashboard loaded · Data synced by Power Automate: ' + syncedAt, 'success', false);
+    NovusCore.Toast.success('Dashboard updated ✓');
+  } catch(err) {
     console.error(err);
-    setSpBar(`⚠ ${err.message}`,'error',false);
-    NovusCore.Toast.error('SharePoint fetch failed — see console.');
-  }finally{btn.disabled=false;}
+    setSpBar('⚠ ' + err.message, 'error', false);
+    NovusCore.Toast.error('Failed to load dashboard data.');
+  } finally {
+    if(btn) btn.disabled = false;
+  }
 }
 
 async function handleUpload(evt){
@@ -747,7 +755,7 @@ window.__libsCallback=async()=>{
       const raw=atob(cached);
       const bytes=new Uint8Array(raw.length);
       for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
-      applyBuffer(bytes.buffer,'SharePoint (cached)');
+      // cache path removed — using JSON fetch
       const t=sessionStorage.getItem('novus1730_sp_time');
       setSpBar(`✓ Cached data — fetched ${t||'earlier'}. Click Refresh for latest.`,'success',false);
       return;
@@ -758,67 +766,13 @@ window.__libsCallback=async()=>{
     sessionStorage.removeItem('novus1730_sp_time');
   }
 
-  // Load from Supabase automatically (no user gesture needed)
-  await _loadDashboardFromSupabase();
+  // Auto-load from Power Automate JSON — no auth needed
+  await fetchFromSharePoint();
   document.getElementById('plant-status-bar').dataset.status='loading';
 };
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(window.__libs.chartjs&&window.__libs.xlsx)window.__libsCallback();});
 
 // ── SharePoint data path ──
-// ── Supabase data path (replaces SharePoint) ─────────────────────────────
-async function _loadDashboardFromSupabase() {
-  const btn = document.getElementById('btn-sp');
-  if (btn) { btn.disabled = true; }
-  setSpBar('Loading from Supabase…', '', true);
-
-  try {
-    const { data, error } = await NovusDB.dashboardData.getAll();
-    if (error) throw error;
-    if (!data || !data.length) {
-      setSpBar('No dashboard data found. Run your Power Automate flow first.', 'error', false);
-      return;
-    }
-
-    // Group rows by sheet name into _sbData
-    _sbData = {};
-    data.forEach(row => {
-      if (!_sbData[row.sheet]) _sbData[row.sheet] = [];
-      _sbData[row.sheet].push(row);
-    });
-
-    // Sort each sheet by date desc then row_index
-    Object.keys(_sbData).forEach(sheet => {
-      _sbData[sheet].sort((a, b) =>
-        b.row_date.localeCompare(a.row_date) || a.row_index - b.row_index
-      );
-    });
-
-    // workbook flag so renderDashboard() knows data is available
-    workbook = { _supabase: true };
-    renderDashboard();
-    updatePlantStatusBar();
-    updateFreshnessBadge();
-    applyRoleAccess();
-    markManualOverrides();
-
-    // Show last synced time
-    const lastSync = await NovusDB.dashboardData.lastSynced();
-    const syncStr = lastSync
-      ? new Date(lastSync).toLocaleString('en-US', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
-      : 'unknown';
-    setSpBar('✓ Dashboard data loaded · Last synced by Power Automate: ' + syncStr, 'success', false);
-    document.getElementById('sp-time').textContent = 'Loaded ' + new Date().toLocaleTimeString();
-    NovusCore.Toast.success('Dashboard updated ✓');
-
-  } catch(err) {
-    console.error(err);
-    setSpBar('⚠ ' + err.message, 'error', false);
-    NovusCore.Toast.error('Failed to load dashboard data.');
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
-
 
 </script>
 <script src="novus-interactions.js" defer></script>
