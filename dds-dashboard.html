@@ -19,6 +19,23 @@
   <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onload="window.__libs.xlsx=true;_checkLibsReady()"></script>
   <script async src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
+    /* ── Department panel cards ── */
+    .panel {
+      background: var(--surface);
+      border: 2px solid rgba(0,0,0,.15);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 12px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.06);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: box-shadow .2s, border-color .2s;
+      position: relative;
+    }
+    .panel:hover {
+      border-color: rgba(0,0,0,.25);
+      box-shadow: 0 6px 20px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.07);
+    }
+
     /* ── Dashboard-specific layout ── */
     .dash-grid { display:grid; grid-template-columns:repeat(12,1fr); gap:12px; margin:16px 0; }
 
@@ -496,7 +513,7 @@ function renderDashboard(){
   // Warehouse
   const whBP=bpWH.find(r=>toDS(parseDate(r.Date))===dWH),whCE=wh.filter(isCE).find(r=>toDS(parseDate(r.Date))===dWH);
   set('wh-fill',pct(whBP?valByKey(whBP,'Fill Rate %'):null,1));set('wh-ce-fill',pct(whCE?valByKey(whCE,'Fill Rate %'):null,1));set('wh-scheduled',whBP?valByKey(whBP,'Number of cases scheduled to ship'):null);set('wh-shipped',whBP?valByKey(whBP,'Number of cases shipped'):null);
-  const cpmhVal=whBP?valByKey(whBP,'CPMH'):null;set('wh-cpmh',cpmhVal!=null?Number(cpmhVal).toFixed(2):null);
+  const cpmhVal=whCE?valByKey(whCE,'CPMH'):null;set('wh-cpmh',cpmhVal!=null?Number(cpmhVal).toFixed(2):null);
   // Inventory
   // Inventory — split by city, Notes from BP row
   const invBP=inv.filter(isBP).find(r=>toDS(parseDate(r.Date))===dInv);
@@ -524,7 +541,7 @@ function drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal){
   [['sap-orders-chart','Open Process Orders','#b45309'],['sap-teco-chart','TECO','#3b82f6'],['sap-cogi-chart','COGI','#ef4444']].forEach(([id,field,color])=>{const d=getHist(sap,field,30);if(d.labels.length)mkChart(id,'line',d.labels,[{label:field,data:d.values,borderColor:color,fill:false}],{title:field});});
 
   mkDoughnut('wh-fill-chart',whBP?valByKey(whBP,'Fill Rate %'):0,'Overall Fill Rate %');mkDoughnut('wh-ce-chart',whCE?valByKey(whCE,'Fill Rate %'):0,'Walmart Fill Rate %');
-  const cpmhH=getHistFiltered(bpWH,()=>true,'CPMH',30);
+  const ceWH=wh.filter(isCE);const cpmhH=getHistFiltered(ceWH,()=>true,'CPMH',30);
   if(cpmhH.labels.length){const el=document.getElementById('wh-cpmh-chart');if(el){const e=Chart.getChart(el);if(e)e.destroy();}new Chart(el.getContext('2d'),{data:{labels:cpmhH.labels,datasets:[{type:'bar',label:'CPMH',data:cpmhH.values,backgroundColor:'rgba(5,150,105,.7)',borderRadius:3,borderWidth:0},{type:'line',label:'Target (450)',data:Array(cpmhH.labels.length).fill(450),borderColor:'#ef4444',borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},plugins:{title:{display:true,text:'CPMH — Cases Per Man Hour',font:{family:"'DM Sans'",size:11,weight:'700'},color:'#2d4438',padding:{bottom:6}},legend:{display:true,position:'bottom',labels:{font:CD.font,color:CD.tick,boxWidth:10,padding:8}},tooltip:{backgroundColor:'rgba(13,31,24,.9)',padding:10,cornerRadius:8}},scales:{x:{grid:{color:CD.grid},ticks:{font:CD.mono,color:CD.tick,maxTicksLimit:8,maxRotation:40}},y:{beginAtZero:true,grid:{color:CD.grid},ticks:{font:CD.mono,color:CD.tick}}}}});}
 }
 
