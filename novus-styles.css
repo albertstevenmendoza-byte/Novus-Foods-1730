@@ -845,7 +845,7 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
 
 .cv-panel {
   position: relative; z-index: 1;
-  background: #0f2d4a;
+  background: linear-gradient(160deg, #080b0f 0%, #0b0f14 50%, #080c12 100%);
   border: none;
   border-radius: 0;
   padding: 40px 48px 48px;
@@ -886,8 +886,8 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
 }
 
 .cv-card {
-  background: rgba(255,255,255,.09);
-  border: 1.5px solid rgba(99,155,255,.25);
+  background: rgba(255,255,255,0.03);
+    border: 1.5px solid rgba(57,181,74,0.18);
   border-radius: var(--radius);
   padding: 0;
   text-align: center;
@@ -910,7 +910,7 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
   pointer-events: none;
 }
 .cv-card:hover {
-  border-color: rgba(99,155,255,.5);
+  border-color: rgba(57,181,74,0.45);
   background: rgba(255,255,255,.14);
   box-shadow: 0 6px 24px rgba(0,0,0,.3), 0 0 0 1px rgba(99,155,255,.2), inset 0 1px 0 rgba(255,255,255,.12);
   transform: scale(1.03);
@@ -920,14 +920,14 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
   display: block;
   font-family: 'Permanent Marker', cursive;
   font-size: 1.1rem;
-  color: var(--green-l);
+  color: #39b54a;
   letter-spacing: .02em;
   margin-bottom: 10px;
   padding: 0 16px;
   position: relative; z-index: 1;
 }
 .cv-card-desc {
-  color: rgba(255,255,255,.68);
+  color: rgba(255,255,255,0.82);
   font-size: .72rem;
   line-height: 1.6;
   font-weight: 500;
