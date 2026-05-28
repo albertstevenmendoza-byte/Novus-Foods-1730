@@ -275,6 +275,14 @@
               <div class="split-col"><div class="col-label">Salsa Lines</div><table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attainment</th><th>DT</th></tr></thead><tbody id="tbody-salsa"></tbody></table></div>
               <div class="split-col"><div class="col-label">Layer Lines</div><table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attainment</th><th>DT</th></tr></thead><tbody id="tbody-layer"></tbody></table></div>
             </div>
+            <div class="split-row" style="margin-top:12px;">
+              <div class="metric-row" style="margin-top:12px; width: 500px;">
+                <div class="metric-box"><div class="metric-label">Pounds Planned</div><div class="metric-value" id="pounds-planned" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+              </div>
+              <div class="metric-row" style="margin-top:12px; width:500px;">
+                <div class="metric-box"><div class="metric-label">Pounds Produced</div><div class="metric-value" id="pounds-produced" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="chart-wrap" style="height:195px;margin-top:12px;"><canvas id="production-chart"></canvas></div>
@@ -508,6 +516,12 @@ function renderDashboard(){
   // Top drivers
   const counts={};prod.filter(r=>toDS(parseDate(r.Date))===dProdStr).forEach(r=>{['Mechanical Downtime Drivers','Material Downtime Drivers'].forEach(col=>{const v=r[col];if(v&&v!=='DNR'&&v!=='None'&&v!=='')String(v).split(/[;,]/).forEach(d=>{const c=d.trim();if(c.length>2)counts[c]=(counts[c]||0)+1;});});});
   const tdEl=document.getElementById('top-drivers');if(tdEl)tdEl.textContent=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,c])=>`• ${n} (${c})`).join('\n')||`No drivers reported.`;
+  // Pounds Planned / Produced — sum across all lines for latest date
+  const prodRows = prod.filter(r => toDS(parseDate(r.Date)) === dProdStr);
+  const totalPlanned  = prodRows.reduce((s,r) => s + (Number(valByKey(r,'Expected Pounds'))  || 0), 0);
+  const totalProduced = prodRows.reduce((s,r) => s + (Number(valByKey(r,'Actual Pounds'))  || 0), 0);
+  set('pounds-planned',  totalPlanned  > 0 ? totalPlanned.toLocaleString()  : null);
+  set('pounds-produced', totalProduced > 0 ? totalProduced.toLocaleString() : null);
   // SAP
   set('proc-orders',getVal(sap,'Open Process Orders',dSAP));set('warehouse-tasks',getVal(sap,'Warehouse Tasks',dSAP));
   // Warehouse
@@ -526,10 +540,10 @@ function renderDashboard(){
   set('inv-ce-variants',  invCE ? valByKey(invCE,'Variants')          : null);
   const inEl=document.getElementById('inv-notes');if(inEl)inEl.textContent=(invBP?valByKey(invBP,'Notes'):null)||'No inventory notes for this date.';
   loadManuals();
-  setTimeout(()=>drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal),60);
+  setTimeout(()=>drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal,wh,isCE,isBP),60);
 }
 
-function drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal){
+function drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal,wh,isCE){
   const pd=getAggProd(prod,30);
   if(pd.labels.length)mkChart('production-chart','line',pd.labels,[{label:'OEE',data:pd.oee,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',fill:true},{label:'Attainment',data:pd.att,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true},{label:'Downtime',data:pd.dt,borderColor:'#ef4444',type:'bar',fill:true,yAxisID:'y1'}],{title:'OEE & Attainment — 30 Days',y:{max:100},y1:{position:'right',grid:{drawOnChartArea:false}}});
 
@@ -546,7 +560,7 @@ function drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal){
 }
 
 // ── Manual overrides ──
-const MANUAL_IDS=['days-incident','near-misses','safety-audits','meal-penalties','holds','holds-coa','pem','complaints','san-preop','san-mss','san-notes','code-red','code-yellow','cost-direct','cost-indirect','pound-hr-direct','pound-hr-indirect','conversion-costs','pounds-prod','trainings','headcount','proc-orders','warehouse-tasks','wh-fill','wh-ce-fill','wh-scheduled','wh-shipped','wh-cpmh','inv-bp-bins','inv-bp-materials','inv-bp-variants','inv-ce-bins','inv-ce-materials','inv-ce-variants'];
+const MANUAL_IDS=['days-incident','near-misses','safety-audits','meal-penalties','holds','holds-coa','pem','complaints','san-preop','san-mss','san-notes','code-red','code-yellow','cost-direct','cost-indirect','pound-hr-direct','pound-hr-indirect','conversion-costs','pounds-prod','pounds-produced','pounds-planned','trainings','headcount','proc-orders','warehouse-tasks','wh-fill','wh-ce-fill','wh-scheduled','wh-shipped','wh-cpmh','inv-bp-bins','inv-bp-materials','inv-bp-variants','inv-ce-bins','inv-ce-materials','inv-ce-variants'];
 function saveManual(id){localStorage.setItem('dds_m_'+id,document.getElementById(id).innerText);}
 function loadManuals(){MANUAL_IDS.forEach(id=>{const v=localStorage.getItem('dds_m_'+id);if(v){const el=document.getElementById(id);if(el)el.innerText=v;}});}
 function clearManuals(){if(!confirm('Clear all manual overrides?'))return;MANUAL_IDS.forEach(id=>localStorage.removeItem('dds_m_'+id));renderDashboard();}
