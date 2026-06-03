@@ -39,12 +39,16 @@
       overflow: hidden;
       transition: transform .25s var(--spring), box-shadow .25s, border-color .2s;
       box-shadow: 0 4px 16px rgba(0,0,0,.2);
+      cursor: pointer;
     }
     .hl-card:hover {
       transform: translateY(-4px);
       box-shadow: 0 12px 32px rgba(0,0,0,.3);
       border-color: #2d5a42;
     }
+    .hl-card.revealed { cursor: default; }
+    
+    /* Dept glow in corner */
     .hl-card::before {
       content: '';
       position: absolute;
@@ -59,10 +63,31 @@
     .hl-card[data-dept="Sanitation"]::before { background: var(--dept-sanitation); }
     .hl-card[data-dept="Warehouse"]::before  { background: var(--dept-warehouse); }
     
+    /* Spotlight burst ring */
+    .hl-spotlight-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 10px; height: 10px;
+      margin: -5px 0 0 -5px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,185,129,.6) 0%, rgba(16,185,129,.15) 40%, transparent 70%);
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(1);
+    }
+    .hl-card.revealed .hl-spotlight-ring {
+      animation: spotlightBurst .65s cubic-bezier(.2,0,.4,1) forwards;
+    }
+    @keyframes spotlightBurst {
+      0%   { transform: scale(1);  opacity: 1; }
+      100% { transform: scale(45); opacity: 0; }
+    }
+    
     .hl-trophy {
       font-size: 1.8rem;
       line-height: 1;
       filter: drop-shadow(0 2px 6px rgba(0,0,0,.3));
+      position: relative; z-index: 1;
     }
     .hl-dept-label {
       font-size: .6rem;
@@ -70,7 +95,10 @@
       text-transform: uppercase;
       letter-spacing: .12em;
       color: rgba(255,255,255,.4);
+      position: relative; z-index: 1;
     }
+    
+    /* Name — blurred until revealed */
     .hl-name {
       font-family: 'Permanent Marker', cursive;
       font-size: 1.2rem;
@@ -82,8 +110,21 @@
       width: 100%;
       text-align: center;
       padding: 4px 2px;
-      transition: border-color .15s;
       letter-spacing: .02em;
+      filter: blur(9px);
+      pointer-events: none;
+      transition: filter .65s cubic-bezier(.4,0,.2,1), border-color .15s;
+      position: relative; z-index: 1;
+    }
+    .hl-card.revealed .hl-name {
+      filter: blur(0);
+      pointer-events: auto;
+      animation: nameGlow .7s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes nameGlow {
+      0%   { text-shadow: none;                                                          filter: blur(9px); }
+      50%  { text-shadow: 0 0 24px rgba(16,185,129,.9), 0 0 48px rgba(16,185,129,.5);   filter: blur(0); }
+      100% { text-shadow: 0 0 6px  rgba(16,185,129,.15);                                filter: blur(0); }
     }
     .hl-name:focus { border-bottom-color: var(--green-l); }
     .hl-name::placeholder {
@@ -93,10 +134,24 @@
       font-style: italic;
     }
     .hl-name[readonly] { cursor: default; border-bottom-color: transparent; }
+    
+    /* Reveal hint */
+    .hl-reveal-hint {
+      font-size: .65rem;
+      color: rgba(255,255,255,.3);
+      font-family: var(--mono);
+      letter-spacing: .05em;
+      pointer-events: none;
+      position: relative; z-index: 1;
+      transition: opacity .3s;
+    }
+    .hl-card.revealed .hl-reveal-hint { display: none; }
+    
     .hl-meta {
       font-size: .58rem;
       color: rgba(255,255,255,.2);
       font-family: var(--mono);
+      position: relative; z-index: 1;
     }
     .hl-saving { color: var(--amber-l); }
     .hl-saved  { color: var(--green-l); }
