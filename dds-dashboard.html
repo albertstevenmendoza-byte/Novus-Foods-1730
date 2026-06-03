@@ -908,8 +908,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   // ══ LEVEL 1 DDS HIGHLIGHTS ═══════════════════════════════════════════════
 
 const HL_DEPTS = [
-  'Safety','Quality','Production','Sanitation',
-  'Costs','HR | Training','SAP','Warehouse','Inventory Control'
+  'Quality','Production','Sanitation','Warehouse', 'Maintenance'
 ];
 
 let _hlData = {};   // dept → { employee, note, updated_by, updated_at }
@@ -933,12 +932,6 @@ function hlBuildGrid() {
                 placeholder="Employee name…"
                 oninput="hlScheduleSave('${dept}')"
                 ${NovusCore.isAdmin() ? '' : 'readonly'}>
-        <textarea class="hl-note"
-                  id="hl-note-${dept.replace(/[\s|]/g,'-')}"
-                  rows="2"
-                  placeholder="Reason / highlight…"
-                  oninput="hlScheduleSave('${dept}')"
-                  ${NovusCore.isAdmin() ? '' : 'readonly'}>${d.note||''}</textarea>
         <div class="hl-meta" id="hl-meta-${dept.replace(/[\s|]/g,'-')}">${ts ? `Last updated ${ts}${by}` : 'Not yet filled in'}</div>
       </div>`;
   }).join('');
