@@ -629,7 +629,7 @@ function renderDashboard(){
   setTimeout(()=>drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal,wh,isCE,isBP),60);
 }
 
-function drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal,wh,isCE){
+function drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal,wh,isCE,isBP){
   const pd=getAggProd(prod,30);
   if(pd.labels.length)mkChart('production-chart','line',pd.labels,[{label:'OEE',data:pd.oee,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',fill:true},{label:'Attainment',data:pd.att,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true},{label:'Downtime',data:pd.dt,borderColor:'#ef4444',type:'bar',fill:true,yAxisID:'y1'}],{title:'OEE & Attainment — 30 Days',y:{max:100},y1:{position:'right',grid:{drawOnChartArea:false}}});
 
@@ -849,7 +849,6 @@ async function fetchFromSharePoint(){
       : 'unknown';
     document.getElementById('sp-time').textContent = 'Loaded ' + new Date().toLocaleTimeString();
     setSpBar('✓ Dashboard loaded · Data synced by Power Automate: ' + syncedAt, 'success', false);
-    NovusCore.Toast.success('Dashboard updated ✓');
     NovusCore.Toast.success('Dashboard updated ✓');
     hlLoad(); // refresh highlights too
   } catch(err) {
