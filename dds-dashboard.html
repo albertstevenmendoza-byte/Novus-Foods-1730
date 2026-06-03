@@ -19,6 +19,83 @@
   <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onload="window.__libs.xlsx=true;_checkLibsReady()"></script>
   <script async src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
+        /* ── Level 1 DDS Highlights ── */
+    .highlights-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .hl-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      position: relative;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .hl-card:hover { border-color: var(--border-2); box-shadow: var(--shadow-sm); }
+    .hl-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    }
+    .hl-card[data-dept="Safety"]::before            { background: var(--dept-safety); }
+    .hl-card[data-dept="Quality"]::before           { background: var(--dept-quality); }
+    .hl-card[data-dept="Production"]::before        { background: var(--dept-production); }
+    .hl-card[data-dept="Sanitation"]::before        { background: var(--dept-sanitation); }
+    .hl-card[data-dept="Costs"]::before             { background: var(--dept-costs); }
+    .hl-card[data-dept="HR | Training"]::before     { background: var(--dept-hr); }
+    .hl-card[data-dept="SAP"]::before               { background: var(--dept-sap); }
+    .hl-card[data-dept="Warehouse"]::before         { background: var(--dept-warehouse); }
+    .hl-card[data-dept="Inventory Control"]::before { background: var(--dept-inventory); }
+    
+    .hl-dept-label {
+      font-size: .62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-4);
+    }
+    .hl-name {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--text-1);
+      border: none;
+      border-bottom: 1.5px solid var(--border);
+      background: transparent;
+      outline: none;
+      padding: 3px 0;
+      font-family: var(--font);
+      width: 100%;
+      transition: border-color .15s;
+    }
+    .hl-name:focus { border-bottom-color: var(--green); }
+    .hl-name::placeholder { color: var(--text-4); font-weight: 400; }
+    .hl-note {
+      font-size: .78rem;
+      color: var(--text-3);
+      border: none;
+      background: transparent;
+      outline: none;
+      padding: 2px 0;
+      font-family: var(--font);
+      width: 100%;
+      resize: none;
+      line-height: 1.4;
+    }
+    .hl-note::placeholder { color: var(--text-4); }
+    .hl-meta {
+      font-size: .6rem;
+      color: var(--text-4);
+      font-family: var(--mono);
+      margin-top: 2px;
+    }
+    .hl-saving { color: var(--amber-l); }
+    .hl-saved  { color: var(--green); }
     /* ── Department panel cards ── */
     .panel {
       background: var(--surface);
@@ -342,7 +419,7 @@
 
     <!-- SAP -->
     <div class="panel" style="grid-column:span 4;position:relative;">
-      <div class="panel-header ph-sap"><span class="panel-title">📊 SAP</span></div>
+      <div class="panel-header ph-sap"><span class="panel-title">📊 SAP Metrics</span></div>
       <div class="panel-date" id="date-sap">—</div>
       <div class="panel-body">
         <div class="metric-row">
@@ -403,7 +480,16 @@
       </div>
       <div class="resizer"></div>
     </div>
-
+        <!-- LEVEL 1 DDS HIGHLIGHTS -->
+    <div class="panel" style="grid-column:span 12;position:relative;" id="panel-highlights">
+      <div class="panel-header" style="background:linear-gradient(135deg,#0d1f18,#065f46);border-bottom:1px solid rgba(5,150,105,.3);">
+        <span class="panel-title">⭐ Level 1 DDS Highlights</span>
+        <span style="font-size:.68rem;color:rgba(255,255,255,.5);font-family:var(--mono);margin-left:auto;">Shared · updates for everyone in real time</span>
+      </div>
+      <div class="panel-body">
+        <div class="highlights-grid" id="highlights-grid"></div>
+      </div>
+    </div>
   </div><!-- /dash-grid -->
 
   <!-- Clear Overrides utility -->
@@ -764,6 +850,8 @@ async function fetchFromSharePoint(){
     document.getElementById('sp-time').textContent = 'Loaded ' + new Date().toLocaleTimeString();
     setSpBar('✓ Dashboard loaded · Data synced by Power Automate: ' + syncedAt, 'success', false);
     NovusCore.Toast.success('Dashboard updated ✓');
+    NovusCore.Toast.success('Dashboard updated ✓');
+    hlLoad(); // refresh highlights too
   } catch(err) {
     console.error(err);
     setSpBar('⚠ ' + err.message, 'error', false);
@@ -818,7 +906,115 @@ window.__libsCallback=async()=>{
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(window.__libs.chartjs)window.__libsCallback();});
 
 // ── SharePoint data path ──
+  // ══ LEVEL 1 DDS HIGHLIGHTS ═══════════════════════════════════════════════
 
+const HL_DEPTS = [
+  'Safety','Quality','Production','Sanitation',
+  'Costs','HR | Training','SAP','Warehouse','Inventory Control'
+];
+
+let _hlData = {};   // dept → { employee, note, updated_by, updated_at }
+let _hlTimers = {}; // dept → debounce timer
+
+function hlBuildGrid() {
+  const grid = document.getElementById('highlights-grid');
+  if (!grid) return;
+  grid.innerHTML = HL_DEPTS.map(dept => {
+    const d = _hlData[dept] || {};
+    const ts = d.updated_at
+      ? new Date(d.updated_at).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
+      : '';
+    const by = d.updated_by ? ` · ${d.updated_by}` : '';
+    return `
+      <div class="hl-card" data-dept="${dept}">
+        <div class="hl-dept-label">${dept}</div>
+        <input  class="hl-name"
+                id="hl-name-${dept.replace(/[\s|]/g,'-')}"
+                value="${(d.employee||'').replace(/"/g,'&quot;')}"
+                placeholder="Employee name…"
+                oninput="hlScheduleSave('${dept}')"
+                ${NovusCore.isAdmin() ? '' : 'readonly'}>
+        <textarea class="hl-note"
+                  id="hl-note-${dept.replace(/[\s|]/g,'-')}"
+                  rows="2"
+                  placeholder="Reason / highlight…"
+                  oninput="hlScheduleSave('${dept}')"
+                  ${NovusCore.isAdmin() ? '' : 'readonly'}>${d.note||''}</textarea>
+        <div class="hl-meta" id="hl-meta-${dept.replace(/[\s|]/g,'-')}">${ts ? `Last updated ${ts}${by}` : 'Not yet filled in'}</div>
+      </div>`;
+  }).join('');
+}
+
+function hlScheduleSave(dept) {
+  const key = dept.replace(/[\s|]/g, '-');
+  const metaEl = document.getElementById(`hl-meta-${key}`);
+  if (metaEl) { metaEl.className = 'hl-meta hl-saving'; metaEl.textContent = 'Saving…'; }
+  clearTimeout(_hlTimers[dept]);
+  _hlTimers[dept] = setTimeout(() => hlSave(dept), 800);
+}
+
+async function hlSave(dept) {
+  const key      = dept.replace(/[\s|]/g, '-');
+  const nameEl   = document.getElementById(`hl-name-${key}`);
+  const noteEl   = document.getElementById(`hl-note-${key}`);
+  const metaEl   = document.getElementById(`hl-meta-${key}`);
+  const employee = nameEl?.value?.trim() || '';
+  const note     = noteEl?.value?.trim() || '';
+  const updatedBy = NovusCore.getUser()?.username || '';
+
+  try {
+    const { error } = await NovusDB.ddsHighlights.upsert(dept, employee, note, updatedBy);
+    if (error) throw error;
+    _hlData[dept] = { ..._hlData[dept], employee, note, updated_by: updatedBy, updated_at: new Date().toISOString() };
+    if (metaEl) {
+      metaEl.className = 'hl-meta hl-saved';
+      metaEl.textContent = '✓ Saved';
+      setTimeout(() => {
+        if (metaEl) {
+          metaEl.className = 'hl-meta';
+          metaEl.textContent = `Last updated just now · ${updatedBy}`;
+        }
+      }, 2000);
+    }
+  } catch (e) {
+    if (metaEl) { metaEl.className = 'hl-meta'; metaEl.textContent = '⚠ Save failed'; }
+    console.error('[hlSave]', e);
+  }
+}
+
+async function hlLoad() {
+  try {
+    const { data, error } = await NovusDB.ddsHighlights.getAll();
+    if (error) throw error;
+    _hlData = {};
+    (data || []).forEach(row => { _hlData[row.dept] = row; });
+    hlBuildGrid();
+  } catch (e) {
+    console.error('[hlLoad]', e);
+    hlBuildGrid(); // render empty cards so the section still appears
+  }
+}
+
+// Subscribe to real-time updates from other users
+NovusDB.ddsHighlights.subscribe(payload => {
+  const row = payload.new;
+  if (!row) return;
+  _hlData[row.dept] = row;
+  // Update only the affected card's fields without rebuilding the whole grid
+  const key    = row.dept.replace(/[\s|]/g, '-');
+  const nameEl = document.getElementById(`hl-name-${key}`);
+  const noteEl = document.getElementById(`hl-note-${key}`);
+  const metaEl = document.getElementById(`hl-meta-${key}`);
+  if (nameEl && document.activeElement !== nameEl) nameEl.value = row.employee || '';
+  if (noteEl && document.activeElement !== noteEl) noteEl.value = row.note     || '';
+  if (metaEl) {
+    const ts = new Date(row.updated_at).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    metaEl.textContent = `Last updated ${ts} · ${row.updated_by || ''}`;
+  }
+});
+
+// Load on startup — call this after fetchFromSharePoint completes
+hlLoad();
 </script>
 <script src="novus-interactions.js" defer></script>
 </body>
