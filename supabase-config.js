@@ -200,6 +200,26 @@ window.NovusDB = {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_staff_meeting' }, callback)
         .subscribe(),
   },
+  // ── DDS Highlights ──────────────────────────────────────────────────────
+    ddsHighlights: {
+      getAll: () =>
+        _sb.from('dds_highlights').select('*').order('dept'),
+  
+      upsert: (dept, employee, note, updatedBy) =>
+        _sb.from('dds_highlights').upsert({
+          dept,
+          employee:   employee || '',
+          note:       note     || '',
+          updated_by: updatedBy || '',
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'dept' }),
+  
+      subscribe: (callback) =>
+        _sb
+          .channel('dds-highlights-changes')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'dds_highlights' }, callback)
+          .subscribe(),
+    },
 };
 
 // ── Play Call ──────────────────────────────────────────────────────────────
