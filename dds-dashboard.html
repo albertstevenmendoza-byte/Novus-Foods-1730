@@ -19,83 +19,87 @@
   <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onload="window.__libs.xlsx=true;_checkLibsReady()"></script>
   <script async src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
-        /* ── Level 1 DDS Highlights ── */
+    /* ── Level 1 DDS Highlights ── */
     .highlights-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
     }
     .hl-card {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 14px 16px;
+      background: #0d1f18;
+      border: 1px solid #1e3d2c;
+      border-radius: var(--radius);
+      padding: 22px 18px 18px;
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      align-items: center;
+      text-align: center;
+      gap: 10px;
       position: relative;
-      transition: border-color .15s, box-shadow .15s;
+      overflow: hidden;
+      transition: transform .25s var(--spring), box-shadow .25s, border-color .2s;
+      box-shadow: 0 4px 16px rgba(0,0,0,.2);
     }
-    .hl-card:hover { border-color: var(--border-2); box-shadow: var(--shadow-sm); }
+    .hl-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,.3);
+      border-color: #2d5a42;
+    }
     .hl-card::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0; height: 3px;
-      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      top: -40px; right: -40px;
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: .15;
     }
-    .hl-card[data-dept="Safety"]::before            { background: var(--dept-safety); }
-    .hl-card[data-dept="Quality"]::before           { background: var(--dept-quality); }
-    .hl-card[data-dept="Production"]::before        { background: var(--dept-production); }
-    .hl-card[data-dept="Sanitation"]::before        { background: var(--dept-sanitation); }
-    .hl-card[data-dept="Costs"]::before             { background: var(--dept-costs); }
-    .hl-card[data-dept="HR | Training"]::before     { background: var(--dept-hr); }
-    .hl-card[data-dept="SAP"]::before               { background: var(--dept-sap); }
-    .hl-card[data-dept="Warehouse"]::before         { background: var(--dept-warehouse); }
-    .hl-card[data-dept="Inventory Control"]::before { background: var(--dept-inventory); }
+    .hl-card[data-dept="Quality"]::before    { background: var(--dept-quality); }
+    .hl-card[data-dept="Production"]::before { background: var(--dept-production); }
+    .hl-card[data-dept="Sanitation"]::before { background: var(--dept-sanitation); }
+    .hl-card[data-dept="Warehouse"]::before  { background: var(--dept-warehouse); }
     
+    .hl-trophy {
+      font-size: 1.8rem;
+      line-height: 1;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,.3));
+    }
     .hl-dept-label {
-      font-size: .62rem;
+      font-size: .6rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--text-4);
+      letter-spacing: .12em;
+      color: rgba(255,255,255,.4);
     }
     .hl-name {
-      font-size: .95rem;
-      font-weight: 700;
-      color: var(--text-1);
+      font-family: 'Permanent Marker', cursive;
+      font-size: 1.2rem;
+      color: var(--green-l);
       border: none;
-      border-bottom: 1.5px solid var(--border);
+      border-bottom: 2px dashed rgba(16,185,129,.3);
       background: transparent;
       outline: none;
-      padding: 3px 0;
-      font-family: var(--font);
       width: 100%;
+      text-align: center;
+      padding: 4px 2px;
       transition: border-color .15s;
+      letter-spacing: .02em;
     }
-    .hl-name:focus { border-bottom-color: var(--green); }
-    .hl-name::placeholder { color: var(--text-4); font-weight: 400; }
-    .hl-note {
-      font-size: .78rem;
-      color: var(--text-3);
-      border: none;
-      background: transparent;
-      outline: none;
-      padding: 2px 0;
+    .hl-name:focus { border-bottom-color: var(--green-l); }
+    .hl-name::placeholder {
+      color: rgba(255,255,255,.18);
       font-family: var(--font);
-      width: 100%;
-      resize: none;
-      line-height: 1.4;
+      font-size: .82rem;
+      font-style: italic;
     }
-    .hl-note::placeholder { color: var(--text-4); }
+    .hl-name[readonly] { cursor: default; border-bottom-color: transparent; }
     .hl-meta {
-      font-size: .6rem;
-      color: var(--text-4);
+      font-size: .58rem;
+      color: rgba(255,255,255,.2);
       font-family: var(--mono);
-      margin-top: 2px;
     }
     .hl-saving { color: var(--amber-l); }
-    .hl-saved  { color: var(--green); }
+    .hl-saved  { color: var(--green-l); }
     /* ── Department panel cards ── */
     .panel {
       background: var(--surface);
@@ -482,8 +486,8 @@
         <!-- LEVEL 1 DDS HIGHLIGHTS -->
     <div class="panel" style="grid-column:span 12;position:relative;" id="panel-highlights">
       <div class="panel-header" style="background:linear-gradient(135deg,#0d1f18,#065f46);border-bottom:1px solid rgba(5,150,105,.3);">
-        <span class="panel-title">⭐ Level 1 DDS Highlights</span>
-        <span style="font-size:.68rem;color:rgba(255,255,255,.5);font-family:var(--mono);margin-left:auto;">Shared · updates for everyone in real time</span>
+        <span class="panel-title">🏆 Level 1 DDS Highlights</span>
+        <span style="font-size:.68rem;color:rgba(255,255,255,.5);font-family:var(--mono);margin-left:auto;">Shared · updates in real time</span>
       </div>
       <div class="panel-body">
         <div class="highlights-grid" id="highlights-grid"></div>
@@ -922,16 +926,18 @@ function hlBuildGrid() {
       ? new Date(d.updated_at).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
       : '';
     const by = d.updated_by ? ` · ${d.updated_by}` : '';
+    const trophies = { Quality:'🥇', Production:'⚙️', Sanitation:'🧼', Warehouse:'🏭' };
     return `
       <div class="hl-card" data-dept="${dept}">
+        <div class="hl-trophy">${trophies[dept] || '⭐'}</div>
         <div class="hl-dept-label">${dept}</div>
-        <input  class="hl-name"
-                id="hl-name-${dept.replace(/[\s|]/g,'-')}"
-                value="${(d.employee||'').replace(/"/g,'&quot;')}"
-                placeholder="Employee name…"
-                oninput="hlScheduleSave('${dept}')"
-                ${NovusCore.isAdmin() ? '' : 'readonly'}>
-        <div class="hl-meta" id="hl-meta-${dept.replace(/[\s|]/g,'-')}">${ts ? `Last updated ${ts}${by}` : 'Not yet filled in'}</div>
+        <input class="hl-name"
+               id="hl-name-${dept.replace(/[\s|]/g,'-')}"
+               value="${(d.employee||'').replace(/"/g,'&quot;')}"
+               placeholder="No highlight yet…"
+               oninput="hlScheduleSave('${dept}')"
+               ${NovusCore.isAdmin() ? '' : 'readonly'}>
+        <div class="hl-meta" id="hl-meta-${dept.replace(/[\s|]/g,'-')}">${ts ? `Updated ${ts}${by}` : '—'}</div>
       </div>`;
   }).join('');
 }
