@@ -969,30 +969,46 @@ const HL_DEPTS = [
   'Quality','Production','Sanitation','Warehouse', 'Maintenance'
 ];
 
-let _hlData = {};   // dept → { employee, note, updated_by, updated_at }
-let _hlTimers = {}; // dept → debounce timer
+const _hlRevealed = new Set(); // persists across grid rebuilds
+let _hlData   = {};
+let _hlTimers = {};
+
+function hlReveal(dept) {
+  const card = document.querySelector(`.hl-card[data-dept="${dept}"]`);
+  if (!card || _hlRevealed.has(dept)) return;
+  _hlRevealed.add(dept);
+  card.classList.add('revealed');
+  card.style.cursor = 'default';
+}
 
 function hlBuildGrid() {
   const grid = document.getElementById('highlights-grid');
   if (!grid) return;
+  const trophies = { Quality:'🥇', Production:'⚙️', Sanitation:'🧼', Warehouse:'🏭' };
   grid.innerHTML = HL_DEPTS.map(dept => {
-    const d = _hlData[dept] || {};
-    const ts = d.updated_at
+    const d   = _hlData[dept] || {};
+    const key = dept.replace(/[\s|]/g, '-');
+    const ts  = d.updated_at
       ? new Date(d.updated_at).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
       : '';
-    const by = d.updated_by ? ` · ${d.updated_by}` : '';
-    const trophies = { Quality:'🥇', Production:'⚙️', Sanitation:'🧼', Warehouse:'🏭' };
+    const by  = d.updated_by ? ` · ${d.updated_by}` : '';
+    const isRevealed = _hlRevealed.has(dept);
     return `
-      <div class="hl-card" data-dept="${dept}">
+      <div class="hl-card${isRevealed ? ' revealed' : ''}"
+           data-dept="${dept}"
+           onclick="hlReveal('${dept}')">
+        <div class="hl-spotlight-ring"></div>
         <div class="hl-trophy">${trophies[dept] || '⭐'}</div>
         <div class="hl-dept-label">${dept}</div>
         <input class="hl-name"
-               id="hl-name-${dept.replace(/[\s|]/g,'-')}"
+               id="hl-name-${key}"
                value="${(d.employee||'').replace(/"/g,'&quot;')}"
                placeholder="No highlight yet…"
                oninput="hlScheduleSave('${dept}')"
+               onclick="event.stopPropagation()"
                ${NovusCore.isAdmin() ? '' : 'readonly'}>
-        <div class="hl-meta" id="hl-meta-${dept.replace(/[\s|]/g,'-')}">${ts ? `Updated ${ts}${by}` : '—'}</div>
+        <div class="hl-reveal-hint">👁 Tap to reveal</div>
+        <div class="hl-meta" id="hl-meta-${key}">${ts ? `Updated ${ts}${by}` : '—'}</div>
       </div>`;
   }).join('');
 }
@@ -1006,26 +1022,20 @@ function hlScheduleSave(dept) {
 }
 
 async function hlSave(dept) {
-  const key      = dept.replace(/[\s|]/g, '-');
-  const nameEl   = document.getElementById(`hl-name-${key}`);
-  const noteEl   = document.getElementById(`hl-note-${key}`);
-  const metaEl   = document.getElementById(`hl-meta-${key}`);
-  const employee = nameEl?.value?.trim() || '';
-  const note     = noteEl?.value?.trim() || '';
+  const key       = dept.replace(/[\s|]/g, '-');
+  const nameEl    = document.getElementById(`hl-name-${key}`);
+  const metaEl    = document.getElementById(`hl-meta-${key}`);
+  const employee  = nameEl?.value?.trim() || '';
   const updatedBy = NovusCore.getUser()?.username || '';
-
   try {
-    const { error } = await NovusDB.ddsHighlights.upsert(dept, employee, note, updatedBy);
+    const { error } = await NovusDB.ddsHighlights.upsert(dept, employee, '', updatedBy);
     if (error) throw error;
-    _hlData[dept] = { ..._hlData[dept], employee, note, updated_by: updatedBy, updated_at: new Date().toISOString() };
+    _hlData[dept] = { ..._hlData[dept], employee, updated_by: updatedBy, updated_at: new Date().toISOString() };
     if (metaEl) {
       metaEl.className = 'hl-meta hl-saved';
       metaEl.textContent = '✓ Saved';
       setTimeout(() => {
-        if (metaEl) {
-          metaEl.className = 'hl-meta';
-          metaEl.textContent = `Last updated just now · ${updatedBy}`;
-        }
+        if (metaEl) { metaEl.className = 'hl-meta'; metaEl.textContent = `Updated just now · ${updatedBy}`; }
       }, 2000);
     }
   } catch (e) {
@@ -1043,29 +1053,24 @@ async function hlLoad() {
     hlBuildGrid();
   } catch (e) {
     console.error('[hlLoad]', e);
-    hlBuildGrid(); // render empty cards so the section still appears
+    hlBuildGrid();
   }
 }
 
-// Subscribe to real-time updates from other users
 NovusDB.ddsHighlights.subscribe(payload => {
   const row = payload.new;
   if (!row) return;
   _hlData[row.dept] = row;
-  // Update only the affected card's fields without rebuilding the whole grid
   const key    = row.dept.replace(/[\s|]/g, '-');
   const nameEl = document.getElementById(`hl-name-${key}`);
-  const noteEl = document.getElementById(`hl-note-${key}`);
   const metaEl = document.getElementById(`hl-meta-${key}`);
   if (nameEl && document.activeElement !== nameEl) nameEl.value = row.employee || '';
-  if (noteEl && document.activeElement !== noteEl) noteEl.value = row.note     || '';
   if (metaEl) {
     const ts = new Date(row.updated_at).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-    metaEl.textContent = `Last updated ${ts} · ${row.updated_by || ''}`;
+    metaEl.textContent = `Updated ${ts} · ${row.updated_by || ''}`;
   }
 });
 
-// Load on startup — call this after fetchFromSharePoint completes
 hlLoad();
 </script>
 <script src="novus-interactions.js" defer></script>
