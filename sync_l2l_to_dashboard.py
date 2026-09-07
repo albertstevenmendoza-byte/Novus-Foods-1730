@@ -9,8 +9,9 @@ dds-dashboard.html merges l2l-data.json on top of dashboard-data.json
 after loading both -- see the small addition in fetchFromSharePoint().
 
 Usage:
-    python sync_l2l_to_dashboard.py            # today
-    python sync_l2l_to_dashboard.py 2026-09-05  # a specific date
+    python sync_l2l_to_dashboard.py                          # today
+    python sync_l2l_to_dashboard.py 2026-09-05                # a specific date
+    python sync_l2l_to_dashboard.py 2026-09-02 2026-09-07     # backfill a range (inclusive)
 """
 
 import json
@@ -79,5 +80,17 @@ def sync(target_date):
 
 
 if __name__ == "__main__":
-    target = datetime.strptime(sys.argv[1], "%Y-%m-%d").date() if len(sys.argv) > 1 else date.today()
-    sync(target)
+    if len(sys.argv) >= 3:
+        # Backfill an inclusive date range -- e.g. for days L2L was never
+        # synced for, so those days keep showing Power Automate's own
+        # (older/placeholder) OEE instead of L2L's real numbers.
+        start_date = datetime.strptime(sys.argv[1], "%Y-%m-%d").date()
+        end_date = datetime.strptime(sys.argv[2], "%Y-%m-%d").date()
+        d = start_date
+        while d <= end_date:
+            sync(d)
+            d += timedelta(days=1)
+    elif len(sys.argv) == 2:
+        sync(datetime.strptime(sys.argv[1], "%Y-%m-%d").date())
+    else:
+        sync(date.today())
