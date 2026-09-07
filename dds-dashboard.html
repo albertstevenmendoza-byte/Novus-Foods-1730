@@ -401,7 +401,12 @@
             </div>
           </div>
           <div>
-            <div class="timeframe-block tf-yesterday"><div class="timeframe-title">Yesterday's Performance</div><div class="timeframe-date" id="yesterday-date-label">—</div></div>
+            <div class="timeframe-block tf-yesterday"><div class="timeframe-title">Yesterday's Performance</div><div class="timeframe-date" id="yesterday-date-label">—</div>
+              <div style="margin-top:6px;display:flex;align-items:center;gap:8px;font-size:11px;">
+                <input type="date" id="prod-date-picker" onchange="setProdDate(this.value)" style="font:inherit;padding:2px 6px;">
+                <a href="javascript:void(0)" onclick="setProdDate(null)" style="text-decoration:underline;cursor:pointer;">Use latest</a>
+              </div>
+            </div>
             <div class="metric-row">
               <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
               <div class="metric-box"><div class="metric-label">Code Yellow</div><div class="metric-value" id="code-yellow" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
@@ -558,7 +563,7 @@
 
 <script>
 // ── State ──
-let workbook=null,GLOBAL_MAX_DATE=null;
+let workbook=null,GLOBAL_MAX_DATE=null,PROD_DATE_OVERRIDE=null;
 const TODAY=new Date();
 let autoRefreshTimer=null,autoRefreshOn=false;
 
@@ -630,7 +635,12 @@ function renderDashboard(){
   // "Attainment": in the live SharePoint sheet, Attainment has been blank since
   // 7/27 (a separate data issue upstream), while Start Up/Expected/Actual Pounds
   // are still posted daily, so it's the reliable signal for "PA's latest day."
-  const dProdStr=getLatestDate(prod,'Start Up')?.str;
+  // Auto-detection can still land on an unexpected day around weekends/holidays,
+  // so PROD_DATE_OVERRIDE (set via the date picker) lets a user pin an exact date.
+  const autoProdStr=getLatestDate(prod,'Start Up')?.str;
+  const dProdStr=PROD_DATE_OVERRIDE||autoProdStr;
+  const pickerEl=document.getElementById('prod-date-picker');
+  if(pickerEl&&document.activeElement!==pickerEl)pickerEl.value=dProdStr||'';
   const dFin=setDateEl('date-costs',getLatestDate(fin)),dSAP=setDateEl('date-sap',getLatestDate(sap)),dWH=setDateEl('date-warehouse',getLatestDate(bpWH)),dInv=setDateEl('date-inventory',getLatestDate(inv));
   const safEl=document.getElementById('date-safety');if(safEl&&dHR){safEl.textContent=document.getElementById('date-hr')?.textContent||'';}
 
@@ -715,6 +725,15 @@ const MANUAL_IDS=['days-incident','near-misses','safety-audits','meal-penalties'
 function saveManual(id){localStorage.setItem('dds_m_'+id,document.getElementById(id).innerText);}
 function loadManuals(){MANUAL_IDS.forEach(id=>{const v=localStorage.getItem('dds_m_'+id);if(v){const el=document.getElementById(id);if(el)el.innerText=v;}});}
 function clearManuals(){if(!confirm('Clear all manual overrides?'))return;MANUAL_IDS.forEach(id=>localStorage.removeItem('dds_m_'+id));renderDashboard();}
+
+// Lets a user pin the Production Summary (OEE/Attainment/DT/Start Up/CIL/pounds/
+// top drivers) to an exact date instead of relying on auto-detecting Power
+// Automate's latest day — useful around weekends/long weekends where "latest"
+// can land on a different day than expected. Pass null/empty to go back to
+// auto-detect. This only re-picks a date already present in the loaded data
+// (dashboard-data.json + l2l-data.json) — it can't call the L2L API live from
+// the browser (that's blocked by CORS and would expose the API key).
+function setProdDate(val){PROD_DATE_OVERRIDE=val||null;renderDashboard();}
 
 // ── Auto-refresh ──
 function updateClock(){
