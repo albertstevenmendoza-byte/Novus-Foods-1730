@@ -621,13 +621,16 @@ function renderDashboard(){
   const isCE=r=>String(valByKey(r,'City')||'').toLowerCase().trim()==='cerritos';
   const bpWH=wh.filter(isBP);
 
-  const dHR=setDateEl('date-hr',getLatestDate(hr)),dQA=setDateEl('date-quality',getLatestDate(qa)),dProd=setDateEl('date-production'||'dummy',getLatestDate(prod,'Attainment'));
+  const dHR=setDateEl('date-hr',getLatestDate(hr)),dQA=setDateEl('date-quality',getLatestDate(qa)),dProd=setDateEl('date-production'||'dummy',getLatestDate(prod,'Start Up'));
   setDateEl('date-sanitation',getLatestDate(qa)); // Sanitation data lives in the QA sheet
-  // Use the most recent date Power Automate actually has data for (Attainment is
-  // Power-Automate-owned) so OEE/Downtime/Start Up/CIL/Attainment/pounds all stay
-  // on the same, complete production day — not whatever date L2L's OEE happens to
-  // reach first (which can be "today" before Power Automate has anything for it).
-  const dProdStr=getLatestDate(prod,'Attainment')?.str;
+  // Use the most recent date Power Automate actually has data for, so OEE/Downtime/
+  // Start Up/CIL/Attainment/pounds all stay on the same, complete production day —
+  // not whatever date L2L's OEE happens to reach first (which can be "today" before
+  // Power Automate has anything for it). Keyed off "Start Up" rather than
+  // "Attainment": in the live SharePoint sheet, Attainment has been blank since
+  // 7/27 (a separate data issue upstream), while Start Up/Expected/Actual Pounds
+  // are still posted daily, so it's the reliable signal for "PA's latest day."
+  const dProdStr=getLatestDate(prod,'Start Up')?.str;
   const dFin=setDateEl('date-costs',getLatestDate(fin)),dSAP=setDateEl('date-sap',getLatestDate(sap)),dWH=setDateEl('date-warehouse',getLatestDate(bpWH)),dInv=setDateEl('date-inventory',getLatestDate(inv));
   const safEl=document.getElementById('date-safety');if(safEl&&dHR){safEl.textContent=document.getElementById('date-hr')?.textContent||'';}
 
