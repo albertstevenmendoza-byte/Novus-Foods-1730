@@ -578,9 +578,9 @@ function set(id,val){const el=document.getElementById(id);if(el)el.textContent=(
 function getProdMetrics(prod,ds,line){
   const rows=prod.filter(r=>toDS(parseDate(r.Date))===ds&&String(valByKey(r,'Line')||'').trim().toUpperCase()===line);
   if(!rows.length)return{oee:null,att:null,dt:null,startup:'—',cil:'—'};
-  let os=0,as=0,dt=0,oc=0,ac=0,su='Yes',cil='Yes';
-  rows.forEach(r=>{const o=valByKey(r,'OEE');if(o!=null){const v=Number(o);if(!isNaN(v)){os+=v;oc++;}}const a=valByKey(r,'Attainment');if(a!=null){const v=Number(a);if(!isNaN(v)){as+=v;ac++;}}const d=Number(valByKey(r,'Downtime'));if(!isNaN(d))dt+=d;if(yn(valByKey(r,'Start Up'))==='No')su='No';if(yn(valByKey(r,'CIL'))==='No')cil='No';});
-  return{oee:oc?os/oc:null,att:ac?as/ac:null,dt,startup:su,cil};
+  let os=0,as=0,dt=0,oc=0,ac=0,su='Yes',cil='Yes',suSeen=false,cilSeen=false;
+  rows.forEach(r=>{const o=valByKey(r,'OEE');if(o!=null){const v=Number(o);if(!isNaN(v)){os+=v;oc++;}}const a=valByKey(r,'Attainment');if(a!=null){const v=Number(a);if(!isNaN(v)){as+=v;ac++;}}const d=Number(valByKey(r,'Downtime'));if(!isNaN(d))dt+=d;const suVal=valByKey(r,'Start Up');if(suVal!=null){suSeen=true;if(yn(suVal)==='No')su='No';}const cilVal=valByKey(r,'CIL');if(cilVal!=null){cilSeen=true;if(yn(cilVal)==='No')cil='No';}});
+  return{oee:oc?os/oc:null,att:ac?as/ac:null,dt,startup:suSeen?su:'—',cil:cilSeen?cil:'—'};
 }
 
 function getAggProd(prod,maxPts=30,limitDs){
