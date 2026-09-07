@@ -401,7 +401,7 @@
             </div>
           </div>
           <div>
-            <div class="timeframe-block tf-yesterday"><div class="timeframe-title">Yesterday's Performance</div><div class="timeframe-date" id="yesterday-date-label"></div>
+            <div class="timeframe-block tf-yesterday"><div class="timeframe-title">Yesterday's Performance</div><div class="timeframe-date" id="yesterday-date-label">—</div>
               <div style="margin-top:6px;display:flex;align-items:center;gap:8px;font-size:11px;">
                 <input type="date" id="prod-date-picker" onchange="setProdDate(this.value)" style="font:inherit;padding:2px 6px;">
                 <a href="javascript:void(0)" onclick="setProdDate(null)" style="text-decoration:underline;cursor:pointer;">Use latest</a>
@@ -564,6 +564,9 @@
 <script>
 // ── State ──
 let workbook=null,GLOBAL_MAX_DATE=null,PROD_DATE_OVERRIDE=null;
+// From this date onward, OEE/Downtime (Production) and Code Red/Code Yellow
+// (Maintenance) are permanently L2L-owned -- see fetchFromSharePoint().
+const L2L_CUTOVER_DATE=new Date(Date.UTC(2026,8,2)); // 2026-09-02
 const TODAY=new Date();
 let autoRefreshTimer=null,autoRefreshOn=false;
 
@@ -946,6 +949,23 @@ async function fetchFromSharePoint(){
     _dashData = {};
     Object.keys(json).forEach(k => {
       if(k !== 'synced_at') _dashData[k] = json[k];
+    });
+
+    // Permanently strip Power Automate's own OEE/Downtime/Code Red/Code
+    // Yellow for L2L_CUTOVER_DATE onward -- BEFORE merging in L2L's numbers
+    // below. This guarantees those fields can only ever show real L2L data
+    // (or "—" if L2L hasn't synced that particular day yet) and never a
+    // leftover/legacy Power Automate value, with no dependency on anyone
+    // remembering to backfill a missed day. Dates before the cutover (from
+    // before this integration existed) keep Power Automate's original
+    // numbers for historical trend charts.
+    (_dashData['Production'] || []).forEach(row => {
+      const d = parseDate(row.Date);
+      if (d && d >= L2L_CUTOVER_DATE) { delete row.OEE; delete row.Downtime; }
+    });
+    (_dashData['Maintenance'] || []).forEach(row => {
+      const d = parseDate(row.Date);
+      if (d && d >= L2L_CUTOVER_DATE) { delete row['Code Red']; delete row['Code Yellow']; }
     });
 
     // Layer in L2L's own numbers (OEE/Downtime/Code Red/Code Yellow) from
