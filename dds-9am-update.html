@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>9AM Production Update – Novus Foods Ops Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="novus-styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="novus-core.js"></script>
+  <style>
+    .page { padding-top:24px; }
+    .page-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+    .page-title { font-size:2rem; font-weight:800; color:var(--ink); letter-spacing:-.04em; }
+    .sync-meta { font-size:.72rem; font-family:var(--mono); color:var(--ink4); display:flex; align-items:center; gap:10px; }
+
+    /* ── Toolbar: line tabs + live/range toggle ── */
+    .nine-am-toolbar { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:14px; flex-wrap:wrap; }
+    .line-tabs { display:flex; gap:6px; flex-wrap:wrap; }
+    .line-tab {
+      padding:7px 16px; border-radius:20px; border:1px solid var(--border);
+      background:var(--surface); color:var(--text-3); font-weight:700; font-size:.78rem;
+      cursor:pointer; transition:all .15s; font-family:var(--font);
+    }
+    .line-tab:hover { border-color:var(--border-2); color:var(--text-1); }
+    .line-tab.active { background:var(--green-xll); border-color:var(--green-ll); color:var(--green-d); }
+
+    .mode-toggle { display:flex; gap:2px; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:2px; flex-shrink:0; }
+    .mode-btn { padding:6px 14px; border-radius:6px; border:none; background:transparent; color:var(--text-3); font-weight:700; font-size:.76rem; cursor:pointer; font-family:var(--font); }
+    .mode-btn.active { background:var(--surface); color:var(--text-1); box-shadow:var(--shadow-xs); }
+
+    .range-picker { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+    .range-picker input[type=date] { font:inherit; padding:6px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); color:var(--ink); }
+    .range-picker span { color:var(--ink4); font-size:.8rem; }
+
+    .stale-banner {
+      background:#fffbeb; border:1px solid rgba(217,119,6,.25); color:#92400e;
+      padding:9px 14px; border-radius:var(--radius-sm); font-size:.8rem;
+      margin-bottom:16px; display:flex; align-items:center; gap:8px;
+    }
+    .stale-banner::before { content:'⚠'; }
+
+    /* ── OEE meter ── */
+    .oee-meter { display:flex; flex-direction:column; align-items:center; gap:10px; padding:14px 4px 4px; }
+    .oee-value { font-size:3.4rem; font-weight:800; letter-spacing:-.03em; color:var(--text-1); font-family:var(--mono); line-height:1; }
+    .oee-status { display:flex; align-items:center; gap:6px; font-size:.78rem; font-weight:700; padding:4px 12px; border-radius:20px; }
+    .oee-status-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .oee-status.good { background:rgba(22,163,74,.1); color:#15803d; }
+    .oee-status.good .oee-status-dot { background:#16a34a; }
+    .oee-status.warn { background:var(--amber-ll); color:#92400e; }
+    .oee-status.warn .oee-status-dot { background:var(--amber-l); }
+    .oee-status.bad { background:var(--red-ll); color:#991b1b; }
+    .oee-status.bad .oee-status-dot { background:var(--red); }
+    .oee-status.unknown { background:var(--surface-3); color:var(--text-4); }
+    .oee-status.unknown .oee-status-dot { background:var(--text-4); }
+    .oee-bar-track { width:100%; height:10px; border-radius:6px; background:var(--surface-3); overflow:hidden; margin-top:6px; }
+    .oee-bar-fill { height:100%; border-radius:6px; width:0%; transition:width .4s ease, background .3s; background:#16a34a; }
+    .oee-bar-scale { width:100%; display:flex; justify-content:space-between; font-size:.62rem; color:var(--text-4); font-family:var(--mono); }
+
+    /* ── Downtime breakdown ── */
+    .downtime-total { display:flex; align-items:baseline; gap:8px; margin-bottom:12px; }
+    .downtime-total-val { font-size:2rem; font-weight:800; font-family:var(--mono); color:var(--text-1); }
+    .downtime-total-label { font-size:.74rem; color:var(--text-3); }
+    .downtime-bar { display:flex; height:22px; border-radius:6px; overflow:hidden; background:var(--surface-3); margin-bottom:10px; }
+    .downtime-seg { height:100%; transition:width .4s ease; }
+    .downtime-seg.red { background:var(--red); }
+    .downtime-seg.yellow { background:var(--amber-l); }
+    .downtime-seg.other { background:var(--text-4); }
+    .downtime-legend { display:flex; gap:16px; flex-wrap:wrap; }
+    .dt-legend-item { display:flex; align-items:center; gap:6px; font-size:.76rem; color:var(--text-2); }
+    .dt-legend-dot { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
+  </style>
+</head>
+<body>
+<!-- ══ COMMAND CENTER HEADER ══════════════════════════════════════════════ -->
+<header class="cmd-header">
+  <div class="cmd-left">
+    <a href="hub.html" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text-3);font-size:.8rem;font-weight:600;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);transition:background .1s,color .1s;" onmouseenter="this.style.background='var(--surface-3)';this.style.color='var(--text-1)'" onmouseleave="this.style.background='var(--surface)';this.style.color='var(--text-3)'">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      Hub
+    </a>
+    <a href="dds-announcements.html">
+      <img src="novus-logo.png" alt="Novus Foods" class="cmd-logo">
+    </a>
+    <div class="cmd-divider"></div>
+    <nav class="cmd-nav">
+      <a class="cmd-tab" href="dds-announcements.html">Announcements</a>
+      <a class="cmd-tab" href="dds-dashboard.html">Dashboard</a>
+      <a class="cmd-tab" href="play-call.html">Play Call</a>
+      <a class="cmd-tab active" href="dds-9am-update.html">9AM Update</a>
+    </nav>
+  </div>
+  <div class="cmd-right">
+    <!-- ··· More menu -->
+    <div class="cmd-more-wrap" id="more-wrap">
+      <button class="btn-cmd-icon" id="btn-more" onclick="toggleMore(event)" title="More options">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+      </button>
+      <div class="more-dropdown hidden" id="more-dropdown">
+        <div class="sd-group-label">Quick Access</div>
+        <button class="sd-item" onclick="NovusCore.showNeedsAction();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Needs Action
+        </button>
+        <button class="sd-item" onclick="NovusCore.showRules();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Rules of Engagement
+        </button>
+        <button class="sd-item" onclick="NovusCore.showCoreValues();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Core Values
+        </button>
+        <button class="sd-item" onclick="NovusCore.showHelp();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Help & FAQ
+        </button>
+        <button class="sd-item" onclick="NovusCore.showMaintenance();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          Maintenance
+        </button>
+        <div class="sd-divider"></div>
+        <div class="sd-group-label">Session</div>
+        <button class="sd-item sd-item-danger" onclick="NovusCore.logout()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="page-top">
+    <h1 class="page-title">9AM Production Update</h1>
+    <div class="sync-meta">
+      <span id="conn-status">Connecting…</span>
+      <span id="last-updated"></span>
+      <button class="btn-cmd btn-cmd-ghost" style="font-size:.72rem;padding:5px 11px;" onclick="loadCurrent()">↺ Refresh</button>
+    </div>
+  </div>
+
+  <div class="nine-am-toolbar">
+    <nav class="line-tabs" id="line-tabs"></nav>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-live-btn" onclick="setMode('live')">Live</button>
+      <button class="mode-btn" id="mode-range-btn" onclick="setMode('range')">Date Range</button>
+    </div>
+  </div>
+
+  <div class="range-picker hidden" id="range-picker">
+    <input type="date" id="range-start">
+    <span>to</span>
+    <input type="date" id="range-end">
+    <button class="btn-cmd btn-cmd-primary" onclick="loadRange()">View</button>
+  </div>
+
+  <div class="stale-banner hidden" id="stale-banner"></div>
+
+  <div class="dash-grid">
+    <div class="panel" style="grid-column:span 5;">
+      <div class="panel-header"><span class="panel-title">⚙️ OEE — <span id="oee-line-label">2A</span></span></div>
+      <div class="panel-body">
+        <div class="oee-meter">
+          <div class="oee-value" id="oee-value">—</div>
+          <div class="oee-status unknown" id="oee-status-pill"><span class="oee-status-dot"></span><span id="oee-status-text">No data</span></div>
+          <div class="oee-bar-track"><div class="oee-bar-fill" id="oee-bar-fill"></div></div>
+          <div class="oee-bar-scale"><span>0</span><span>50</span><span>100</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="grid-column:span 7;">
+      <div class="panel-header"><span class="panel-title">⏱ Downtime Breakdown</span></div>
+      <div class="panel-body">
+        <div class="downtime-total"><span class="downtime-total-val" id="downtime-total">—</span><span class="downtime-total-label">total minutes down</span></div>
+        <div class="downtime-bar" id="downtime-bar"></div>
+        <div class="downtime-legend" id="downtime-legend">
+          <div class="dt-legend-item"><span class="dt-legend-dot" style="background:var(--red);"></span>Code Red <span id="legend-red">—</span></div>
+          <div class="dt-legend-item"><span class="dt-legend-dot" style="background:var(--amber-l);"></span>Code Yellow <span id="legend-yellow">—</span></div>
+          <div class="dt-legend-item"><span class="dt-legend-dot" style="background:var(--text-4);"></span>Other <span id="legend-other">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   9AM Production Update
+   Pulls live OEE + downtime straight from L2L via a Supabase Edge
+   Function proxy (never calls L2L directly from the browser -- that
+   would expose the API key and hit CORS). This page is independent of
+   dashboard-data.json / Power Automate; it only ever talks to L2L.
+
+   NOTE: the exact JSON shape the proxy returns hasn't been verified
+   against a live call yet. extractMetrics() below tries several
+   common key-name variants (raw L2L field names AND friendlier
+   aliases) so it has a good chance of working as-is, but if real data
+   comes back looking wrong, open DevTools → Network, click the
+   "hyper-api" request, and adjust the key lists in extractMetrics()
+   to match what's actually there.
+   ═══════════════════════════════════════════════════════════════════ */
+
+const CONFIG = {
+  SITE_NUMBER: 2,
+  PROXY_URL: 'https://ymwiylhpxryrmqgkzxth.supabase.co/functions/v1/hyper-api',
+  LINES: [
+    { name: '2A',   code: 'BP-LINE1' },
+    { name: 'PXM6', code: 'BP-LINE2' },
+    { name: 'MP4',  code: 'BP-LINE3' },
+    { name: 'PL1',  code: 'BP-LINE4' },
+    { name: 'PL2',  code: 'BP-LINE5' },
+    { name: '2E',   code: 'BP-LINE6' }
+  ],
+  CODE_RED_ID: 205,
+  CODE_YELLOW_ID: 206,
+  OEE_GOOD: 85,
+  OEE_WARN: 65,
+  REFRESH_INTERVAL_MS: 60000
+};
+
+let currentLine = CONFIG.LINES[0];
+let mode = 'live';
+let liveTimer = null;
+let lastGood = null; // { oee, downtimeTotal, codeRed, codeYellow, other, ts }
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmtDate(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function firstDefined(obj, keys) { for (const k of keys) { if (obj && obj[k] != null) return obj[k]; } return null; }
+
+function initLineTabs() {
+  const nav = document.getElementById('line-tabs');
+  nav.innerHTML = CONFIG.LINES.map(l =>
+    `<button class="line-tab${l.code === currentLine.code ? ' active' : ''}" data-code="${l.code}" onclick="selectLine('${l.code}')">${l.name}</button>`
+  ).join('');
+}
+
+function selectLine(code) {
+  currentLine = CONFIG.LINES.find(l => l.code === code) || currentLine;
+  document.querySelectorAll('.line-tab').forEach(b => b.classList.toggle('active', b.dataset.code === code));
+  document.getElementById('oee-line-label').textContent = currentLine.name;
+  lastGood = null;
+  if (mode === 'live') loadCurrent(); else loadRange();
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('mode-live-btn').classList.toggle('active', m === 'live');
+  document.getElementById('mode-range-btn').classList.toggle('active', m === 'range');
+  document.getElementById('range-picker').classList.toggle('hidden', m !== 'range');
+  if (m === 'live') {
+    loadCurrent();
+    startLiveTimer();
+  } else {
+    stopLiveTimer();
+    const today = fmtDate(new Date());
+    if (!document.getElementById('range-start').value) document.getElementById('range-start').value = today;
+    if (!document.getElementById('range-end').value) document.getElementById('range-end').value = today;
+  }
+}
+
+function startLiveTimer() { stopLiveTimer(); liveTimer = setInterval(loadCurrent, CONFIG.REFRESH_INTERVAL_MS); }
+function stopLiveTimer() { if (liveTimer) { clearInterval(liveTimer); liveTimer = null; } }
+
+async function fetchLineData(startStr, endStr) {
+  const url = `${CONFIG.PROXY_URL}?line=${encodeURIComponent(currentLine.code)}&site=${CONFIG.SITE_NUMBER}&start=${encodeURIComponent(startStr)}&end=${encodeURIComponent(endStr)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Proxy returned ' + res.status);
+  return res.json();
+}
+
+function extractMetrics(payload) {
+  const records = Array.isArray(payload) ? payload : (payload.records || payload.data || payload.oee || []);
+  const dispatches = payload.dispatches || payload.maintenance || [];
+
+  let oeeSum = 0, oeeCount = 0, dtSum = 0;
+  (Array.isArray(records) ? records : [records]).forEach(r => {
+    if (!r) return;
+    const oeeRaw = firstDefined(r, ['oee', 'OEE', 'overall_equipment_effectiveness']);
+    const dtRaw  = firstDefined(r, ['downtime', 'Downtime', 'downtime_minutes']);
+    if (oeeRaw != null && !isNaN(Number(oeeRaw))) {
+      const v = Number(oeeRaw);
+      oeeSum += (v <= 2 ? v * 100 : v); // L2L returns OEE as a 0-1 fraction
+      oeeCount++;
+    }
+    if (dtRaw != null && !isNaN(Number(dtRaw))) dtSum += Number(dtRaw);
+  });
+
+  let codeRed = 0, codeYellow = 0;
+  (Array.isArray(dispatches) ? dispatches : []).forEach(d => {
+    const type = Number(firstDefined(d, ['dispatchtype', 'dispatchType', 'type']));
+    if (type === CONFIG.CODE_RED_ID) codeRed++;
+    else if (type === CONFIG.CODE_YELLOW_ID) codeYellow++;
+  });
+  // Fall back to pre-rolled-up counts if the proxy doesn't return raw dispatches
+  if (!Array.isArray(dispatches) || !dispatches.length) {
+    const rc = firstDefined(payload, ['codeRed', 'code_red', 'Code Red']);
+    const ry = firstDefined(payload, ['codeYellow', 'code_yellow', 'Code Yellow']);
+    if (rc != null) codeRed = Number(rc);
+    if (ry != null) codeYellow = Number(ry);
+  }
+
+  const oee = oeeCount ? oeeSum / oeeCount : null;
+  const other = Math.max(0, dtSum - (codeRed + codeYellow));
+  return { oee, downtimeTotal: dtSum, codeRed, codeYellow, other, ts: new Date() };
+}
+
+async function loadCurrent() {
+  const today = new Date();
+  const start = fmtDate(today) + ' 00:00';
+  const end = fmtDate(new Date(today.getTime() + 86400000)) + ' 00:00';
+  setStatus('Connecting…');
+  try {
+    const payload = await fetchLineData(start, end);
+    const m = extractMetrics(payload);
+    lastGood = m;
+    render(m);
+    hideStaleBanner();
+    setStatus('Live');
+  } catch (err) {
+    console.error('9am update fetch failed', err);
+    if (lastGood) { render(lastGood); showStaleBanner(lastGood.ts); }
+    else { renderEmpty(); showStaleBanner(null); }
+    setStatus('Connection error');
+  }
+}
+
+async function loadRange() {
+  const s = document.getElementById('range-start').value;
+  const e = document.getElementById('range-end').value;
+  if (!s || !e) return;
+  const today = fmtDate(new Date());
+  if (s > today || e > today) { alert('Date range cannot go beyond today.'); return; }
+  setStatus('Loading range…');
+  try {
+    const payload = await fetchLineData(s + ' 00:00', e + ' 00:00');
+    const m = extractMetrics(payload);
+    lastGood = m;
+    render(m);
+    hideStaleBanner();
+    setStatus(`Showing ${s} → ${e}`);
+  } catch (err) {
+    console.error('9am update range fetch failed', err);
+    renderEmpty();
+    showStaleBanner(null);
+    setStatus('Connection error');
+  }
+}
+
+function setStatus(text) {
+  const el = document.getElementById('conn-status');
+  if (el) el.textContent = text;
+  const lu = document.getElementById('last-updated');
+  if (lu) lu.textContent = lastGood ? ('Updated ' + lastGood.ts.toLocaleTimeString()) : '';
+}
+
+function showStaleBanner(ts) {
+  const el = document.getElementById('stale-banner');
+  el.textContent = ts
+    ? `Can't reach L2L right now — showing data from ${ts.toLocaleTimeString()}.`
+    : `Can't reach L2L right now.`;
+  el.classList.remove('hidden');
+}
+function hideStaleBanner() { document.getElementById('stale-banner').classList.add('hidden'); }
+
+function statusClass(oee) {
+  if (oee == null) return 'unknown';
+  if (oee >= CONFIG.OEE_GOOD) return 'good';
+  if (oee >= CONFIG.OEE_WARN) return 'warn';
+  return 'bad';
+}
+function statusLabel(cls) {
+  return { good: 'On Target', warn: 'Below Target', bad: 'Critical', unknown: 'No data' }[cls];
+}
+function statusFill(cls) {
+  return { good: '#16a34a', warn: 'var(--amber-l)', bad: 'var(--red)', unknown: 'var(--text-4)' }[cls];
+}
+
+function render(m) {
+  const cls = statusClass(m.oee);
+  document.getElementById('oee-value').textContent = m.oee != null ? Math.round(m.oee) + '%' : '—';
+  const pill = document.getElementById('oee-status-pill');
+  pill.className = 'oee-status ' + cls;
+  document.getElementById('oee-status-text').textContent = statusLabel(cls);
+  const fill = document.getElementById('oee-bar-fill');
+  fill.style.width = (m.oee != null ? Math.min(100, Math.max(0, m.oee)) : 0) + '%';
+  fill.style.background = statusFill(cls);
+
+  document.getElementById('downtime-total').textContent = m.downtimeTotal != null ? Math.round(m.downtimeTotal) : '—';
+  const total = (m.codeRed || 0) + (m.codeYellow || 0) + (m.other || 0);
+  const bar = document.getElementById('downtime-bar');
+  if (total > 0) {
+    bar.innerHTML = `
+      <div class="downtime-seg red" style="width:${(m.codeRed / total * 100).toFixed(1)}%"></div>
+      <div class="downtime-seg yellow" style="width:${(m.codeYellow / total * 100).toFixed(1)}%"></div>
+      <div class="downtime-seg other" style="width:${(m.other / total * 100).toFixed(1)}%"></div>`;
+  } else {
+    bar.innerHTML = '';
+  }
+  document.getElementById('legend-red').textContent = m.codeRed != null ? m.codeRed : '—';
+  document.getElementById('legend-yellow').textContent = m.codeYellow != null ? m.codeYellow : '—';
+  document.getElementById('legend-other').textContent = m.other != null ? Math.round(m.other) : '—';
+}
+
+function renderEmpty() {
+  render({ oee: null, downtimeTotal: null, codeRed: null, codeYellow: null, other: null, ts: null });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  NovusCore.requireAuth();
+  initLineTabs();
+  loadCurrent();
+  startLiveTimer();
+});
+</script>
+</body>
+</html>
