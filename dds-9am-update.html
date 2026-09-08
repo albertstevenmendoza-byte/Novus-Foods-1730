@@ -84,6 +84,7 @@
       border:1px dashed var(--border-2); border-radius:var(--radius-sm);
       padding:11px 13px; line-height:1.55; min-height:172px; display:flex; align-items:center;
     }
+    .order-setup-hint code { font-family:var(--mono); background:var(--surface-3); border-radius:4px; padding:1px 5px; margin:0 2px; white-space:nowrap; }
 
     /* ── Downtime breakdown ── */
     .downtime-total { display:flex; align-items:baseline; gap:8px; margin-bottom:14px; }
@@ -216,7 +217,7 @@
       <div class="panel-header"><span class="panel-title">📋 Current Order — <span id="order-line-label">2A</span></span></div>
       <div class="panel-body" id="order-panel-body">
         <div class="order-setup-hint" id="order-setup-hint">
-          Not connected yet. Your Supabase proxy needs a <code>current_order</code> field added to its response — see <code>current-order-addition.ts</code> for the L2L call to add.
+          Not connected yet. Your Supabase proxy needs a <code>current_order</code> field added to its response — see <code>l2l-proxy-index.ts</code> for the L2L call to add.
         </div>
         <div class="order-card-body hidden" id="order-card-body"></div>
         <div class="order-empty hidden" id="order-empty"><span class="oe-icon">○</span>No order currently running</div>
