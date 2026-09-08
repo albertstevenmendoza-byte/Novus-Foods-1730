@@ -406,6 +406,7 @@
                 <input type="date" id="prod-date-picker" onchange="setProdDate(this.value)" style="font:inherit;padding:2px 6px;">
                 <a href="javascript:void(0)" onclick="setProdDate(null)" style="text-decoration:underline;cursor:pointer;">Use latest</a>
               </div>
+              <div style="margin-top:4px;font-size:10px;opacity:.7;">Applies to OEE / Downtime / Code Red / Code Yellow only — Attainment, Start Up, CIL &amp; pounds always show Power Automate's latest day</div>
             </div>
             <div class="metric-row">
               <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
@@ -583,12 +584,31 @@ function pct(val,dec=0){if(val==null||val===''||val==='DNR')return'—';const n=
 function yn(val){if(val==null)return'—';return['YES','Y','TRUE','1'].includes(String(val).toUpperCase())?'Yes':'No';}
 function set(id,val){const el=document.getElementById(id);if(el)el.textContent=(val==null?'—':val);}
 
-function getProdMetrics(prod,ds,line){
-  const rows=prod.filter(r=>toDS(parseDate(r.Date))===ds&&String(valByKey(r,'Line')||'').trim().toUpperCase()===line);
-  if(!rows.length)return{oee:null,att:null,dt:null,startup:'—',cil:'—'};
-  let os=0,as=0,dt=0,oc=0,ac=0,su='Yes',cil='Yes',suSeen=false,cilSeen=false;
-  rows.forEach(r=>{const o=valByKey(r,'OEE');if(o!=null){const v=Number(o);if(!isNaN(v)){os+=v;oc++;}}const a=valByKey(r,'Attainment');if(a!=null){const v=Number(a);if(!isNaN(v)){as+=v;ac++;}}const d=Number(valByKey(r,'Downtime'));if(!isNaN(d))dt+=d;const suVal=valByKey(r,'Start Up');if(suVal!=null){suSeen=true;if(yn(suVal)==='No')su='No';}const cilVal=valByKey(r,'CIL');if(cilVal!=null){cilSeen=true;if(yn(cilVal)==='No')cil='No';}});
-  return{oee:oc?os/oc:null,att:ac?as/ac:null,dt,startup:suSeen?su:'—',cil:cilSeen?cil:'—'};
+// apiDs picks the row(s) for L2L-owned fields (OEE, Downtime) -- this is the
+// date the date-picker controls. paDs picks the row(s) for Power-Automate-
+// owned fields (Attainment, Start Up, CIL) -- always PA's own latest day,
+// never affected by the picker. They're often the same date, but don't have
+// to be -- e.g. picking an older date to inspect that day's L2L numbers
+// still leaves Attainment/Start Up/CIL showing today's real PA status.
+function getProdMetrics(prod,apiDs,paDs,line){
+  const isLine=r=>String(valByKey(r,'Line')||'').trim().toUpperCase()===line;
+  const apiRows=prod.filter(r=>toDS(parseDate(r.Date))===apiDs&&isLine(r));
+  const paRows=apiDs===paDs?apiRows:prod.filter(r=>toDS(parseDate(r.Date))===paDs&&isLine(r));
+
+  let os=0,oc=0,dt=0,dtSeen=false;
+  apiRows.forEach(r=>{
+    const o=valByKey(r,'OEE');if(o!=null){const v=Number(o);if(!isNaN(v)){os+=v;oc++;}}
+    const d=valByKey(r,'Downtime');if(d!=null){const v=Number(d);if(!isNaN(v)){dt+=v;dtSeen=true;}}
+  });
+
+  let as=0,ac=0,su='Yes',cil='Yes',suSeen=false,cilSeen=false;
+  paRows.forEach(r=>{
+    const a=valByKey(r,'Attainment');if(a!=null){const v=Number(a);if(!isNaN(v)){as+=v;ac++;}}
+    const suVal=valByKey(r,'Start Up');if(suVal!=null){suSeen=true;if(yn(suVal)==='No')su='No';}
+    const cilVal=valByKey(r,'CIL');if(cilVal!=null){cilSeen=true;if(yn(cilVal)==='No')cil='No';}
+  });
+
+  return{oee:oc?os/oc:null,att:ac?as/ac:null,dt:dtSeen?dt:null,startup:suSeen?su:'—',cil:cilSeen?cil:'—'};
 }
 
 function getAggProd(prod,maxPts=30,limitDs){
@@ -631,25 +651,24 @@ function renderDashboard(){
 
   const dHR=setDateEl('date-hr',getLatestDate(hr)),dQA=setDateEl('date-quality',getLatestDate(qa)),dProd=setDateEl('date-production'||'dummy',getLatestDate(prod,'Start Up'));
   setDateEl('date-sanitation',getLatestDate(qa)); // Sanitation data lives in the QA sheet
-  // Use the most recent date Power Automate actually has data for, so OEE/Downtime/
-  // Start Up/CIL/Attainment/pounds all stay on the same, complete production day —
-  // not whatever date L2L's OEE happens to reach first (which can be "today" before
-  // Power Automate has anything for it). Keyed off "Start Up" rather than
-  // "Attainment": in the live SharePoint sheet, Attainment has been blank since
-  // 7/27 (a separate data issue upstream), while Start Up/Expected/Actual Pounds
-  // are still posted daily, so it's the reliable signal for "PA's latest day."
-  // Auto-detection can still land on an unexpected day around weekends/holidays,
-  // so PROD_DATE_OVERRIDE (set via the date picker) lets a user pin an exact date.
-  const autoProdStr=getLatestDate(prod,'Start Up')?.str;
-  const dProdStr=PROD_DATE_OVERRIDE||autoProdStr;
+  // paDs: Power-Automate-owned fields (Attainment/Start Up/CIL/pounds/drivers)
+  // always follow PA's own most recent real day -- never affected by the date
+  // picker below. Keyed off "Start Up" rather than "Attainment": in the live
+  // SharePoint sheet, Attainment has been blank since 7/27 (a separate data
+  // issue upstream), while Start Up/Expected/Actual Pounds are still posted
+  // daily, so it's the reliable signal for "PA's latest day."
+  // apiDs: L2L-owned fields (OEE/Downtime/Code Red/Code Yellow) follow
+  // whatever date the picker is set to -- defaulting to paDs until touched.
+  const paDs=getLatestDate(prod,'Start Up')?.str;
+  const apiDs=PROD_DATE_OVERRIDE||paDs;
   const pickerEl=document.getElementById('prod-date-picker');
-  if(pickerEl&&document.activeElement!==pickerEl)pickerEl.value=dProdStr||'';
+  if(pickerEl&&document.activeElement!==pickerEl)pickerEl.value=apiDs||'';
   const dFin=setDateEl('date-costs',getLatestDate(fin)),dSAP=setDateEl('date-sap',getLatestDate(sap)),dWH=setDateEl('date-warehouse',getLatestDate(bpWH)),dInv=setDateEl('date-inventory',getLatestDate(inv));
   const safEl=document.getElementById('date-safety');if(safEl&&dHR){safEl.textContent=document.getElementById('date-hr')?.textContent||'';}
 
   const hdrEl=document.getElementById('date-header');if(hdrEl)hdrEl.textContent=`Today: ${TODAY.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
   const todEl=document.getElementById('today-date-label');if(todEl)todEl.textContent=TODAY.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-  if(dProdStr){const yEl=document.getElementById('yesterday-date-label');if(yEl){const dObj=parseDate(dProdStr);yEl.textContent=dObj?new Date(dObj.getUTCFullYear(),dObj.getUTCMonth(),dObj.getUTCDate()).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'—';}}
+  if(paDs){const yEl=document.getElementById('yesterday-date-label');if(yEl){const dObj=parseDate(paDs);yEl.textContent=dObj?new Date(dObj.getUTCFullYear(),dObj.getUTCMonth(),dObj.getUTCDate()).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'—';}}
 
   [['date-safety',dHR],['date-quality',dQA],['date-costs',dFin],['date-hr',dHR],['date-sap',dSAP],['date-warehouse',dWH],['date-inventory',dInv]].forEach(([id,d])=>checkStale(id,d));
 
@@ -663,13 +682,14 @@ function renderDashboard(){
   const snEl=document.getElementById('san-notes');if(snEl)snEl.textContent=getVal(qa,'Sanitation Notes',dQA)||'No sanitation notes reported.';
   // Costs
   set('cost-direct',getVal(fin,'$/Pound - Direct',dFin));set('cost-indirect',getVal(fin,'$/Pound - Indirect',dFin));set('pound-hr-direct',getVal(fin,'Pounds/hour - Direct',dFin));set('pound-hr-indirect',getVal(fin,'Pounds/hour - Indirect',dFin));set('conversion-costs',getVal(fin,'Conversion Cost',dFin));set('pounds-prod',getVal(fin,'Pounds Produced',dFin));
-  // Maintenance
-  const dMaint=getLatestDate(maint)?.str;set('code-red',getVal(maint,'Code Red',dMaint));set('code-yellow',getVal(maint,'Code Yellow',dMaint));
+  // Maintenance -- Code Red/Code Yellow are L2L-owned (API data), so they
+  // follow the date picker (apiDs) too, same as OEE/Downtime.
+  set('code-red',getVal(maint,'Code Red',apiDs));set('code-yellow',getVal(maint,'Code Yellow',apiDs));
   // Production tables
   function buildProdSection(lines,tbodyId,readId){
     const tbody=document.getElementById(tbodyId),grid=document.getElementById(readId);tbody.innerHTML='';grid.innerHTML='';
     lines.forEach(line=>{
-      const m=getProdMetrics(prod,dProdStr,line);
+      const m=getProdMetrics(prod,apiDs,paDs,line);
       const oeeN=m.oee!=null?(Number(m.oee)<=2?Number(m.oee):Number(m.oee)/100):null;
       const cls=oeeN==null?'':oeeN<=.60?'td-red':oeeN<.65?'td-amber':'td-green';
       const tr=document.createElement('tr');tr.innerHTML=`<td style="font-weight:700">${line}</td><td class="${cls}">${pct(m.oee)}</td><td>${pct(m.att,1)}</td><td>${m.dt!=null?m.dt.toFixed(0)+'m':'—'}</td>`;tbody.appendChild(tr);
@@ -677,11 +697,11 @@ function renderDashboard(){
     });
   }
   buildProdSection(['2A','PL1','MP4','PXM6'],'tbody-salsa','readiness-salsa');buildProdSection(['PL2','2E'],'tbody-layer','readiness-layer');
-  // Top drivers
-  const counts={};prod.filter(r=>toDS(parseDate(r.Date))===dProdStr).forEach(r=>{['Mechanical Downtime Drivers','Material Downtime Drivers'].forEach(col=>{const v=r[col];if(v&&v!=='DNR'&&v!=='None'&&v!=='')String(v).split(/[;,]/).forEach(d=>{const c=d.trim();if(c.length>2)counts[c]=(counts[c]||0)+1;});});});
+  // Top drivers -- Power-Automate-authored text field, always the latest PA day
+  const counts={};prod.filter(r=>toDS(parseDate(r.Date))===paDs).forEach(r=>{['Mechanical Downtime Drivers','Material Downtime Drivers'].forEach(col=>{const v=r[col];if(v&&v!=='DNR'&&v!=='None'&&v!=='')String(v).split(/[;,]/).forEach(d=>{const c=d.trim();if(c.length>2)counts[c]=(counts[c]||0)+1;});});});
   const tdEl=document.getElementById('top-drivers');if(tdEl)tdEl.textContent=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,c])=>`• ${n} (${c})`).join('\n')||`No drivers reported.`;
-  // Pounds Planned / Produced — sum across all lines for latest date
-  const prodRows = prod.filter(r => toDS(parseDate(r.Date)) === dProdStr);
+  // Pounds Planned / Produced — Power-Automate-owned, always the latest PA day
+  const prodRows = prod.filter(r => toDS(parseDate(r.Date)) === paDs);
   const totalPlanned  = prodRows.reduce((s,r) => s + (Number(valByKey(r,'Expected Pounds'))  || 0), 0);
   const totalProduced = prodRows.reduce((s,r) => s + (Number(valByKey(r,'Actual Pounds'))  || 0), 0);
   set('pounds-planned',  totalPlanned  > 0 ? totalPlanned.toLocaleString()  : null);
