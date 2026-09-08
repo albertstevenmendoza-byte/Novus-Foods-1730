@@ -9,9 +9,17 @@ dds-dashboard.html merges l2l-data.json on top of dashboard-data.json
 after loading both -- see the small addition in fetchFromSharePoint().
 
 Usage:
-    python sync_l2l_to_dashboard.py                          # today
-    python sync_l2l_to_dashboard.py 2026-09-05                # a specific date
+    python sync_l2l_to_dashboard.py                          # self-healing: last 7 days through today
+    python sync_l2l_to_dashboard.py 2026-09-05                # just one specific date
     python sync_l2l_to_dashboard.py 2026-09-02 2026-09-07     # backfill a range (inclusive)
+
+Running it with no arguments re-syncs the last 7 days every time (not just
+today) -- each day's data is upserted in place, so a run that already has a
+day's numbers just overwrites them with the same (or updated) values. That
+means if this script's scheduled run is ever missed for a day or two --
+computer was off, GitHub Action didn't fire, whatever -- the very next
+run automatically catches that day back up. No one has to notice a gap and
+run a manual backfill.
 """
 
 import json
@@ -93,4 +101,9 @@ if __name__ == "__main__":
     elif len(sys.argv) == 2:
         sync(datetime.strptime(sys.argv[1], "%Y-%m-%d").date())
     else:
-        sync(date.today())
+        # Self-healing default: re-sync the last 7 days (oldest first), not
+        # just today, so a missed run never leaves a permanent gap.
+        SELF_HEAL_WINDOW_DAYS = 7
+        today = date.today()
+        for offset in range(SELF_HEAL_WINDOW_DAYS - 1, -1, -1):
+            sync(today - timedelta(days=offset))
