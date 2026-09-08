@@ -14,21 +14,25 @@
     .page { padding-top:24px; }
     .page-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
     .page-title { font-size:2rem; font-weight:800; color:var(--ink); letter-spacing:-.04em; }
-    .sync-meta { font-size:.72rem; font-family:var(--mono); color:var(--ink4); display:flex; align-items:center; gap:10px; }
+    .sync-meta { font-size:.72rem; font-family:var(--mono); color:var(--ink4); display:flex; align-items:center; gap:9px; }
+    .conn-dot { width:7px; height:7px; border-radius:50%; background:var(--text-4); flex-shrink:0; transition:background .3s; }
+    .conn-dot.live { background:#16a34a; }
+    .conn-dot.err { background:var(--red); animation:pulse-dot 1.4s ease-in-out infinite; }
+    @keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:.35;} }
 
     /* ── Toolbar: line tabs + live/range toggle ── */
     .nine-am-toolbar { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:14px; flex-wrap:wrap; }
     .line-tabs { display:flex; gap:6px; flex-wrap:wrap; }
     .line-tab {
-      padding:7px 16px; border-radius:20px; border:1px solid var(--border);
+      padding:7px 17px; border-radius:20px; border:1px solid var(--border);
       background:var(--surface); color:var(--text-3); font-weight:700; font-size:.78rem;
       cursor:pointer; transition:all .15s; font-family:var(--font);
     }
     .line-tab:hover { border-color:var(--border-2); color:var(--text-1); }
-    .line-tab.active { background:var(--green-xll); border-color:var(--green-ll); color:var(--green-d); }
+    .line-tab.active { background:var(--green-xll); border-color:var(--green-ll); color:var(--green-d); box-shadow:0 1px 4px rgba(29,78,216,.12); }
 
     .mode-toggle { display:flex; gap:2px; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:2px; flex-shrink:0; }
-    .mode-btn { padding:6px 14px; border-radius:6px; border:none; background:transparent; color:var(--text-3); font-weight:700; font-size:.76rem; cursor:pointer; font-family:var(--font); }
+    .mode-btn { padding:6px 14px; border-radius:6px; border:none; background:transparent; color:var(--text-3); font-weight:700; font-size:.76rem; cursor:pointer; font-family:var(--font); transition:background .15s,color .15s; }
     .mode-btn.active { background:var(--surface); color:var(--text-1); box-shadow:var(--shadow-xs); }
 
     .range-picker { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
@@ -42,10 +46,19 @@
     }
     .stale-banner::before { content:'⚠'; }
 
-    /* ── OEE meter ── */
-    .oee-meter { display:flex; flex-direction:column; align-items:center; gap:10px; padding:14px 4px 4px; }
-    .oee-value { font-size:3.4rem; font-weight:800; letter-spacing:-.03em; color:var(--text-1); font-family:var(--mono); line-height:1; }
-    .oee-status { display:flex; align-items:center; gap:6px; font-size:.78rem; font-weight:700; padding:4px 12px; border-radius:20px; }
+    /* ── Card polish (site .panel already gives border/shadow/hover) ── */
+    .card-sub { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--text-4); }
+
+    /* ── OEE gauge ── */
+    .oee-card-body { display:flex; flex-direction:column; align-items:center; gap:8px; padding-top:6px; }
+    .oee-gauge-wrap { position:relative; width:172px; height:172px; margin:2px auto 0; }
+    .oee-gauge-svg { width:100%; height:100%; transform:rotate(-90deg); }
+    .oee-gauge-track { fill:none; stroke:var(--surface-3); stroke-width:13; }
+    .oee-gauge-fill { fill:none; stroke-width:13; stroke-linecap:round; transition:stroke-dasharray .5s cubic-bezier(.4,0,.2,1), stroke .3s; }
+    .oee-gauge-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
+    .oee-gauge-value { font-size:2.5rem; font-weight:800; font-family:var(--mono); color:var(--text-1); letter-spacing:-.03em; line-height:1; }
+    .oee-gauge-sub { font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--text-4); }
+    .oee-status { display:flex; align-items:center; gap:6px; font-size:.78rem; font-weight:700; padding:4px 13px; border-radius:20px; margin-top:2px; }
     .oee-status-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
     .oee-status.good { background:rgba(22,163,74,.1); color:#15803d; }
     .oee-status.good .oee-status-dot { background:#16a34a; }
@@ -55,22 +68,41 @@
     .oee-status.bad .oee-status-dot { background:var(--red); }
     .oee-status.unknown { background:var(--surface-3); color:var(--text-4); }
     .oee-status.unknown .oee-status-dot { background:var(--text-4); }
-    .oee-bar-track { width:100%; height:10px; border-radius:6px; background:var(--surface-3); overflow:hidden; margin-top:6px; }
-    .oee-bar-fill { height:100%; border-radius:6px; width:0%; transition:width .4s ease, background .3s; background:#16a34a; }
-    .oee-bar-scale { width:100%; display:flex; justify-content:space-between; font-size:.62rem; color:var(--text-4); font-family:var(--mono); }
+    .oee-threshold-note { font-size:.66rem; color:var(--text-4); text-align:center; margin-top:2px; }
+
+    /* ── Current order card ── */
+    .order-card-body { display:flex; flex-direction:column; gap:2px; min-height:172px; justify-content:center; }
+    .order-name { font-size:1.5rem; font-weight:800; color:var(--text-1); letter-spacing:-.02em; line-height:1.15; margin-bottom:10px; word-break:break-word; }
+    .order-row { display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid var(--border); }
+    .order-row:last-child { border-bottom:none; }
+    .order-label { font-size:.66rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-4); }
+    .order-value { font-size:.88rem; font-weight:700; color:var(--text-1); font-family:var(--mono); text-align:right; }
+    .order-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:var(--text-4); font-size:.84rem; text-align:center; padding:20px 8px; min-height:172px; }
+    .order-empty .oe-icon { font-size:1.6rem; opacity:.5; }
+    .order-setup-hint {
+      font-size:.72rem; color:var(--text-3); background:var(--surface-2);
+      border:1px dashed var(--border-2); border-radius:var(--radius-sm);
+      padding:11px 13px; line-height:1.55; min-height:172px; display:flex; align-items:center;
+    }
 
     /* ── Downtime breakdown ── */
-    .downtime-total { display:flex; align-items:baseline; gap:8px; margin-bottom:12px; }
-    .downtime-total-val { font-size:2rem; font-weight:800; font-family:var(--mono); color:var(--text-1); }
+    .downtime-total { display:flex; align-items:baseline; gap:8px; margin-bottom:14px; }
+    .downtime-total-val { font-size:2.1rem; font-weight:800; font-family:var(--mono); color:var(--text-1); letter-spacing:-.02em; }
     .downtime-total-label { font-size:.74rem; color:var(--text-3); }
-    .downtime-bar { display:flex; height:22px; border-radius:6px; overflow:hidden; background:var(--surface-3); margin-bottom:10px; }
-    .downtime-seg { height:100%; transition:width .4s ease; }
+    .downtime-bar { display:flex; height:24px; border-radius:8px; overflow:hidden; background:var(--surface-3); margin-bottom:14px; box-shadow:inset 0 1px 2px rgba(0,0,0,.04); }
+    .downtime-seg { height:100%; transition:width .5s cubic-bezier(.4,0,.2,1); }
     .downtime-seg.red { background:var(--red); }
     .downtime-seg.yellow { background:var(--amber-l); }
     .downtime-seg.other { background:var(--text-4); }
-    .downtime-legend { display:flex; gap:16px; flex-wrap:wrap; }
-    .dt-legend-item { display:flex; align-items:center; gap:6px; font-size:.76rem; color:var(--text-2); }
-    .dt-legend-dot { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
+    .downtime-legend { display:flex; flex-direction:column; gap:9px; }
+    .dt-legend-item { display:flex; align-items:center; gap:9px; font-size:.82rem; color:var(--text-2); }
+    .dt-legend-dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+    .dt-legend-name { flex:1; font-weight:600; }
+    .dt-legend-val { font-family:var(--mono); font-weight:700; color:var(--text-1); }
+
+    @media (max-width: 1100px) {
+      .dash-grid > .panel { grid-column: span 12 !important; }
+    }
   </style>
 </head>
 <body>
@@ -135,6 +167,7 @@
   <div class="page-top">
     <h1 class="page-title">9AM Production Update</h1>
     <div class="sync-meta">
+      <span class="conn-dot" id="conn-dot"></span>
       <span id="conn-status">Connecting…</span>
       <span id="last-updated"></span>
       <button class="btn-cmd btn-cmd-ghost" style="font-size:.72rem;padding:5px 11px;" onclick="loadCurrent()">↺ Refresh</button>
@@ -159,27 +192,46 @@
   <div class="stale-banner hidden" id="stale-banner"></div>
 
   <div class="dash-grid">
-    <div class="panel" style="grid-column:span 5;">
+    <div class="panel" style="grid-column:span 4;">
       <div class="panel-header"><span class="panel-title">⚙️ OEE — <span id="oee-line-label">2A</span></span></div>
       <div class="panel-body">
-        <div class="oee-meter">
-          <div class="oee-value" id="oee-value">—</div>
+        <div class="oee-card-body">
+          <div class="oee-gauge-wrap">
+            <svg class="oee-gauge-svg" viewBox="0 0 120 120">
+              <circle class="oee-gauge-track" cx="60" cy="60" r="52"/>
+              <circle class="oee-gauge-fill" id="oee-gauge-fill" cx="60" cy="60" r="52" stroke-dasharray="0 326.7"/>
+            </svg>
+            <div class="oee-gauge-center">
+              <div class="oee-gauge-value" id="oee-value">—</div>
+              <div class="oee-gauge-sub">OEE</div>
+            </div>
+          </div>
           <div class="oee-status unknown" id="oee-status-pill"><span class="oee-status-dot"></span><span id="oee-status-text">No data</span></div>
-          <div class="oee-bar-track"><div class="oee-bar-fill" id="oee-bar-fill"></div></div>
-          <div class="oee-bar-scale"><span>0</span><span>50</span><span>100</span></div>
+          <div class="oee-threshold-note">Target 85% · Watch below 65%</div>
         </div>
       </div>
     </div>
 
-    <div class="panel" style="grid-column:span 7;">
+    <div class="panel" style="grid-column:span 4;">
+      <div class="panel-header"><span class="panel-title">📋 Current Order — <span id="order-line-label">2A</span></span></div>
+      <div class="panel-body" id="order-panel-body">
+        <div class="order-setup-hint" id="order-setup-hint">
+          Not connected yet. Your Supabase proxy needs a <code>current_order</code> field added to its response — see <code>current-order-addition.ts</code> for the L2L call to add.
+        </div>
+        <div class="order-card-body hidden" id="order-card-body"></div>
+        <div class="order-empty hidden" id="order-empty"><span class="oe-icon">○</span>No order currently running</div>
+      </div>
+    </div>
+
+    <div class="panel" style="grid-column:span 4;">
       <div class="panel-header"><span class="panel-title">⏱ Downtime Breakdown</span></div>
       <div class="panel-body">
         <div class="downtime-total"><span class="downtime-total-val" id="downtime-total">—</span><span class="downtime-total-label">total minutes down</span></div>
         <div class="downtime-bar" id="downtime-bar"></div>
         <div class="downtime-legend" id="downtime-legend">
-          <div class="dt-legend-item"><span class="dt-legend-dot" style="background:var(--red);"></span>Code Red <span id="legend-red">—</span></div>
-          <div class="dt-legend-item"><span class="dt-legend-dot" style="background:var(--amber-l);"></span>Code Yellow <span id="legend-yellow">—</span></div>
-          <div class="dt-legend-item"><span class="dt-legend-dot" style="background:var(--text-4);"></span>Other <span id="legend-other">—</span></div>
+          <div class="dt-legend-item"><span class="dt-legend-dot" style="background:var(--red);"></span><span class="dt-legend-name">Code Red</span><span class="dt-legend-val" id="legend-red">—</span></div>
+          <div class="dt-legend-item"><span class="dt-legend-dot" style="background:var(--amber-l);"></span><span class="dt-legend-name">Code Yellow</span><span class="dt-legend-val" id="legend-yellow">—</span></div>
+          <div class="dt-legend-item"><span class="dt-legend-dot" style="background:var(--text-4);"></span><span class="dt-legend-name">Other</span><span class="dt-legend-val" id="legend-other">—</span></div>
         </div>
       </div>
     </div>
@@ -189,18 +241,25 @@
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    9AM Production Update
-   Pulls live OEE + downtime straight from L2L via a Supabase Edge
-   Function proxy (never calls L2L directly from the browser -- that
-   would expose the API key and hit CORS). This page is independent of
-   dashboard-data.json / Power Automate; it only ever talks to L2L.
+   Pulls live OEE + downtime (and, once the proxy is extended, the
+   current order) straight from L2L via a Supabase Edge Function proxy
+   (never calls L2L directly from the browser -- that would expose the
+   API key and hit CORS). Independent of dashboard-data.json / Power
+   Automate; only ever talks to L2L.
 
-   NOTE: the exact JSON shape the proxy returns hasn't been verified
-   against a live call yet. extractMetrics() below tries several
-   common key-name variants (raw L2L field names AND friendlier
-   aliases) so it has a good chance of working as-is, but if real data
-   comes back looking wrong, open DevTools → Network, click the
-   "hyper-api" request, and adjust the key lists in extractMetrics()
-   to match what's actually there.
+   Confirmed live response shape for OEE/downtime (checked via DevTools
+   Network tab against the real proxy): a single flat object per
+   line/date-range, already pre-aggregated server-side --
+     { oee, total_dt, red_dt, yellow_dt, day_count, range_start, range_end, updated_at }
+   oee is a plain percentage (38 = 38%); total_dt/red_dt/yellow_dt are
+   minutes.
+
+   Current order: not wired up on the proxy yet. See
+   current-order-addition.ts for the server-side snippet to add (calls
+   L2L's buildsequence/get_current_order_on_line). Once that's live and
+   the response carries a `current_order` object, extractOrder() below
+   will pick it up automatically -- check DevTools again afterward and
+   adjust the key list in extractOrder() if the real field names differ.
    ═══════════════════════════════════════════════════════════════════ */
 
 const CONFIG = {
@@ -216,13 +275,14 @@ const CONFIG = {
   ],
   OEE_GOOD: 85,
   OEE_WARN: 65,
-  REFRESH_INTERVAL_MS: 60000
+  REFRESH_INTERVAL_MS: 60000,
+  GAUGE_CIRCUMFERENCE: 2 * Math.PI * 52
 };
 
 let currentLine = CONFIG.LINES[0];
 let mode = 'live';
 let liveTimer = null;
-let lastGood = null; // { oee, downtimeTotal, codeRed, codeYellow, other, ts }
+let lastGood = null; // { oee, downtimeTotal, codeRed, codeYellow, other, order, ts }
 
 function pad(n) { return String(n).padStart(2, '0'); }
 function fmtDate(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
@@ -239,6 +299,7 @@ function selectLine(code) {
   currentLine = CONFIG.LINES.find(l => l.code === code) || currentLine;
   document.querySelectorAll('.line-tab').forEach(b => b.classList.toggle('active', b.dataset.code === code));
   document.getElementById('oee-line-label').textContent = currentLine.name;
+  document.getElementById('order-line-label').textContent = currentLine.name;
   lastGood = null;
   if (mode === 'live') loadCurrent(); else loadRange();
 }
@@ -269,14 +330,8 @@ async function fetchLineData(startStr, endStr) {
   return res.json();
 }
 
-// Confirmed live shape (checked via DevTools Network tab against the real
-// proxy): a single flat object per line/date-range, already pre-aggregated
-// server-side --
-//   { oee, total_dt, red_dt, yellow_dt, day_count, range_start, range_end, updated_at }
-// oee comes back as a plain percentage (e.g. 38, meaning 38%), and
-// total_dt/red_dt/yellow_dt are minutes, not dispatch counts.
 function extractMetrics(payload) {
-  if (!payload || typeof payload !== 'object') return { oee: null, downtimeTotal: null, codeRed: 0, codeYellow: 0, other: 0, ts: new Date() };
+  if (!payload || typeof payload !== 'object') return { oee: null, downtimeTotal: null, codeRed: 0, codeYellow: 0, other: 0 };
 
   const oeeRaw = firstDefined(payload, ['oee', 'OEE', 'overall_equipment_effectiveness']);
   let oee = null;
@@ -296,26 +351,45 @@ function extractMetrics(payload) {
   // proxy -- widen the bar's denominator rather than clipping real minutes.
   const other = Math.max(0, (downtimeTotal || 0) - (codeRed + codeYellow));
 
-  return { oee, downtimeTotal, codeRed, codeYellow, other, ts: new Date() };
+  return { oee, downtimeTotal, codeRed, codeYellow, other };
+}
+
+// Distinguishes "the proxy doesn't send order data at all yet" (wired:false
+// -- show the setup hint) from "it does, and no order is running right now"
+// (wired:true, active:false) from "here's the order" (wired:true, active:true).
+function extractOrder(payload) {
+  if (!payload || typeof payload !== 'object') return { wired: false };
+  const wired = ('current_order' in payload) || ('order' in payload) || ('buildsequence' in payload);
+  if (!wired) return { wired: false };
+  const o = payload.current_order ?? payload.order ?? payload.buildsequence;
+  if (!o || typeof o !== 'object') return { wired: true, active: false };
+  return {
+    wired: true,
+    active: true,
+    number: firstDefined(o, ['name', 'order_number', 'number', 'wonumber']),
+    product: firstDefined(o, ['product_name', 'product', 'description']),
+    qty: firstDefined(o, ['order_quantity', 'quantity', 'target']),
+    status: firstDefined(o, ['status', 'state'])
+  };
 }
 
 async function loadCurrent() {
   const today = new Date();
   const start = fmtDate(today) + ' 00:00';
   const end = fmtDate(new Date(today.getTime() + 86400000)) + ' 00:00';
-  setStatus('Connecting…');
+  setStatus('connecting', 'Connecting…');
   try {
     const payload = await fetchLineData(start, end);
-    const m = extractMetrics(payload);
+    const m = { ...extractMetrics(payload), order: extractOrder(payload), ts: new Date() };
     lastGood = m;
     render(m);
     hideStaleBanner();
-    setStatus('Live');
+    setStatus('live', 'Live');
   } catch (err) {
     console.error('9am update fetch failed', err);
     if (lastGood) { render(lastGood); showStaleBanner(lastGood.ts); }
     else { renderEmpty(); showStaleBanner(null); }
-    setStatus('Connection error');
+    setStatus('err', 'Connection error');
   }
 }
 
@@ -325,25 +399,27 @@ async function loadRange() {
   if (!s || !e) return;
   const today = fmtDate(new Date());
   if (s > today || e > today) { alert('Date range cannot go beyond today.'); return; }
-  setStatus('Loading range…');
+  setStatus('connecting', 'Loading range…');
   try {
     const payload = await fetchLineData(s + ' 00:00', e + ' 00:00');
-    const m = extractMetrics(payload);
+    const m = { ...extractMetrics(payload), order: extractOrder(payload), ts: new Date() };
     lastGood = m;
     render(m);
     hideStaleBanner();
-    setStatus(`Showing ${s} → ${e}`);
+    setStatus('live', `Showing ${s} → ${e}`);
   } catch (err) {
     console.error('9am update range fetch failed', err);
     renderEmpty();
     showStaleBanner(null);
-    setStatus('Connection error');
+    setStatus('err', 'Connection error');
   }
 }
 
-function setStatus(text) {
+function setStatus(kind, text) {
   const el = document.getElementById('conn-status');
   if (el) el.textContent = text;
+  const dot = document.getElementById('conn-dot');
+  if (dot) dot.className = 'conn-dot' + (kind === 'live' ? ' live' : kind === 'err' ? ' err' : '');
   const lu = document.getElementById('last-updated');
   if (lu) lu.textContent = lastGood ? ('Updated ' + lastGood.ts.toLocaleTimeString()) : '';
 }
@@ -366,8 +442,8 @@ function statusClass(oee) {
 function statusLabel(cls) {
   return { good: 'On Target', warn: 'Below Target', bad: 'Critical', unknown: 'No data' }[cls];
 }
-function statusFill(cls) {
-  return { good: '#16a34a', warn: 'var(--amber-l)', bad: 'var(--red)', unknown: 'var(--text-4)' }[cls];
+function statusColor(cls) {
+  return { good: '#16a34a', warn: 'var(--amber-l)', bad: 'var(--red)', unknown: 'var(--border-2)' }[cls];
 }
 
 function render(m) {
@@ -376,9 +452,12 @@ function render(m) {
   const pill = document.getElementById('oee-status-pill');
   pill.className = 'oee-status ' + cls;
   document.getElementById('oee-status-text').textContent = statusLabel(cls);
-  const fill = document.getElementById('oee-bar-fill');
-  fill.style.width = (m.oee != null ? Math.min(100, Math.max(0, m.oee)) : 0) + '%';
-  fill.style.background = statusFill(cls);
+
+  const C = CONFIG.GAUGE_CIRCUMFERENCE;
+  const frac = m.oee != null ? Math.min(1, Math.max(0, m.oee / 100)) : 0;
+  const gauge = document.getElementById('oee-gauge-fill');
+  gauge.setAttribute('stroke-dasharray', `${(frac * C).toFixed(1)} ${C.toFixed(1)}`);
+  gauge.style.stroke = statusColor(cls);
 
   // total_dt from the proxy has been seen to under-report vs red_dt+yellow_dt
   // on some days -- show whichever is larger so the headline number is never
@@ -398,10 +477,30 @@ function render(m) {
   document.getElementById('legend-red').textContent = m.codeRed != null ? Math.round(m.codeRed) + 'm' : '—';
   document.getElementById('legend-yellow').textContent = m.codeYellow != null ? Math.round(m.codeYellow) + 'm' : '—';
   document.getElementById('legend-other').textContent = m.other != null ? Math.round(m.other) + 'm' : '—';
+
+  renderOrder(m.order || { wired: false });
+}
+
+function renderOrder(o) {
+  const hint = document.getElementById('order-setup-hint');
+  const body = document.getElementById('order-card-body');
+  const empty = document.getElementById('order-empty');
+  hint.classList.add('hidden'); body.classList.add('hidden'); empty.classList.add('hidden');
+
+  if (!o.wired) { hint.classList.remove('hidden'); return; }
+  if (!o.active) { empty.classList.remove('hidden'); return; }
+
+  body.classList.remove('hidden');
+  body.innerHTML = `
+    <div class="order-name">${o.product || o.number || 'Order running'}</div>
+    ${o.number ? `<div class="order-row"><span class="order-label">Order #</span><span class="order-value">${o.number}</span></div>` : ''}
+    ${o.qty != null ? `<div class="order-row"><span class="order-label">Target Qty</span><span class="order-value">${o.qty}</span></div>` : ''}
+    ${o.status ? `<div class="order-row"><span class="order-label">Status</span><span class="order-value">${o.status}</span></div>` : ''}
+  `;
 }
 
 function renderEmpty() {
-  render({ oee: null, downtimeTotal: null, codeRed: null, codeYellow: null, other: null, ts: null });
+  render({ oee: null, downtimeTotal: null, codeRed: null, codeYellow: null, other: null, order: { wired: false }, ts: null });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
