@@ -1,0 +1,48 @@
+name: Sync L2L data
+
+on:
+  schedule:
+    - cron: '0 13 * * *'   # 6:00 AM Pacific (UTC-7) daily -- adjust if needed
+  workflow_dispatch:        # lets you also trigger it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r l2l_sync_requirements.txt
+
+      - name: Write config.py from secret
+        run: |
+          cat > config.py << 'EOF'
+          COMPANY = "lakeviewfarms"
+          API_KEY = "${{ secrets.L2L_API_KEY }}"
+          SITE_NUMBER = 2
+          LINECODE_DICT = {
+              "BP-LINE1": "2A", "BP-LINE2": "PXM6", "BP-LINE3": "MP4",
+              "BP-LINE4": "PL1", "BP-LINE5": "PL2", "BP-LINE6": "2E"
+          }
+          LINE_CODES = list(LINECODE_DICT.keys())
+          CODE_RED_ID = 205
+          CODE_YELLOW_ID = 206
+          EOF
+
+      - name: Run sync (today)
+        run: python sync_l2l_to_dashboard.py
+
+      - name: Commit and push if l2l-data.json changed
+        run: |
+          git config user.name "l2l-sync-bot"
+          git config user.email "actions@github.com"
+          git add l2l-data.json
+          git diff --staged --quiet || git commit -m "Auto-sync L2L data"
+          git push
