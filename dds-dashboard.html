@@ -564,9 +564,9 @@
 <script>
 // ── State ──
 let workbook=null,GLOBAL_MAX_DATE=null,PROD_DATE_OVERRIDE=null;
-// From this date onward, OEE/Downtime (Production) and Code Red/Code Yellow
-// (Maintenance) are permanently L2L-owned -- see fetchFromSharePoint().
-const L2L_CUTOVER_DATE=new Date(Date.UTC(2026,8,2)); // 2026-09-02
+// OEE/Downtime (Production) and Code Red/Code Yellow (Maintenance) are
+// permanently L2L-owned, for every date, no exceptions -- see
+// fetchFromSharePoint().
 const TODAY=new Date();
 let autoRefreshTimer=null,autoRefreshOn=false;
 
@@ -649,7 +649,7 @@ function renderDashboard(){
 
   const hdrEl=document.getElementById('date-header');if(hdrEl)hdrEl.textContent=`Today: ${TODAY.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
   const todEl=document.getElementById('today-date-label');if(todEl)todEl.textContent=TODAY.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-  if(dProdStr){const yEl=document.getElementById('yesterday-date-label');if(yEl)yEl.textContent=new Date(dProdStr).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
+  if(dProdStr){const yEl=document.getElementById('yesterday-date-label');if(yEl){const dObj=parseDate(dProdStr);yEl.textContent=dObj?new Date(dObj.getUTCFullYear(),dObj.getUTCMonth(),dObj.getUTCDate()).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'—';}}
 
   [['date-safety',dHR],['date-quality',dQA],['date-costs',dFin],['date-hr',dHR],['date-sap',dSAP],['date-warehouse',dWH],['date-inventory',dInv]].forEach(([id,d])=>checkStale(id,d));
 
@@ -952,20 +952,18 @@ async function fetchFromSharePoint(){
     });
 
     // Permanently strip Power Automate's own OEE/Downtime/Code Red/Code
-    // Yellow for L2L_CUTOVER_DATE onward -- BEFORE merging in L2L's numbers
-    // below. This guarantees those fields can only ever show real L2L data
-    // (or "—" if L2L hasn't synced that particular day yet) and never a
-    // leftover/legacy Power Automate value, with no dependency on anyone
-    // remembering to backfill a missed day. Dates before the cutover (from
-    // before this integration existed) keep Power Automate's original
-    // numbers for historical trend charts.
+    // Yellow -- for EVERY date, no exceptions -- BEFORE merging in L2L's
+    // numbers below. This guarantees those 4 fields can only ever show real
+    // L2L data (or "—" if L2L hasn't synced that particular day) and never
+    // a Power Automate value, with no dependency on anyone remembering to
+    // backfill a missed day. (Older trend charts will show gaps for any
+    // date L2L was never asked to sync -- that's the tradeoff for never
+    // letting Power Automate's OEE/Downtime show, ever.)
     (_dashData['Production'] || []).forEach(row => {
-      const d = parseDate(row.Date);
-      if (d && d >= L2L_CUTOVER_DATE) { delete row.OEE; delete row.Downtime; }
+      delete row.OEE; delete row.Downtime;
     });
     (_dashData['Maintenance'] || []).forEach(row => {
-      const d = parseDate(row.Date);
-      if (d && d >= L2L_CUTOVER_DATE) { delete row['Code Red']; delete row['Code Yellow']; }
+      delete row['Code Red']; delete row['Code Yellow'];
     });
 
     // Layer in L2L's own numbers (OEE/Downtime/Code Red/Code Yellow) from
