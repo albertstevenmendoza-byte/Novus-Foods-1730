@@ -406,7 +406,7 @@
                 <input type="date" id="prod-date-picker" onchange="setProdDate(this.value)" style="font:inherit;padding:2px 6px;">
                 <a href="javascript:void(0)" onclick="setProdDate(null)" style="text-decoration:underline;cursor:pointer;">Use latest</a>
               </div>
-              <div style="margin-top:4px;font-size:10px;opacity:.7;">Applies to OEE / Downtime / Code Red / Code Yellow only — Attainment, Start Up, CIL &amp; pounds always show Power Automate's latest day</div>
+              <div style="margin-top:4px;font-size:10px;opacity:.7;">Applies to OEE / Downtime / Code Red / Code Yellow only — defaults to yesterday. Attainment, Start Up, CIL &amp; pounds always show Power Automate's latest day</div>
             </div>
             <div class="metric-row">
               <div class="metric-box"><div class="metric-label">Code Red</div><div class="metric-value" id="code-red" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
@@ -574,6 +574,11 @@ let autoRefreshTimer=null,autoRefreshOn=false;
 // ── Date utils ──
 const p2=n=>String(n).padStart(2,'0');
 function toDS(d){if(!d||isNaN(d.getTime()))return null;return`${d.getUTCFullYear()}-${p2(d.getUTCMonth()+1)}-${p2(d.getUTCDate())}`;}
+// Yesterday relative to the browser's real local "today" -- NOT derived
+// from any data field, so it stays correct even on days with no rows yet.
+// This is the default for apiDs (L2L-owned fields) below; the date picker
+// can still override it to look at any other day.
+function yesterdayStr(){const t=new Date();t.setDate(t.getDate()-1);return`${t.getFullYear()}-${p2(t.getMonth()+1)}-${p2(t.getDate())}`;}
 function parseDate(val){if(val==null||val==='')return null;const n=Number(val);if(!isNaN(n)&&val!=='')return new Date((n-25569)*86400*1000);const d=new Date(val);return isNaN(d.getTime())?null:new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));}
 function valByKey(row,field){if(!row)return null;const key=Object.keys(row).find(k=>k.trim().toLowerCase()===field.toLowerCase()||k.trim().toLowerCase().replace(/\s/g,'')===field.toLowerCase().replace(/\s/g,''));const v=row[key??field];if(v===''||v==null||String(v).includes('#')||v==='DNR')return null;return v;}
 function getLatestDate(data,reqField=null){let max=0;const limit=new Date();limit.setDate(limit.getDate()+7);data.forEach(row=>{const d=parseDate(row.Date);if(!d||isNaN(d.getTime())||d>=limit)return;if(reqField&&(valByKey(row,reqField)==null||valByKey(row,reqField)===''))return;if(d.getTime()>max)max=d.getTime();});if(!max)return null;const obj=new Date(max);return{str:toDS(obj),obj};}
@@ -660,7 +665,9 @@ function renderDashboard(){
   // apiDs: L2L-owned fields (OEE/Downtime/Code Red/Code Yellow) follow
   // whatever date the picker is set to -- defaulting to paDs until touched.
   const paDs=getLatestDate(prod,'Start Up')?.str;
-  const apiDs=PROD_DATE_OVERRIDE||paDs;
+  // apiDs defaults to yesterday (real calendar date) now, not "PA's latest
+  // day" -- the date picker still overrides it to browse any other day.
+  const apiDs=PROD_DATE_OVERRIDE||yesterdayStr();
   const pickerEl=document.getElementById('prod-date-picker');
   if(pickerEl&&document.activeElement!==pickerEl)pickerEl.value=apiDs||'';
   const dFin=setDateEl('date-costs',getLatestDate(fin)),dSAP=setDateEl('date-sap',getLatestDate(sap)),dWH=setDateEl('date-warehouse',getLatestDate(bpWH)),dInv=setDateEl('date-inventory',getLatestDate(inv));
