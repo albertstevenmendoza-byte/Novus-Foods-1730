@@ -967,8 +967,14 @@ async function fetchFromSharePoint(){
   if(btn) btn.disabled = true;
   setSpBar('Loading dashboard data…', '', true);
   try {
+    // The `?v=` cache-buster is load-bearing, not decorative: GitHub Pages
+    // sits behind a CDN that has been observed serving this exact URL's
+    // response days stale even with `cache: 'no-cache'` set (that option
+    // only controls how *this browser* uses its own cache -- it can't force
+    // an upstream CDN edge to revalidate). A timestamp query param makes
+    // every load a distinct URL, so there's nothing cached to serve.
     const res = await fetch(
-      'https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/dashboard-data.json',
+      'https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/dashboard-data.json?v=' + Date.now(),
       { cache: 'no-cache' }
     );
     if(!res.ok) throw new Error('dashboard-data.json not found (' + res.status + '). Run your Power Automate flow first.');
@@ -999,7 +1005,7 @@ async function fetchFromSharePoint(){
     // just those fields, no matter what Power Automate last wrote there.
     try {
       const l2lRes = await fetch(
-        'https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/l2l-data.json',
+        'https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/l2l-data.json?v=' + Date.now(),
         { cache: 'no-cache' }
       );
       if (l2lRes.ok) {
