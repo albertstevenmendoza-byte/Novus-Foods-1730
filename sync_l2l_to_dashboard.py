@@ -5,6 +5,10 @@ dashboard-data.json, so Power Automate's own sync never touches or
 overwrites these numbers, and this script never touches anything
 Power Automate owns (HR, QA, Finance, Attainment, Start Up, CIL, etc).
 
+"Downtime" is L2L's downtime_minutes minus nonproduction_minutes (planned
+non-production time), so a line that's simply not scheduled to run doesn't
+count the same as one that's actually down during scheduled time.
+
 dds-dashboard.html merges l2l-data.json on top of dashboard-data.json
 after loading both -- see the small addition in fetchFromSharePoint().
 
@@ -40,6 +44,15 @@ def to_excel_serial(target_date):
     return str((target_date - EXCEL_EPOCH).days)
 
 
+def _to_float(value):
+    # L2L returns these as strings (e.g. "1415.09"); None/"" -> None rather
+    # than raising, so a field L2L didn't report doesn't blow up the sync.
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def upsert_row(rows, match_fields, new_values):
     for row in rows:
         if all(str(row.get(key, "")).strip() == str(value).strip() for key, value in match_fields.items()):
@@ -68,9 +81,16 @@ def sync(target_date):
         if not line_code:
             continue
         oee = record.get("overall_equipment_effectiveness")
-        downtime = record.get("downtime_minutes")
+        # "Downtime" here means unplanned downtime, so nonproduction_minutes
+        # (planned non-production time -- e.g. scheduled off-shift, no
+        # order running) gets subtracted out of L2L's raw downtime_minutes.
+        # Without this, a line with a long scheduled gap looked identical
+        # to one that was actually down while it should have been running.
+        downtime_minutes = _to_float(record.get("downtime_minutes"))
+        nonproduction_minutes = _to_float(record.get("nonproduction_minutes")) or 0
+        downtime = None if downtime_minutes is None else round(downtime_minutes - nonproduction_minutes, 2)
         upsert_row(production_rows, {"Date": date_serial, "Line": line_code}, {"OEE": oee, "Downtime": downtime})
-        print(f"  {line_code}: OEE={oee}  Downtime={downtime}")
+        print(f"  {line_code}: OEE={oee}  Downtime={downtime}  (raw downtime_minutes={record.get('downtime_minutes')}, nonproduction_minutes={record.get('nonproduction_minutes')})")
 
     dispatches = get_dispatches(config.SITE_NUMBER, start, end, config.LINE_CODES) or []
     code_red_count = sum(1 for d in dispatches if d.get("dispatchtype") == config.CODE_RED_ID)
