@@ -44,7 +44,7 @@ jobs:
           CODE_YELLOW_ID = 206
           EOF
 
-      - name: Run sync (today)
+      - name: Run sync (self-healing: last 7 days)
         run: python sync_l2l_to_dashboard.py
 
       - name: Commit and push if l2l-data.json changed
@@ -52,5 +52,23 @@ jobs:
           git config user.name "l2l-sync-bot"
           git config user.email "actions@github.com"
           git add l2l-data.json
-          git diff --staged --quiet || git commit -m "Auto-sync L2L data"
-          git push
+          git diff --staged --quiet && exit 0
+          git commit -m "Auto-sync L2L data"
+
+          # Something else (e.g. whatever writes dashboard-data.json) can
+          # push to main in the same few seconds this job is running, which
+          # makes a plain `git push` fail as a non-fast-forward. Rebase onto
+          # whatever's newly on the remote and retry instead of failing the
+          # run -- l2l-data.json is only ever touched by this job, so there's
+          # nothing for it to conflict with.
+          for attempt in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt/5) -- fetching and rebasing before retrying..."
+            git fetch origin "$GITHUB_REF_NAME"
+            git rebase "origin/$GITHUB_REF_NAME"
+          done
+
+          echo "::error::Push failed after 5 attempts."
+          exit 1
