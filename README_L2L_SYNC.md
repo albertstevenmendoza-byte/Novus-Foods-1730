@@ -1,50 +1,59 @@
-# L2L → dashboard-data.json sync
+# L2L → l2l-data.json sync
 
-Three new files, nothing else touched:
+Files:
 
-- `config.py` — your L2L API key and site settings.
+- `config.py` — your L2L API key and site settings. **Never commit this**
+  (see below) — it's only here for running the script by hand. Locally,
+  `.gitignore` already excludes it.
 - `l2l_client.py` — the same tested L2L API functions from your other
   L2L project.
 - `sync_l2l_to_dashboard.py` — pulls real OEE/Downtime (per line) and
   Code Red/Code Yellow (counts) from L2L and writes them into
-  `dashboard-data.json`, in the exact same shape Power Automate already
-  produces. **`dds-dashboard.html` needs no changes at all** — it
-  already reads `Production` and `Maintenance` rows this way; right now
-  it's just reading the placeholder/zero values that are in there.
+  **`l2l-data.json`** — a separate file from `dashboard-data.json`, so
+  Power Automate's own sync never touches or overwrites these numbers,
+  and this script never touches anything Power Automate owns
+  (Attainment, Start Up, CIL, HR, QA, Finance, etc). `dds-dashboard.html`
+  merges `l2l-data.json` on top of `dashboard-data.json` after loading
+  both, so no dashboard changes are needed beyond that merge.
+- `l2l_sync_requirements.txt` — just `requests`. Named with the `l2l_sync_`
+  prefix (not plain `requirements.txt`) so it doesn't collide with any
+  other `requirements.txt` at the repo root.
 
 It only ever touches the `OEE` and `Downtime` fields on `Production`
 rows and the `Code Red`/`Code Yellow` fields on `Maintenance` rows, for
-the date you ask it to sync — matched by `Date` + `Line` so it updates
-today's existing row in place if Power Automate (or you) already made
-one, rather than creating a duplicate. Everything else — Attainment,
-Start Up, CIL, every other sheet — is left exactly as it is.
+the date(s) you ask it to sync — matched by `Date` + `Line` so it
+updates an existing row in place rather than creating a duplicate.
 
 ## Running it
 
 ```
-pip install -r requirements.txt   # flask isn't needed here, just: pip install requests
-python sync_l2l_to_dashboard.py            # syncs today
-python sync_l2l_to_dashboard.py 2026-09-05  # syncs a specific date
+pip install -r l2l_sync_requirements.txt    # just installs "requests"
+python sync_l2l_to_dashboard.py             # self-healing: last 7 days through today
+python sync_l2l_to_dashboard.py 2026-09-05                # just one specific date
+python sync_l2l_to_dashboard.py 2026-09-02 2026-09-07     # backfill a range (inclusive)
 ```
 
-Run it from inside this project folder (it reads/writes
-`dashboard-data.json` right next to it).
+Run it from inside this project folder (it reads/writes `l2l-data.json`
+right next to it). With no arguments it re-syncs the last 7 days every
+run, not just today — each day is upserted in place, so if a scheduled
+run is ever missed, the next one automatically catches that day back up.
 
-## Before you push this to GitHub — important
+## Already automated
+
+`l2l-sync.yml` (in this repo's `.github/workflows/`) runs this sync
+every 3 hours via GitHub Actions and commits the updated `l2l-data.json`
+— no manual runs needed day to day. It writes `config.py` at runtime
+from the `L2L_API_KEY` repository secret, so the real key is never
+committed. Manual runs (above) are only for testing or a one-off
+backfill.
+
+## Before running this by hand / pushing to GitHub — important
 
 This repo's `dashboard-data.json` is fetched from a public GitHub Pages
 URL, which means **this repo is public**. `config.py` has your real L2L
-API key in it — don't let it get committed. Add this to a `.gitignore`
-in this project if you don't already have one:
-
-```
-config.py
-```
-
-If you want this to run automatically (e.g. a scheduled sync instead of
-running it by hand), the key belongs in a GitHub Actions secret or
-similar — not in a file that ends up in the repo — happy to help set
-that up when you're ready for it.
+API key in it — don't let it get committed. It's already listed in
+`.gitignore` here; if you copy these files elsewhere, carry that
+`.gitignore` entry with them.
 
 ## One thing I couldn't map
 
