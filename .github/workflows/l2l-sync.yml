@@ -44,7 +44,7 @@ jobs:
           CODE_YELLOW_ID = 206
           EOF
 
-      - name: Run sync (self-healing: last 7 days)
+      - name: "Run sync (self-healing: last 7 days)"
         run: python sync_l2l_to_dashboard.py
 
       - name: Commit and push if l2l-data.json changed
