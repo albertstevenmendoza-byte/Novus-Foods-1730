@@ -2,7 +2,15 @@ name: Sync L2L data
 
 on:
   schedule:
-    - cron: '0 13 * * *'   # 6:00 AM Pacific (UTC-7) daily -- adjust if needed
+    # Every 3 hours, not once a day. GitHub's scheduled triggers can be
+    # delayed or occasionally dropped under load (their own docs say so),
+    # worst right at the top of the hour when everyone else's cron jobs
+    # fire too -- ':23' avoids that congestion. Running this often is
+    # safe because sync_l2l_to_dashboard.py upserts by date: a re-run
+    # updates today's existing row instead of duplicating it, so if one
+    # firing gets dropped, the next one a few hours later just catches it
+    # instead of the whole day going stale.
+    - cron: '23 */3 * * *'
   workflow_dispatch:        # lets you also trigger it manually from the Actions tab
 
 permissions:
