@@ -158,10 +158,6 @@ body {
 .hub-card.dds .hub-card-strip {
   background: linear-gradient(90deg, var(--green), var(--green-l));
 }
-.hub-card.weekly .hub-card-strip {
-  background: linear-gradient(90deg, var(--blue), #6366f1);
-}
-
 .hub-card-body {
   padding: 28px 24px 24px;
   display: flex;
@@ -184,12 +180,6 @@ body {
   border: 1px solid var(--green-ll);
   color: var(--green-d);
 }
-.hub-card.weekly .hub-card-icon {
-  background: var(--blue-ll);
-  border: 1px solid rgba(59,130,246,.2);
-  color: var(--blue);
-}
-
 .hub-card-title {
   font-size: 1.05rem;
   font-weight: 700;
@@ -232,7 +222,6 @@ body {
   transition: gap .15s;
 }
 .hub-card.dds .hub-card-cta { color: var(--green); }
-.hub-card.weekly .hub-card-cta { color: var(--blue); }
 .hub-card:hover .hub-card-cta { gap: 8px; }
 
 /* ── Footer ── */
@@ -338,6 +327,7 @@ body {
 <!-- Top bar -->
 <div class="hub-topbar">
   <img src="novus-logo.png" alt="Novus Foods" class="hub-logo">
+  <select id="plant-selector" class="btn-cmd btn-cmd-ghost" onchange="switchPlant(this.value)" title="Switch plant"><option>Loading…</option></select>
   <div class="hub-user">
     <div class="hub-avatar" id="hub-avatar">—</div>
     <span id="hub-username">—</span>
@@ -404,39 +394,12 @@ body {
       </div>
     </a>
 
-    <!-- Weekly Staff Meeting -->
-    <a class="hub-card weekly" href="weekly-staff-meeting.html">
-      <div class="hub-card-strip"></div>
-      <div class="hub-card-body">
-        <div class="hub-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/>
-            <line x1="12" y1="17" x2="12" y2="21"/>
-          </svg>
-        </div>
-        <div>
-          <div class="hub-card-title">Weekly Staff Meeting</div>
-          <div class="hub-card-desc">Department-by-department review with coverflow cards — last week, this week, key metrics, and media tiles for all 13 departments.</div>
-        </div>
-        <div class="hub-card-tags">
-          <span class="hub-tag">Coverflow</span>
-          <span class="hub-tag">13 Depts</span>
-          <span class="hub-tag">Presentation Mode</span>
-          <span class="hub-tag">Bird's Eye</span>
-        </div>
-        <div class="hub-card-cta">
-          Open Weekly Review
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </div>
-      </div>
-    </a>
-
   </div>
 
 </main>
 
 <div class="hub-footer">
-  NOVUS FOODS · PLANT 1730 · BUENA PARK, CA &nbsp;·&nbsp; INTERNAL TOOL
+  <span id="hub-footer-plant">NOVUS FOODS · PLANT 1730 · BUENA PARK, CA · INTERNAL TOOL</span>
   <div class="hub-brand-strip" style="margin-top:10px;border-radius:2px;overflow:hidden;width:120px;margin-left:auto;margin-right:auto;">
     <div style="background:var(--brand-fc)"></div>
     <div style="background:var(--brand-lm)"></div>
@@ -466,11 +429,70 @@ if (user) {
 // Date greeting
 const now = new Date();
 const dateStr = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
-document.getElementById('hub-date').textContent = `Plant 1730 · ${dateStr}`;
 
 const h = now.getHours();
 const greeting = h < 12 ? 'Good morning,' : h < 17 ? 'Good afternoon,' : 'Good evening,';
 document.querySelector('.hub-headline').childNodes[0].textContent = greeting + '\n';
+
+// ── Multi-plant selection ───────────────────────────────────────────────
+// Same plants.json / novus_active_plant scheme dds-dashboard.html uses, so
+// whichever plant is picked here is what the DDS dashboard opens to (it
+// reads the same localStorage key on load).
+async function resolveActivePlant(){
+  const res = await fetch('plants.json?v=' + Date.now(), { cache: 'no-cache' });
+  const config = await res.json();
+  const plants = config.plants || [];
+  const urlId = new URLSearchParams(location.search).get('plant');
+  let storedId = null;
+  try { storedId = localStorage.getItem('novus_active_plant'); } catch(_) {}
+  // No "default plant" concept -- if nothing was explicitly chosen (no URL
+  // param, nothing picked before), just fall back to the first plant listed
+  // in plants.json.
+  const wantId = urlId || storedId;
+  const plant = plants.find(p => p.id === wantId) || plants[0];
+  try { localStorage.setItem('novus_active_plant', plant.id); } catch(_) {}
+  window.PLANTS_CONFIG = config;
+  window.ACTIVE_PLANT = plant;
+  return plant;
+}
+
+function applyPlantBranding(plant){
+  document.title = 'Ops Hub — ' + plant.name;
+
+  const eyebrow = document.getElementById('hub-date');
+  if (eyebrow) {
+    const loc = plant.location ? ` · ${plant.location}` : '';
+    eyebrow.textContent = `${plant.shortLabel || plant.name}${loc} · ${dateStr}`;
+  }
+
+  const footer = document.getElementById('hub-footer-plant');
+  if (footer) {
+    const loc = plant.location ? ` · ${plant.location.toUpperCase()}` : '';
+    footer.textContent = `NOVUS FOODS · ${(plant.shortLabel || plant.name).toUpperCase()}${loc} · INTERNAL TOOL`;
+  }
+
+  const sel = document.getElementById('plant-selector');
+  if (sel && window.PLANTS_CONFIG) {
+    sel.innerHTML = window.PLANTS_CONFIG.plants.map(p =>
+      `<option value="${p.id}"${p.id===plant.id?' selected':''}>${p.shortLabel||p.name}</option>`
+    ).join('');
+  }
+
+  // Carry the choice into the DDS Meeting flow explicitly (on top of the
+  // localStorage key), so the link stays correct even if localStorage is
+  // unavailable in the browser.
+  const ddsLink = document.querySelector('a.hub-card.dds');
+  if (ddsLink) ddsLink.href = 'dds-announcements.html?plant=' + encodeURIComponent(plant.id);
+}
+
+function switchPlant(id){
+  try { localStorage.setItem('novus_active_plant', id); } catch(_) {}
+  const url = new URL(location.href);
+  url.searchParams.set('plant', id);
+  location.href = url.toString();
+}
+
+resolveActivePlant().then(applyPlantBranding);
 </script>
 <script src="novus-interactions.js" defer></script>
 </body>
