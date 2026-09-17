@@ -1,0 +1,13 @@
+{
+  "defaultPlant": "1730",
+  "plants": [
+    {
+      "id": "1730",
+      "name": "Novus Foods Plant 1730",
+      "shortLabel": "Plant 1730",
+      "dataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/dashboard-data.json",
+      "l2lDataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/l2l-data.json",
+      "lines": ["2A", "PL1", "MP4", "PXM6", "PL2", "2E"]
+    }
+  ]
+}
