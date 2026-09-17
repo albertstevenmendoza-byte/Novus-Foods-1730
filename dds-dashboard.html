@@ -723,13 +723,17 @@ function renderDashboard(){
   setDateEl('date-sanitation',getLatestDate(qa)); // Sanitation data lives in the QA sheet
   // paDs: Power-Automate-owned fields (Attainment/Start Up/CIL/pounds/drivers)
   // always follow PA's own most recent real day -- never affected by the date
-  // picker below. Keyed off "Start Up" rather than "Attainment": in the live
-  // SharePoint sheet, Attainment has been blank since 7/27 (a separate data
-  // issue upstream), while Start Up/Expected/Actual Pounds are still posted
-  // daily, so it's the reliable signal for "PA's latest day."
+  // picker below. This used to require a specific field (first "Attainment",
+  // then "Start Up") to be non-blank before counting a date as "latest" --
+  // but whichever field got picked has repeatedly stopped being entered
+  // first, silently freezing this section on that old date while the rest
+  // of the workbook kept moving. Using the Production sheet's plain latest
+  // date (same approach every other panel already uses -- see dHR/dQA/dFin
+  // above) means this always reflects whatever the workbook actually last
+  // reported, even if a given field isn't filled in yet for that day.
   // apiDs: L2L-owned fields (OEE/Downtime/Code Red/Code Yellow) follow
   // whatever date the picker is set to -- defaulting to paDs until touched.
-  const paDs=getLatestDate(prod,'Start Up')?.str;
+  const paDs=getLatestDate(prod)?.str;
   // apiDs defaults to yesterday (real calendar date) now, not "PA's latest
   // day" -- the date picker still overrides it to browse any other day.
   const apiDs=PROD_DATE_OVERRIDE||yesterdayStr();
