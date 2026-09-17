@@ -8,6 +8,14 @@
       "dataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/dashboard-data.json",
       "l2lDataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/l2l-data.json",
       "lines": ["2A", "PL1", "MP4", "PXM6", "PL2", "2E"]
+    },
+    {
+      "id": "1600",
+      "name": "Novus Foods Plant 1600",
+      "shortLabel": "Plant 1600",
+      "dataUrl": "PUT_PLANT_1600S_REAL_dashboard-data.json_URL_HERE",
+      "l2lDataUrl": "PUT_PLANT_1600S_REAL_l2l-data.json_URL_HERE",
+      "lines": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
     }
   ]
 }
