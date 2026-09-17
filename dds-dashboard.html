@@ -15,6 +15,72 @@
     window.__libs={chartjs:false};
     function _checkLibsReady(){if(window.__libs.chartjs&&window.__libsCallback)window.__libsCallback();}
   </script>
+  <script>
+    // ── Multi-plant config ──────────────────────────────────────────────
+    // plants.json lists every plant this dashboard can show. Each plant
+    // supplies its own Power-Automate/L2L data URLs and its own flat line
+    // list -- the 8 data sheets/fields and the rest of the layout stay
+    // identical across every plant. Kicked off immediately (in parallel
+    // with chart.js/xlsx below) so it's ready by the time __libsCallback
+    // runs.
+    window.PLANTS_CONFIG_PROMISE = fetch('plants.json?v=' + Date.now(), { cache: 'no-cache' })
+      .then(r => r.json())
+      .catch(err => {
+        console.error('Could not load plants.json -- falling back to a single built-in plant:', err);
+        return {
+          defaultPlant: '1730',
+          plants: [{
+            id: '1730', name: 'Novus Foods Plant 1730', shortLabel: 'Plant 1730',
+            dataUrl: 'https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/dashboard-data.json',
+            l2lDataUrl: 'https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/l2l-data.json',
+            lines: ['2A','PL1','MP4','PXM6','PL2','2E']
+          }]
+        };
+      });
+
+    // Resolves which plant is active -- URL ?plant=, then the last plant
+    // chosen in this browser, then the config's defaultPlant -- and stashes
+    // it on window.ACTIVE_PLANT for the rest of the app to read.
+    async function resolveActivePlant(){
+      const config = await window.PLANTS_CONFIG_PROMISE;
+      const plants = config.plants || [];
+      const urlId = new URLSearchParams(location.search).get('plant');
+      let storedId = null;
+      try { storedId = localStorage.getItem('novus_active_plant'); } catch(_) {}
+      const wantId = urlId || storedId || config.defaultPlant;
+      const plant = plants.find(p => p.id === wantId) || plants[0];
+      window.PLANTS_CONFIG = config;
+      window.ACTIVE_PLANT = plant;
+      try { localStorage.setItem('novus_active_plant', plant.id); } catch(_) {}
+      return plant;
+    }
+
+    // Reflects the active plant into branding (title, plant-status-bar
+    // label) and populates/selects the plant-picker dropdown in the header.
+    function applyPlantBranding(plant){
+      document.title = 'DDS Dashboard – ' + plant.name;
+      const label = document.querySelector('.psb-plant-label');
+      if(label) label.textContent = plant.shortLabel || plant.name;
+
+      const sel = document.getElementById('plant-selector');
+      if(sel && window.PLANTS_CONFIG){
+        sel.innerHTML = window.PLANTS_CONFIG.plants.map(p =>
+          `<option value="${p.id}"${p.id===plant.id?' selected':''}>${p.shortLabel||p.name}</option>`
+        ).join('');
+      }
+    }
+
+    // Called from the plant-picker's onchange. A full reload keeps this
+    // simple and guarantees every plant-scoped bit of state (charts, auto
+    // refresh timers, manual-override keys -- see manualKey() below) gets
+    // re-derived cleanly for the newly chosen plant.
+    function switchPlant(id){
+      try { localStorage.setItem('novus_active_plant', id); } catch(_) {}
+      const url = new URL(location.href);
+      url.searchParams.set('plant', id);
+      location.href = url.toString();
+    }
+  </script>
   <script async src="https://cdn.jsdelivr.net/npm/chart.js" onload="window.__libs.chartjs=true;_checkLibsReady()"></script>
   <script async src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onload="window.__libs.xlsx=true;_checkLibsReady()"></script>
   <script async src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -231,6 +297,9 @@
   <!-- Right: freshness badge + refresh + settings + logout -->
   <div class="cmd-right">
 
+    <!-- Plant selector -->
+    <select id="plant-selector" class="btn-cmd btn-cmd-ghost" onchange="switchPlant(this.value)" title="Switch plant"><option>Loading…</option></select>
+
     <!-- Data freshness badge -->
     <div class="freshness-badge" id="freshness-badge" title="Data freshness">
       <div class="freshness-dot" id="freshness-dot"></div>
@@ -325,7 +394,7 @@
   <div class="psb-inner">
     <div class="psb-left">
       <div class="psb-dot" id="psb-dot"></div>
-      <span class="psb-plant-label">Plant 1730</span>
+      <span class="psb-plant-label">—</span>
       <span class="psb-status-sep">·</span>
       <span class="psb-status-text" id="psb-status-text">Loading…</span>
     </div>
@@ -396,8 +465,7 @@
           <div>
             <div class="timeframe-block tf-today"><div class="timeframe-title">Today's Operational Status</div><div class="timeframe-date" id="today-date-label">—</div></div>
             <div class="split-row">
-              <div class="split-col"><div class="col-label">Salsa Lines</div><div class="readiness-stack" id="readiness-salsa"></div></div>
-              <div class="split-col"><div class="col-label">Layer Lines</div><div class="readiness-stack" id="readiness-layer"></div></div>
+              <div class="split-col"><div class="col-label">Lines</div><div class="readiness-stack" id="readiness-lines"></div></div>
             </div>
           </div>
           <div>
@@ -414,8 +482,7 @@
               <div style="flex:2"><div class="section-label">Top Downtime Drivers</div><div class="drivers-box alert" id="top-drivers">Scanning data…</div></div>
             </div>
             <div class="split-row" style="margin-top:12px;">
-              <div class="split-col"><div class="col-label">Salsa Lines</div><table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attainment</th><th>DT</th></tr></thead><tbody id="tbody-salsa"></tbody></table></div>
-              <div class="split-col"><div class="col-label">Layer Lines</div><table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attainment</th><th>DT</th></tr></thead><tbody id="tbody-layer"></tbody></table></div>
+              <div class="split-col"><div class="col-label">Lines</div><table class="data-table"><thead><tr><th>Line</th><th>OEE</th><th>Attainment</th><th>DT</th></tr></thead><tbody id="tbody-lines"></tbody></table></div>
             </div>
             <div class="split-row" style="margin-top:12px;">
               <div class="metric-row" style="margin-top:12px; width: 500px;">
@@ -642,8 +709,6 @@ function regression(y){const n=y.length;if(n<2)return y;let sx=0,sy=0,sxy=0,sx2=
 
 // [migrated above]
 
-
-
 // [migrated above]
 
 function renderDashboard(){
@@ -703,7 +768,7 @@ function renderDashboard(){
       const card=document.createElement('div');card.className='readiness-card';card.innerHTML=`<div class="readiness-line">${line}</div><div class="status-pill ${m.startup==='Yes'?'pill-yes':'pill-no'}"><span class="pill-label">STARTUP</span><span>${m.startup==='Yes'?'✓':'✗'}</span></div><div class="status-pill ${m.cil==='Yes'?'pill-yes':'pill-no'}"><span class="pill-label">CIL</span><span>${m.cil==='Yes'?'✓':'✗'}</span></div>`;grid.appendChild(card);
     });
   }
-  buildProdSection(['2A','PL1','MP4','PXM6'],'tbody-salsa','readiness-salsa');buildProdSection(['PL2','2E'],'tbody-layer','readiness-layer');
+  buildProdSection((window.ACTIVE_PLANT&&window.ACTIVE_PLANT.lines)||[],'tbody-lines','readiness-lines');
   // Top drivers -- Power-Automate-authored text field, always the latest PA day
   const counts={};prod.filter(r=>toDS(parseDate(r.Date))===paDs).forEach(r=>{['Mechanical Downtime Drivers','Material Downtime Drivers'].forEach(col=>{const v=r[col];if(v&&v!=='DNR'&&v!=='None'&&v!=='')String(v).split(/[;,]/).forEach(d=>{const c=d.trim();if(c.length>2)counts[c]=(counts[c]||0)+1;});});});
   const tdEl=document.getElementById('top-drivers');if(tdEl)tdEl.textContent=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,c])=>`• ${n} (${c})`).join('\n')||`No drivers reported.`;
@@ -752,9 +817,12 @@ function drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal,wh,isCE,isBP){
 
 // ── Manual overrides ──
 const MANUAL_IDS=['days-incident','near-misses','safety-audits','meal-penalties','holds','holds-coa','pem','complaints','san-preop','san-mss','san-notes','code-red','code-yellow','cost-direct','cost-indirect','pound-hr-direct','pound-hr-indirect','conversion-costs','pounds-prod','pounds-produced','pounds-planned','trainings','headcount','proc-orders','warehouse-tasks','wh-fill','wh-ce-fill','wh-scheduled','wh-shipped','wh-cpmh','inv-bp-bins','inv-bp-materials','inv-bp-variants','inv-ce-bins','inv-ce-materials','inv-ce-variants'];
-function saveManual(id){localStorage.setItem('dds_m_'+id,document.getElementById(id).innerText);}
-function loadManuals(){MANUAL_IDS.forEach(id=>{const v=localStorage.getItem('dds_m_'+id);if(v){const el=document.getElementById(id);if(el)el.innerText=v;}});}
-function clearManuals(){if(!confirm('Clear all manual overrides?'))return;MANUAL_IDS.forEach(id=>localStorage.removeItem('dds_m_'+id));renderDashboard();}
+// Namespaced per plant so two plants sharing this one page/origin never
+// bleed manual overrides into each other.
+function manualKey(id){return 'dds_m_'+((window.ACTIVE_PLANT&&window.ACTIVE_PLANT.id)||'default')+'_'+id;}
+function saveManual(id){localStorage.setItem(manualKey(id),document.getElementById(id).innerText);}
+function loadManuals(){MANUAL_IDS.forEach(id=>{const v=localStorage.getItem(manualKey(id));if(v){const el=document.getElementById(id);if(el)el.innerText=v;}});}
+function clearManuals(){if(!confirm('Clear all manual overrides?'))return;MANUAL_IDS.forEach(id=>localStorage.removeItem(manualKey(id)));renderDashboard();}
 
 // Lets a user pin the Production Summary (OEE/Attainment/DT/Start Up/CIL/pounds/
 // top drivers) to an exact date instead of relying on auto-detecting Power
@@ -867,8 +935,9 @@ function updatePlantStatusBar(){
     crEl.style.color=codeRed>1?'var(--red)':codeRed===1?'var(--amber-l)':'inherit';
   }
 
+  const plantLines=(window.ACTIVE_PLANT&&window.ACTIVE_PLANT.lines)||[];
   const lnEl=document.getElementById('psb-lines');
-  if(lnEl) lnEl.textContent=activeLines.length?`${activeLines.length} / ${['2A','PL1','MP4','PXM6','PL2','2E'].length}`:'—';
+  if(lnEl) lnEl.textContent=activeLines.length?`${activeLines.length} / ${plantLines.length}`:'—';
 }
 
 // ══ ROLE-BASED INTERACTION ════════════════════════════════════════════════
@@ -891,7 +960,7 @@ function markManualOverrides(){
   MANUAL_IDS.forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
-    el.classList.toggle('has-override',localStorage.getItem('dds_m_'+id)!==null);
+    el.classList.toggle('has-override',localStorage.getItem(manualKey(id))!==null);
   });
 }
 
@@ -973,11 +1042,13 @@ async function fetchFromSharePoint(){
     // only controls how *this browser* uses its own cache -- it can't force
     // an upstream CDN edge to revalidate). A timestamp query param makes
     // every load a distinct URL, so there's nothing cached to serve.
+    if(!window.ACTIVE_PLANT) await resolveActivePlant();
+    const plant = window.ACTIVE_PLANT;
     const res = await fetch(
-      'https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/dashboard-data.json?v=' + Date.now(),
+      plant.dataUrl + '?v=' + Date.now(),
       { cache: 'no-cache' }
     );
-    if(!res.ok) throw new Error('dashboard-data.json not found (' + res.status + '). Run your Power Automate flow first.');
+    if(!res.ok) throw new Error(plant.shortLabel + ': dashboard data not found (' + res.status + '). Run your Power Automate flow first.');
     const json = await res.json();
     _dashData = {};
     Object.keys(json).forEach(k => {
@@ -1004,13 +1075,15 @@ async function fetchFromSharePoint(){
     // after Power Automate's data loads, so L2L's numbers always win for
     // just those fields, no matter what Power Automate last wrote there.
     try {
-      const l2lRes = await fetch(
-        'https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/l2l-data.json?v=' + Date.now(),
-        { cache: 'no-cache' }
-      );
-      if (l2lRes.ok) {
-        const l2lJson = await l2lRes.json();
-        mergeL2LData(l2lJson);
+      if (plant.l2lDataUrl) {
+        const l2lRes = await fetch(
+          plant.l2lDataUrl + '?v=' + Date.now(),
+          { cache: 'no-cache' }
+        );
+        if (l2lRes.ok) {
+          const l2lJson = await l2lRes.json();
+          mergeL2LData(l2lJson);
+        }
       }
     } catch (e) {
       console.warn('l2l-data.json not loaded (non-fatal):', e);
@@ -1054,28 +1127,36 @@ function initDraggable(){new Sortable(document.getElementById('main-sortable'),{
 function initResizable(){document.querySelectorAll('#main-sortable .panel').forEach(panel=>{const r=panel.querySelector('.resizer');if(!r)return;r.addEventListener('mousedown',e=>{e.preventDefault();const sx=e.pageX,sy=e.pageY,sw=panel.offsetWidth,sh=panel.offsetHeight,colW=document.querySelector('.dash-grid').getBoundingClientRect().width/12;function mv(e){panel.style.width=`${sw+(e.pageX-sx)}px`;panel.style.height=`${sh+(e.pageY-sy)}px`;}function up(e){window.removeEventListener('mousemove',mv);window.removeEventListener('mouseup',up);const cols=Math.max(2,Math.min(12,Math.round((sw+(e.pageX-sx))/colW)));panel.style.gridColumn=`span ${cols}`;panel.style.width='';panel.style.height='';window.dispatchEvent(new Event('resize'));}window.addEventListener('mousemove',mv);window.addEventListener('mouseup',up);});});}
 
 window.__libsCallback=async()=>{
+  // Resolve which plant is active before anything else touches data --
+  // fetchFromSharePoint(), the manual-override keys, and the session
+  // cache below all key off window.ACTIVE_PLANT.
+  const plant=await resolveActivePlant();
+  applyPlantBranding(plant);
+
   NovusCore.requireAuth();
   applyRoleAccess();
   markManualOverrides();
   updateClock();setInterval(updateClock,1000);
 
-  // Restore session cache (instant back-navigation)
+  // Restore session cache (instant back-navigation) -- namespaced per
+  // plant so switching plants never restores another plant's cache.
+  const cacheKeyWb=`novus_${plant.id}_sp_wb`,cacheKeyTime=`novus_${plant.id}_sp_time`;
   try{
-    const cached=sessionStorage.getItem('novus1730_sp_wb');
+    const cached=sessionStorage.getItem(cacheKeyWb);
     if(cached){
       // Fast ArrayBuffer restore from base64 cache
       const raw=atob(cached);
       const bytes=new Uint8Array(raw.length);
       for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
       applyBuffer(bytes.buffer,'SharePoint (cached)');
-      const t=sessionStorage.getItem('novus1730_sp_time');
+      const t=sessionStorage.getItem(cacheKeyTime);
       setSpBar(`✓ Cached data — fetched ${t||'earlier'}. Click Refresh for latest.`,'success',false);
       return;
     }
   }catch(_){
     // Corrupt cache — clear it and fall through to prompt
-    sessionStorage.removeItem('novus1730_sp_wb');
-    sessionStorage.removeItem('novus1730_sp_time');
+    sessionStorage.removeItem(cacheKeyWb);
+    sessionStorage.removeItem(cacheKeyTime);
   }
 
   // Auto-load from Power Automate JSON — no auth needed
