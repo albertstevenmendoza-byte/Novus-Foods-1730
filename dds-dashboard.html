@@ -28,7 +28,6 @@
       .catch(err => {
         console.error('Could not load plants.json -- falling back to a single built-in plant:', err);
         return {
-          defaultPlant: '1730',
           plants: [{
             id: '1730', name: 'Novus Foods Plant 1730', shortLabel: 'Plant 1730',
             dataUrl: 'https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/dashboard-data.json',
@@ -39,15 +38,17 @@
       });
 
     // Resolves which plant is active -- URL ?plant=, then the last plant
-    // chosen in this browser, then the config's defaultPlant -- and stashes
-    // it on window.ACTIVE_PLANT for the rest of the app to read.
+    // chosen in this browser -- and stashes it on window.ACTIVE_PLANT for
+    // the rest of the app to read. No "default plant" concept: if nothing
+    // was explicitly chosen, this just falls back to the first plant listed
+    // in plants.json.
     async function resolveActivePlant(){
       const config = await window.PLANTS_CONFIG_PROMISE;
       const plants = config.plants || [];
       const urlId = new URLSearchParams(location.search).get('plant');
       let storedId = null;
       try { storedId = localStorage.getItem('novus_active_plant'); } catch(_) {}
-      const wantId = urlId || storedId || config.defaultPlant;
+      const wantId = urlId || storedId;
       const plant = plants.find(p => p.id === wantId) || plants[0];
       window.PLANTS_CONFIG = config;
       window.ACTIVE_PLANT = plant;
