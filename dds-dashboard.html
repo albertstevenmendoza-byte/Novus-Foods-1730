@@ -57,29 +57,14 @@
     }
 
     // Reflects the active plant into branding (title, plant-status-bar
-    // label) and populates/selects the plant-picker dropdown in the header.
+    // label). The plant picker itself lives on the hub (hub.html) -- this
+    // page only ever displays whichever plant was chosen there (via
+    // ?plant= on the link, or the novus_active_plant localStorage key it
+    // sets); there's no picker here to keep in sync with it.
     function applyPlantBranding(plant){
       document.title = 'DDS Dashboard – ' + plant.name;
       const label = document.querySelector('.psb-plant-label');
       if(label) label.textContent = plant.shortLabel || plant.name;
-
-      const sel = document.getElementById('plant-selector');
-      if(sel && window.PLANTS_CONFIG){
-        sel.innerHTML = window.PLANTS_CONFIG.plants.map(p =>
-          `<option value="${p.id}"${p.id===plant.id?' selected':''}>${p.shortLabel||p.name}</option>`
-        ).join('');
-      }
-    }
-
-    // Called from the plant-picker's onchange. A full reload keeps this
-    // simple and guarantees every plant-scoped bit of state (charts, auto
-    // refresh timers, manual-override keys -- see manualKey() below) gets
-    // re-derived cleanly for the newly chosen plant.
-    function switchPlant(id){
-      try { localStorage.setItem('novus_active_plant', id); } catch(_) {}
-      const url = new URL(location.href);
-      url.searchParams.set('plant', id);
-      location.href = url.toString();
     }
   </script>
   <script async src="https://cdn.jsdelivr.net/npm/chart.js" onload="window.__libs.chartjs=true;_checkLibsReady()"></script>
@@ -297,9 +282,6 @@
 
   <!-- Right: freshness badge + refresh + settings + logout -->
   <div class="cmd-right">
-
-    <!-- Plant selector -->
-    <select id="plant-selector" class="btn-cmd btn-cmd-ghost" onchange="switchPlant(this.value)" title="Switch plant"><option>Loading…</option></select>
 
     <!-- Data freshness badge -->
     <div class="freshness-badge" id="freshness-badge" title="Data freshness">
