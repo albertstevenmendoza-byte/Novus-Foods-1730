@@ -1,21 +1,40 @@
 {
-  "defaultPlant": "1730",
   "plants": [
     {
       "id": "1730",
       "name": "Novus Foods Plant 1730",
       "shortLabel": "Plant 1730",
+      "location": "Buena Park, CA",
       "dataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/dashboard-data.json",
       "l2lDataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/l2l-data.json",
       "lines": ["2A", "PL1", "MP4", "PXM6", "PL2", "2E"]
     },
     {
-      "id": "1600",
-      "name": "Novus Foods Plant 1600",
-      "shortLabel": "Plant 1600",
-      "dataUrl": "PUT_PLANT_1600S_REAL_dashboard-data.json_URL_HERE",
-      "l2lDataUrl": "PUT_PLANT_1600S_REAL_l2l-data.json_URL_HERE",
-      "lines": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
+      "id": "1710",
+      "name": "Novus Foods Plant 1710",
+      "shortLabel": "Plant 1710",
+      "location": "REPLACE_ME — city, state",
+      "dataUrl": "REPLACE_ME — Plant 1710's dashboard-data.json URL",
+      "l2lDataUrl": "REPLACE_ME — Plant 1710's l2l-data.json URL (omit this field entirely if 1710 doesn't use L2L)",
+      "lines": []
+    },
+    {
+      "id": "1720",
+      "name": "Novus Foods Plant 1720",
+      "shortLabel": "Plant 1720",
+      "location": "REPLACE_ME — city, state",
+      "dataUrl": "REPLACE_ME — Plant 1720's dashboard-data.json URL",
+      "l2lDataUrl": "REPLACE_ME — Plant 1720's l2l-data.json URL (omit this field entirely if 1720 doesn't use L2L)",
+      "lines": []
+    },
+    {
+      "id": "1740",
+      "name": "Novus Foods Plant 1740",
+      "shortLabel": "Plant 1740",
+      "location": "REPLACE_ME — city, state",
+      "dataUrl": "REPLACE_ME — Plant 1740's dashboard-data.json URL",
+      "l2lDataUrl": "REPLACE_ME — Plant 1740's l2l-data.json URL (omit this field entirely if 1740 doesn't use L2L)",
+      "lines": []
     }
   ]
 }
