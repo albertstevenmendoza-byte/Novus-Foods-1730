@@ -131,7 +131,6 @@ body {
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
-  cursor: pointer;
   text-decoration: none;
   display: flex;
   flex-direction: column;
@@ -147,7 +146,6 @@ body {
   box-shadow: var(--shadow-lift);
   border-color: var(--border-2);
 }
-.hub-card:active { transform: translateY(-2px); }
 
 /* Card accent strip */
 .hub-card-strip {
@@ -193,6 +191,35 @@ body {
   line-height: 1.65;
 }
 
+/* ── Plant picker (lives inside the DDS Meeting card) ── */
+.hub-card-plant-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: default;
+}
+.hub-card-plant-label {
+  font-size: .68rem;
+  font-weight: 700;
+  color: var(--text-4);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  flex-shrink: 0;
+}
+.hub-card-plant-picker select {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-1);
+  cursor: pointer;
+}
+
 .hub-card-tags {
   display: flex;
   flex-wrap: wrap;
@@ -215,14 +242,19 @@ body {
 .hub-card-cta {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   font-size: .8rem;
   font-weight: 700;
   margin-top: 4px;
-  transition: gap .15s;
+  padding: 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: gap .15s, background .15s;
 }
-.hub-card.dds .hub-card-cta { color: var(--green); }
-.hub-card:hover .hub-card-cta { gap: 8px; }
+.hub-card.dds .hub-card-cta { color: var(--green); background: var(--green-xll); }
+.hub-card.dds .hub-card-cta:hover { gap: 8px; background: var(--green-ll); }
 
 /* ── Footer ── */
 .hub-footer {
@@ -327,7 +359,6 @@ body {
 <!-- Top bar -->
 <div class="hub-topbar">
   <img src="novus-logo.png" alt="Novus Foods" class="hub-logo">
-  <select id="plant-selector" class="btn-cmd btn-cmd-ghost" onchange="switchPlant(this.value)" title="Switch plant"><option>Loading…</option></select>
   <div class="hub-user">
     <div class="hub-avatar" id="hub-avatar">—</div>
     <span id="hub-username">—</span>
@@ -368,7 +399,7 @@ body {
   <div class="hub-cards">
 
     <!-- DDS Meeting -->
-    <a class="hub-card dds" href="dds-announcements.html">
+    <div class="hub-card dds">
       <div class="hub-card-strip"></div>
       <div class="hub-card-body">
         <div class="hub-card-icon">
@@ -381,18 +412,26 @@ body {
           <div class="hub-card-title">DDS Meeting</div>
           <div class="hub-card-desc">Daily Direction Setting — live KPI dashboard with safety, quality, production, and inventory panels synced from SharePoint.</div>
         </div>
+
+        <!-- Plant selection lives here now -- this is what Open DDS below
+             opens into, and it's what the DDS dashboard itself reads. -->
+        <label class="hub-card-plant-picker">
+          <span class="hub-card-plant-label">Plant</span>
+          <select id="plant-selector" onchange="onPlantChange(this.value)"><option>Loading…</option></select>
+        </label>
+
         <div class="hub-card-tags">
           <span class="hub-tag">Dashboard</span>
           <span class="hub-tag">Announcements</span>
           <span class="hub-tag">Play Call</span>
           <span class="hub-tag">Needs Action</span>
         </div>
-        <div class="hub-card-cta">
+        <a class="hub-card-cta" id="dds-open-link" href="dds-announcements.html">
           Open DDS
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </div>
+        </a>
       </div>
-    </a>
+    </div>
 
   </div>
 
@@ -481,15 +520,20 @@ function applyPlantBranding(plant){
   // Carry the choice into the DDS Meeting flow explicitly (on top of the
   // localStorage key), so the link stays correct even if localStorage is
   // unavailable in the browser.
-  const ddsLink = document.querySelector('a.hub-card.dds');
+  const ddsLink = document.getElementById('dds-open-link');
   if (ddsLink) ddsLink.href = 'dds-announcements.html?plant=' + encodeURIComponent(plant.id);
 }
 
-function switchPlant(id){
-  try { localStorage.setItem('novus_active_plant', id); } catch(_) {}
-  const url = new URL(location.href);
-  url.searchParams.set('plant', id);
-  location.href = url.toString();
+// Called from the plant picker's onchange, inside the DDS Meeting card.
+// Updates in place (no reload) -- title/eyebrow/footer/Open-DDS-link all
+// re-derive immediately from the newly picked plant.
+function onPlantChange(id){
+  const plants = (window.PLANTS_CONFIG && window.PLANTS_CONFIG.plants) || [];
+  const plant = plants.find(p => p.id === id);
+  if (!plant) return;
+  try { localStorage.setItem('novus_active_plant', plant.id); } catch(_) {}
+  window.ACTIVE_PLANT = plant;
+  applyPlantBranding(plant);
 }
 
 resolveActivePlant().then(applyPlantBranding);
