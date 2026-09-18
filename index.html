@@ -1,557 +1,966 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Novus Foods 1730 – Ops Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="novus-styles.css">
-  <style>
-    /* ── Login-page-specific layout ── */
-    html, body {
-      height: 100%;
-      background: #f5f5f7;
-    }
-
-    body {
-      display: flex;
-      min-height: 100vh;
-      overflow: hidden;
-    }
-
-    /* ── Brand Panel ── */
-    .brand-panel {
-      width: 440px;
-      flex-shrink: 0;
-      background: #0a1a12;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 48px 40px 36px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Layered radial glows for depth */
-    .brand-panel::before {
-      content: '';
-      position: absolute;
-      top: -120px; right: -120px;
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(5,150,105,.22) 0%, transparent 65%);
-      pointer-events: none;
-    }
-    .brand-panel::after {
-      content: '';
-      position: absolute;
-      bottom: -80px; left: -60px;
-      width: 280px; height: 280px;
-      background: radial-gradient(circle, rgba(5,150,105,.10) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    /* Noise texture overlay for premium feel */
-    .brand-noise {
-      position: absolute;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      opacity: 0.6;
-    }
-
-    .brand-top { position: relative; z-index: 1; }
-    .brand-bottom { position: relative; z-index: 1; }
-
-    /* Logo lockup */
-    .brand-logo-wrap {
-      display: inline-flex;
-      align-items: center;
-      background: rgba(255,255,255,.95);
-      border-radius: 14px;
-      padding: 10px 18px;
-      box-shadow: 0 4px 20px rgba(0,0,0,.28), 0 1px 4px rgba(0,0,0,.18);
-      margin-bottom: 40px;
-    }
-    .brand-logo-wrap img { height: 48px; width: auto; display: block; }
-
-    .brand-location {
-      font-size: .65rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-      color: rgba(255,255,255,.28);
-      margin-bottom: 10px;
-      font-family: var(--mono);
-    }
-    .brand-headline {
-      font-size: 2rem;
-      font-weight: 800;
-      color: white;
-      line-height: 1.15;
-      letter-spacing: -.04em;
-      margin-bottom: 14px;
-    }
-    .brand-headline span { color: #10b981; }
-    .brand-desc {
-      font-size: .83rem;
-      color: rgba(255,255,255,.42);
-      line-height: 1.8;
-      margin-bottom: 40px;
-      max-width: 300px;
-    }
-
-    /* Portfolio brand tiles */
-    .brand-tiles {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .brand-tile {
-      border-radius: 14px;
-      padding: 16px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      transition: transform 300ms cubic-bezier(0.25,1,0.5,1), opacity 300ms;
-      cursor: default;
-    }
-    .brand-tile:hover { transform: translateY(-3px); }
-    .brand-tile:nth-child(1) { animation: fadeUp .4s .05s cubic-bezier(0.25,1,0.5,1) both; }
-    .brand-tile:nth-child(2) { animation: fadeUp .4s .10s cubic-bezier(0.25,1,0.5,1) both; }
-    .brand-tile:nth-child(3) { animation: fadeUp .4s .15s cubic-bezier(0.25,1,0.5,1) both; }
-    .brand-tile:nth-child(4) { animation: fadeUp .4s .20s cubic-bezier(0.25,1,0.5,1) both; }
-    .brand-tile:nth-child(5) { animation: fadeUp .4s .25s cubic-bezier(0.25,1,0.5,1) both; grid-column: span 2; }
-
-    .tile-name {
-      font-size: .83rem;
-      font-weight: 800;
-      color: rgba(255,255,255,.92);
-      letter-spacing: -.01em;
-    }
-    .tile-cat {
-      font-size: .62rem;
-      font-weight: 600;
-      color: rgba(255,255,255,.55);
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
-
-    /* Bottom bar */
-    .brand-bottom-text {
-      font-size: .62rem;
-      color: rgba(255,255,255,.16);
-      font-family: var(--mono);
-      letter-spacing: .06em;
-      margin-bottom: 12px;
-    }
-    .brand-rainbow-bar {
-      display: flex;
-      height: 3px;
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    .brand-rainbow-bar div { flex: 1; }
-
-    /* ── Login Panel ── */
-    .login-panel {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 40px;
-      background: #f5f5f7;
-      position: relative;
-    }
-
-    /* Subtle dot grid background */
-    .login-panel::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(rgba(0,0,0,.07) 1px, transparent 1px);
-      background-size: 28px 28px;
-      pointer-events: none;
-    }
-
-    .login-card {
-      background: rgba(255,255,255,.92);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border: 1px solid rgba(0,0,0,.07);
-      border-radius: 20px;
-      padding: 48px 44px;
-      width: 100%;
-      max-width: 420px;
-      position: relative;
-      z-index: 1;
-      box-shadow:
-        0 2px 8px rgba(0,0,0,.04),
-        0 8px 32px rgba(0,0,0,.07),
-        0 24px 64px rgba(0,0,0,.06),
-        0 0 0 1px rgba(255,255,255,.8) inset;
-      animation: cardIn .5s cubic-bezier(0.25,1,0.5,1) both;
-    }
-
-    .login-eyebrow {
-      font-size: .65rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-      color: var(--green);
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .login-eyebrow::before {
-      content: '';
-      display: inline-block;
-      width: 18px; height: 2px;
-      background: var(--green);
-      border-radius: 1px;
-    }
-
-    .login-greeting {
-      font-size: 1.75rem;
-      font-weight: 800;
-      color: #1d1d1f;
-      letter-spacing: -.04em;
-      line-height: 1.1;
-      margin-bottom: 6px;
-    }
-    .login-sub {
-      font-size: .83rem;
-      color: #6e6e73;
-      margin-bottom: 36px;
-      line-height: 1.6;
-    }
-
-    .error-msg {
-      display: none;
-      background: rgba(220,38,38,.05);
-      border: 1px solid rgba(220,38,38,.14);
-      color: var(--red);
-      border-radius: 10px;
-      padding: 11px 15px;
-      font-size: .82rem;
-      font-weight: 600;
-      margin-bottom: 18px;
-      animation: fadeUp .22s cubic-bezier(0.25,1,0.5,1) both;
-    }
-    .error-msg.visible { display: flex; align-items: center; gap: 8px; }
-    .error-msg svg { flex-shrink: 0; }
-
-    .form-input-wrap { margin-bottom: 16px; }
-    .form-input-wrap label {
-      display: block;
-      font-size: .7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: #6e6e73;
-      margin-bottom: 8px;
-    }
-    .form-input {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1.5px solid rgba(0,0,0,.1);
-      border-radius: 12px;
-      font-family: var(--font);
-      font-size: .9rem;
-      color: #1d1d1f;
-      background: rgba(255,255,255,.95);
-      outline: none;
-      transition:
-        border-color 200ms cubic-bezier(0.25,1,0.5,1),
-        box-shadow   200ms cubic-bezier(0.25,1,0.5,1),
-        transform    200ms cubic-bezier(0.25,1,0.5,1);
-    }
-    .form-input:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 0 4px rgba(5,150,105,.12);
-      transform: translateY(-1px);
-    }
-    .form-input.err { border-color: var(--red-l); }
-    .form-input.err:focus { box-shadow: 0 0 0 4px rgba(239,68,68,.12); }
-    .form-input::placeholder { color: #c7c7cc; }
-
-    .btn-login {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-family: var(--font);
-      font-size: .92rem;
-      font-weight: 700;
-      letter-spacing: -.01em;
-      cursor: pointer;
-      margin-top: 10px;
-      box-shadow: 0 2px 12px rgba(5,150,105,.35), 0 1px 3px rgba(5,150,105,.2);
-      transition:
-        filter       200ms cubic-bezier(0.25,1,0.5,1),
-        transform    200ms cubic-bezier(0.25,1,0.5,1),
-        box-shadow   200ms cubic-bezier(0.25,1,0.5,1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      position: relative;
-      overflow: hidden;
-    }
-    .btn-login:hover:not(:disabled) {
-      filter: brightness(1.08);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(5,150,105,.4), 0 2px 6px rgba(5,150,105,.2);
-    }
-    .btn-login:active { transform: scale(0.97) translateY(0); filter: brightness(0.97); }
-    .btn-login:disabled { opacity: .65; cursor: not-allowed; }
-    .btn-login.loading .btn-spin { display: block; }
-    .btn-spin {
-      display: none;
-      width: 15px; height: 15px;
-      border: 2px solid rgba(255,255,255,.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin .6s linear infinite;
-      flex-shrink: 0;
-    }
-
-    .divider-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 24px 0 20px;
-    }
-    .divider-line { flex: 1; height: 1px; background: rgba(0,0,0,.07); }
-    .divider-label { font-size: .68rem; color: #aeaeb2; font-weight: 600; white-space: nowrap; }
-
-    .role-hint {
-      display: flex;
-      gap: 7px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .role-hint-label { font-size: .7rem; color: #aeaeb2; }
-    .role-badge {
-      font-size: .66rem;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 20px;
-      letter-spacing: .03em;
-    }
-    .role-admin  { background: #ecfdf5; color: #065f46; border: 1px solid #d1fae5; }
-    .role-viewer { background: #f9f9fb; color: #6e6e73; border: 1px solid rgba(0,0,0,.08); }
-
-    .login-footer {
-      font-size: .73rem;
-      color: #aeaeb2;
-      text-align: center;
-      margin-top: 22px;
-      line-height: 1.7;
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 820px) {
-      body { flex-direction: column; }
-      .brand-panel { width: 100%; padding: 28px 24px 22px; }
-      .brand-headline { font-size: 1.5rem; }
-      .brand-desc { display: none; }
-      .brand-tiles { grid-template-columns: repeat(5, 1fr); }
-      .brand-tile:nth-child(5) { grid-column: auto; }
-      .login-panel { padding: 28px 20px 40px; }
-      .login-card { padding: 32px 28px; }
-    }
-    @media (max-width: 500px) {
-      .brand-tiles { grid-template-columns: repeat(3, 1fr); }
-      .brand-tile:nth-child(5) { grid-column: span 1; }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- ── Brand Panel ── -->
-  <div class="brand-panel">
-    <div class="brand-noise"></div>
-    <div class="brand-top">
-      <div class="brand-logo-wrap">
-        <img src="novus-logo.png" alt="Novus Foods">
-      </div>
-      <div class="brand-location">Plant 1730 · Buena Park, CA</div>
-      <h1 class="brand-headline">Operations<br><span>Hub.</span></h1>
-      <p class="brand-desc">Real-time visibility across safety, quality, production, and inventory — built for the floor, not the boardroom.</p>
-
-      <div class="brand-tiles">
-        <div class="brand-tile" style="background:rgba(43,181,160,.25);">
-          <span class="tile-name">fresh cravings</span>
-          <span class="tile-cat">Salsa &amp; Dips</span>
-        </div>
-        <div class="brand-tile" style="background:rgba(218,30,117,.25);">
-          <span class="tile-name">La Mexicana</span>
-          <span class="tile-cat">Tortillas</span>
-        </div>
-        <div class="brand-tile" style="background:rgba(201,168,0,.25);">
-          <span class="tile-name">noosa</span>
-          <span class="tile-cat">Yoghurt</span>
-        </div>
-        <div class="brand-tile" style="background:rgba(244,123,32,.25);">
-          <span class="tile-name">Señor Rico</span>
-          <span class="tile-cat">Hispanic Foods</span>
-        </div>
-        <div class="brand-tile" style="background:rgba(26,91,166,.25);">
-          <span class="tile-name">Salads of the Sea</span>
-          <span class="tile-cat">Premium Seafood</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="brand-bottom">
-      <div class="brand-bottom-text">NOVUS FOODS 1730 OPS HUB &nbsp;·&nbsp; INTERNAL TOOL</div>
-      <div class="brand-rainbow-bar">
-        <div style="background:#2BB5A0"></div>
-        <div style="background:#DA1E75"></div>
-        <div style="background:#F5C518"></div>
-        <div style="background:#F47B20"></div>
-        <div style="background:#1A5BA6"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Login Panel ── -->
-  <div class="login-panel">
-    <div class="login-card">
-      <div class="login-eyebrow">Secure Access</div>
-      <div class="login-greeting">Welcome back.</div>
-      <div class="login-sub">Sign in with your Plant 1730 credentials.</div>
-
-      <div class="error-msg" id="error-msg">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span id="error-text">Invalid credentials.</span>
-      </div>
-
-      <div class="form-input-wrap">
-        <label for="username">Username</label>
-        <input class="form-input" id="username" type="text"
-          autocomplete="username" spellcheck="false"
-          autocapitalize="none" placeholder="e.g. amendoza"/>
-      </div>
-      <div class="form-input-wrap">
-        <label for="password">Password</label>
-        <input class="form-input" id="password" type="password"
-          autocomplete="current-password" placeholder="••••••••"/>
-      </div>
-
-      <button class="btn-login" id="btn-login" onclick="handleLogin()">
-        <div class="btn-spin"></div>
-        <span class="btn-text">Sign In</span>
-      </button>
-
-      <div class="divider-row">
-        <div class="divider-line"></div>
-        <div class="divider-label">Access Levels</div>
-        <div class="divider-line"></div>
-      </div>
-
-      <div class="role-hint">
-        <span class="role-hint-label">Roles:</span>
-        <span class="role-badge role-admin">Admin — post &amp; edit</span>
-        <span class="role-badge role-viewer">Viewer — read only</span>
-      </div>
-
-      <div class="login-footer">
-        Plant 1730 internal tool. Authorized personnel only.<br>
-        Contact Albert Mendoza if you need access.
-      </div>
-    </div>
-  </div>
-
-<script src="novus-interactions.js" defer></script>
-<script>
-  /* Redirect if already logged in */
-  (function () {
-    try {
-      const u = JSON.parse(sessionStorage.getItem('novus1730_user'));
-      if (u && u.plant === '1730') window.location.replace('hub.html');
-    } catch (_) {}
-  })();
-
-  const ALLOWED_USERS = {
-    'amendoza':  { password: '1730data', plant: '1730', role: 'admin' },
-    'mcaballero':{ password: 'novus26',  plant: '1730', role: 'admin' },
-    'mestala':{ password: 'user123',  plant: '1730', role: 'admin' },
-    'landrade':{ password: 'user123',  plant: '1730', role: 'admin' },
-    'vmarino':   { password: 'user123',  plant: '1730', role: 'admin' },
-    'csimonian': { password: 'user123',  plant: '1730', role: 'admin' },
-    'hdiaz':     { password: 'user123',  plant: '1730', role: 'sdmin' },
-    'cmunoz':    { password: 'user123',  plant: '1730', role: 'admin' },
-    'dorellana':  { password: 'batch123',  plant: '1730', role: 'admin' },
-    'yrivera':  { password: 'user123',  plant: '1730', role: 'admin' },
-    'dburgos':  { password: 'prod123',  plant: '1730', role: 'admin' },
-    'hwang':     { password: 'user123',  plant: '1730', role: 'viewer' },
-    'dbarrios': { password: 'Novus1234567!', plant: '1730', role: 'admin' }
-  };
-
-  const usernameEl = document.getElementById('username');
-  const passwordEl = document.getElementById('password');
-  const btnEl      = document.getElementById('btn-login');
-  const errorEl    = document.getElementById('error-msg');
-  const errorText  = document.getElementById('error-text');
-
-  document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
-  [usernameEl, passwordEl].forEach(el => el.addEventListener('input', () => {
-    errorEl.classList.remove('visible');
-    el.classList.remove('err');
-  }));
-
-  function showError(msg) {
-    errorText.textContent = msg;
-    errorEl.classList.add('visible');
-    // Shake animation
-    errorEl.style.animation = 'none';
-    requestAnimationFrame(() => {
-      errorEl.style.animation = '';
-      errorEl.style.animation = 'novus-shake 350ms cubic-bezier(0.25,1,0.5,1)';
-    });
-    passwordEl.value = '';
-    passwordEl.focus();
-    [usernameEl, passwordEl].forEach(el => el.classList.add('err'));
-  }
-
-  function handleLogin() {
-    const username = usernameEl.value.trim().toLowerCase();
-    const password = passwordEl.value.trim();
-    errorEl.classList.remove('visible');
-    if (!username || !password) { showError('Please enter both username and password.'); return; }
-    const user = ALLOWED_USERS[username];
-    if (!user || user.password !== password || user.plant !== '1730') {
-      showError('Invalid Plant 1730 credentials.');
-      return;
-    }
-    btnEl.disabled = true;
-    btnEl.classList.add('loading');
-    btnEl.querySelector('.btn-text').textContent = 'Signing in…';
-    try {
-      sessionStorage.setItem('novus1730_user', JSON.stringify({
-        username, plant: user.plant, role: user.role,
-        loginTime: new Date().toISOString()
-      }));
-    } catch (_) {}
-    setTimeout(() => { window.location.href = 'hub.html'; }, 400);
-  }
-</script>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plant 1730 Production Trending</title>
 <style>
-  @keyframes novus-shake {
-    0%,100% { transform: translateX(0); }
-    20%     { transform: translateX(-6px); }
-    40%     { transform: translateX(5px); }
-    60%     { transform: translateX(-4px); }
-    80%     { transform: translateX(3px); }
+  /* ============================= Design tokens ============================= */
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --border-strong:  rgba(11,11,11,0.16);
+
+    --series-1: #2a78d6; /* blue    - Plant Total / BP-LINE1 */
+    --series-2: #eb6834; /* orange  - BP-LINE2 */
+    --series-3: #1baf7a; /* aqua    - BP-LINE3 */
+    --series-4: #eda100; /* yellow  - BP-LINE4 */
+    --series-5: #e87ba4; /* magenta - BP-LINE5 */
+    --series-6: #008300; /* green   - BP-LINE6 */
+
+    --status-good:     #0ca30c;
+    --status-critical: #d03b3b;
+    --status-neutral:  #898781;
+
+    --radius-lg: 14px;
+    --radius-md: 10px;
+    --radius-sm: 6px;
+    --shadow-tile: 0 1px 2px rgba(11,11,11,0.04), 0 1px 1px rgba(11,11,11,0.03);
+    --shadow-modal: 0 20px 60px rgba(11,11,11,0.28);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --border-strong:  rgba(255,255,255,0.18);
+
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --series-4: #c98500;
+      --series-5: #d55181;
+      --series-6: #008300;
+
+      --status-good:     #0ca30c;
+      --status-critical: #e66767;
+      --shadow-tile: 0 1px 2px rgba(0,0,0,0.5), 0 1px 1px rgba(0,0,0,0.4);
+      --shadow-modal: 0 20px 60px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --border-strong:  rgba(255,255,255,0.18);
+
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+
+    --status-good:     #0ca30c;
+    --status-critical: #e66767;
+    --shadow-tile: 0 1px 2px rgba(0,0,0,0.5), 0 1px 1px rgba(0,0,0,0.4);
+    --shadow-modal: 0 20px 60px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; }
+
+  /* ============================= Layout ============================= */
+  #app { min-height: 100%; padding-bottom: 48px; }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+  }
+  .topbar-row {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .brand { display: flex; flex-direction: column; gap: 2px; }
+  .brand h1 { font-size: 18px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+  .brand .subtitle { font-size: 12.5px; color: var(--text-muted); }
+
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .segmented {
+    display: inline-flex; background: var(--page-plane);
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 2px; gap: 2px;
+  }
+  .segmented button {
+    border: none; background: transparent; color: var(--text-secondary);
+    padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 550;
+    cursor: pointer;
+  }
+  .segmented button.active {
+    background: var(--surface-1); color: var(--text-primary);
+    box-shadow: var(--shadow-tile);
+  }
+
+  .date-range {
+    display: flex; align-items: center; gap: 6px;
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 4px 6px; background: var(--page-plane);
+  }
+  .date-range input[type="date"] {
+    border: none; background: transparent; color: var(--text-primary);
+    font-size: 13px; padding: 4px 6px; font-family: inherit;
+  }
+  .date-range span.to { color: var(--text-muted); font-size: 12px; }
+
+  select.preset {
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    background: var(--page-plane); color: var(--text-primary);
+    font-size: 13px; padding: 7px 10px; cursor: pointer;
+  }
+
+  .icon-btn {
+    border: 1px solid var(--border); background: var(--page-plane);
+    color: var(--text-secondary); border-radius: var(--radius-md);
+    width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 15px;
+  }
+  .icon-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+
+  .status-banner {
+    display: none; margin: 12px 20px 0; padding: 10px 14px;
+    border-radius: var(--radius-md); font-size: 13px;
+    background: color-mix(in srgb, var(--status-critical) 12%, var(--surface-1));
+    border: 1px solid color-mix(in srgb, var(--status-critical) 35%, var(--border));
+    color: var(--text-primary);
+  }
+  .status-banner.visible { display: block; }
+  .status-banner code {
+    background: var(--page-plane); padding: 1px 5px; border-radius: 4px; font-size: 12px;
+  }
+
+  main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+
+  .category-block { margin-bottom: 28px; }
+  .category-title {
+    font-size: 12.5px; font-weight: 650; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-muted); margin: 0 0 10px 2px;
+  }
+  .tile-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .tile {
+    text-align: left; cursor: pointer;
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 14px 16px 12px;
+    box-shadow: var(--shadow-tile);
+    display: flex; flex-direction: column; gap: 8px;
+    transition: border-color 0.12s ease, transform 0.08s ease;
+  }
+  .tile:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+  .tile:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+  .tile .label { font-size: 12.5px; color: var(--text-secondary); font-weight: 550; }
+  .tile .value-row { display: flex; align-items: baseline; gap: 8px; }
+  .tile .value { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; }
+  .tile .delta { font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
+  .tile .delta.good { color: var(--status-good); }
+  .tile .delta.bad { color: var(--status-critical); }
+  .tile .delta.neutral { color: var(--text-muted); }
+  .tile .spark { height: 32px; }
+  .tile .no-data { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+  .tile.skeleton .value { color: transparent; background: var(--gridline); border-radius: 4px; }
+  .tile.skeleton .label { color: transparent; background: var(--gridline); border-radius: 4px; width: 60%; }
+
+  /* ============================= Modal ============================= */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 40;
+    background: rgba(11,11,11,0.45); backdrop-filter: blur(2px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface-1); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-modal); width: 100%; max-width: 980px;
+    max-height: 88vh; display: flex; flex-direction: column; overflow: hidden;
+  }
+  .modal-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 18px 20px 12px; border-bottom: 1px solid var(--border);
+  }
+  .modal-header h2 { margin: 0; font-size: 17px; font-weight: 650; }
+  .modal-header .cat { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .modal-body { padding: 16px 20px 20px; overflow-y: auto; }
+
+  .compare-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px;
+  }
+  .chip {
+    border: 1px solid var(--border); background: var(--page-plane);
+    color: var(--text-secondary); border-radius: 999px; padding: 5px 12px;
+    font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .chip.active { border-color: var(--border-strong); color: var(--text-primary); font-weight: 600; }
+  .view-toggle { margin-left: auto; display: flex; gap: 2px; }
+
+  .legend-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 4px 0 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary); }
+  .legend-item .swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+  .chart-wrap { position: relative; }
+  .chart-tooltip {
+    position: absolute; pointer-events: none; display: none;
+    background: var(--surface-1); border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm); box-shadow: var(--shadow-tile);
+    padding: 8px 10px; font-size: 12px; z-index: 5; min-width: 140px;
+  }
+  .chart-tooltip .tt-title { font-weight: 650; margin-bottom: 4px; color: var(--text-primary); }
+  .chart-tooltip .tt-row { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+  .chart-tooltip .tt-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .chart-tooltip .tt-val { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--text-primary); font-weight: 600; }
+
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.data-table th, table.data-table td {
+    text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  table.data-table th:first-child, table.data-table td:first-child { text-align: left; font-variant-numeric: normal; }
+  table.data-table th { color: var(--text-muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
   }
 </style>
-<script src="novus-interactions.js" defer></script>
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <h1>Plant 1730 Production Trending</h1>
+        <div class="subtitle" id="rangeSubtitle">Loading&hellip;</div>
+      </div>
+      <div class="controls">
+        <div class="segmented" id="granularityToggle" role="tablist" aria-label="Granularity">
+          <button data-value="day" class="active" role="tab" aria-selected="true">Day</button>
+          <button data-value="week" role="tab" aria-selected="false">Week</button>
+        </div>
+        <select class="preset" id="presetSelect" aria-label="Date range preset"></select>
+        <div class="date-range">
+          <input type="date" id="startDate" aria-label="Start date" />
+          <span class="to">&rarr;</span>
+          <input type="date" id="endDate" aria-label="End date" />
+        </div>
+        <button class="icon-btn" id="refreshBtn" title="Refresh" aria-label="Refresh">&#8635;</button>
+        <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle light/dark theme">&#9788;</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="status-banner" id="statusBanner"></div>
+
+  <main id="mainContent">
+    <div class="empty-state" id="emptyState" style="display:none;"></div>
+    <div id="tileContainer"></div>
+  </main>
+
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-header">
+      <div>
+        <h2 id="modalTitle">Metric</h2>
+        <div class="cat" id="modalCategory">Category</div>
+      </div>
+      <button class="icon-btn" id="modalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="compare-row" id="compareRow"></div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============================= Config ============================= */
+  // By default this page reads the static data/*.json files (relative to
+  // wherever this HTML file itself is served from) -- the ones
+  // scripts/refresh_data.py writes and a scheduled GitHub Action keeps
+  // fresh. No backend needs to be running anywhere for that.
+  //
+  // For local development against a live backend instead (e.g. one you
+  // started with `uvicorn backend.main:app`), open this file with
+  // ?live=http://localhost:8000 appended to the URL. That's a per-load
+  // override, not a persisted setting -- meant for testing, not for what
+  // gets published.
+  const LIVE_API_BASE = (() => {
+    try {
+      const fromQuery = new URLSearchParams(window.location.search).get("live");
+      return fromQuery ? fromQuery.replace(/\/$/, "") : null;
+    } catch (e) { return null; }
+  })();
+  const LIVE_MODE = !!LIVE_API_BASE;
+
+  const LINES = ["BP-LINE1", "BP-LINE2", "BP-LINE3", "BP-LINE4", "BP-LINE5", "BP-LINE6"];
+  const SERIES_COLOR_VARS = {
+    ALL_LINES: "--series-1",
+    "BP-LINE1": "--series-2",
+    "BP-LINE2": "--series-3",
+    "BP-LINE3": "--series-4",
+    "BP-LINE4": "--series-5",
+    "BP-LINE5": "--series-6",
+    "BP-LINE6": "--series-1",
+  };
+  const SERIES_LABELS = { ALL_LINES: "Plant Total" };
+  LINES.forEach((l) => (SERIES_LABELS[l] = l));
+
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+  function colorFor(seriesId) {
+    return cssVar(SERIES_COLOR_VARS[seriesId] || "--series-1");
+  }
+
+  /* ============================= State ============================= */
+  const state = {
+    granularity: "day",
+    startDate: null,
+    endDate: null,
+    metrics: [],          // catalog for current granularity
+    trending: null,       // current data, filtered to the selected date range
+    fullTrendingCache: {},// { day: <full rolling-window payload>, week: <...> } -- fetched once per granularity
+    loading: false,
+    apiReachable: true,
+    theme: null,           // null = follow system; "light" | "dark" = manual override (session only)
+    modal: {
+      open: false,
+      metricId: null,
+      compareLines: ["ALL_LINES"],
+      viewMode: "chart",   // "chart" | "table"
+    },
+  };
+
+  /* ============================= Date helpers ============================= */
+  function toISO(d) { return d.toISOString().slice(0, 10); }
+  function fromISO(s) { const [y, m, d] = s.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d)); }
+  function addDays(d, n) { const r = new Date(d); r.setUTCDate(r.getUTCDate() + n); return r; }
+  function todayUTC() { const n = new Date(); return new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())); }
+  function fmtShort(d) { return d.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" }); }
+  function fmtLong(d) { return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); }
+
+  const PRESETS = {
+    day: [
+      { label: "Last 7 days", days: 6 },
+      { label: "Last 14 days", days: 13 },
+      { label: "Last 30 days", days: 29 },
+      { label: "Last 90 days", days: 89 },
+    ],
+    week: [
+      { label: "Last 4 weeks", days: 27 },
+      { label: "Last 8 weeks", days: 55 },
+      { label: "Last 13 weeks", days: 90 },
+      { label: "Last 26 weeks", days: 181 },
+    ],
+  };
+
+  function applyPreset(days) {
+    const end = todayUTC();
+    const start = addDays(end, -days);
+    state.startDate = start;
+    state.endDate = end;
+    els.startDate.value = toISO(start);
+    els.endDate.value = toISO(end);
+  }
+
+  /* ============================= Formatting ============================= */
+  function compactNumber(value, decimals) {
+    if (!isFinite(value)) return "—";
+    return new Intl.NumberFormat(undefined, {
+      notation: Math.abs(value) >= 1000 ? "compact" : "standard",
+      maximumFractionDigits: decimals,
+      minimumFractionDigits: Math.abs(value) >= 1000 ? 0 : decimals,
+    }).format(value);
+  }
+
+  function formatValue(value, metric) {
+    if (value === null || value === undefined || Number.isNaN(value)) return "—";
+    switch (metric.unit) {
+      case "percent":
+        return `${value.toFixed(metric.decimals)}%`;
+      case "minutes": {
+        if (Math.abs(value) >= 60) {
+          const h = Math.floor(Math.abs(value) / 60) * Math.sign(value || 1);
+          const m = Math.round(Math.abs(value) % 60);
+          return `${h}h ${m}m`;
+        }
+        return `${value.toFixed(0)}m`;
+      }
+      case "hours":
+        return `${value.toFixed(Math.max(metric.decimals, 1))}h`;
+      default:
+        return compactNumber(value, metric.decimals);
+    }
+  }
+
+  /* ============================= DOM refs ============================= */
+  const els = {};
+  function cacheEls() {
+    [
+      "granularityToggle", "presetSelect", "startDate", "endDate", "refreshBtn", "themeBtn",
+      "statusBanner", "tileContainer", "emptyState", "rangeSubtitle",
+      "modalBackdrop", "modalTitle", "modalCategory", "modalClose", "modalContent", "compareRow",
+    ].forEach((id) => (els[id] = document.getElementById(id)));
+  }
+
+  /* ============================= Data loading ============================= */
+  // Live mode (?live=<url>): calls a running backend's /api/* endpoints,
+  // same as this dashboard originally worked -- useful for local dev.
+  async function fetchLiveJSON(path, params) {
+    const url = new URL(LIVE_API_BASE + path);
+    if (params) Object.entries(params).forEach(([k, v]) => v !== undefined && v !== null && url.searchParams.set(k, v));
+    const res = await fetch(url.toString());
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`${res.status} ${res.statusText}: ${body.slice(0, 200)}`);
+    }
+    return res.json();
+  }
+
+  async function loadMetricsCatalogLive() {
+    state.metrics = await fetchLiveJSON("/api/metrics", { granularity: state.granularity });
+  }
+
+  async function loadTrendingLive() {
+    state.trending = await fetchLiveJSON("/api/trending", {
+      start_date: toISO(state.startDate),
+      end_date: toISO(state.endDate),
+      granularity: state.granularity,
+    });
+  }
+
+  // Static mode (default): reads the pre-built data/*.json files. These
+  // cover a wide rolling window (see scripts/refresh_data.py), so we fetch
+  // each granularity's file once and filter it client-side to whatever
+  // date range the user picks -- no network call needed just to change dates.
+  async function fetchStaticJSON(relativePath) {
+    const res = await fetch(relativePath, { cache: "no-cache" });
+    if (!res.ok) {
+      throw new Error(`${res.status} ${res.statusText} fetching ${relativePath}`);
+    }
+    return res.json();
+  }
+
+  async function loadFullTrendingStatic(granularity) {
+    if (state.fullTrendingCache[granularity]) return state.fullTrendingCache[granularity];
+    const full = await fetchStaticJSON(`data/trending-${granularity}.json`);
+    state.fullTrendingCache[granularity] = full;
+    return full;
+  }
+
+  function filterTrendingToRange(full, startISO, endISO) {
+    const series = {};
+    Object.entries(full.series || {}).forEach(([key, rows]) => {
+      series[key] = rows.filter((r) => r.period_start >= startISO && r.period_start <= endISO);
+    });
+    return { ...full, series, start_date: startISO, end_date: endISO };
+  }
+
+  // Keeps the date pickers from wandering outside what's actually in the
+  // precomputed window -- picking a date with no data would otherwise just
+  // look like a bug ("no data in this range" on every tile).
+  function clampDateRangeToAvailable(full) {
+    if (!full.start_date || !full.end_date) return;
+    const availableStart = fromISO(full.start_date);
+    const availableEnd = fromISO(full.end_date);
+    els.startDate.min = full.start_date;
+    els.startDate.max = full.end_date;
+    els.endDate.min = full.start_date;
+    els.endDate.max = full.end_date;
+    if (state.startDate < availableStart) state.startDate = availableStart;
+    if (state.endDate > availableEnd) state.endDate = availableEnd;
+    els.startDate.value = toISO(state.startDate);
+    els.endDate.value = toISO(state.endDate);
+  }
+
+  function showBanner(message) {
+    els.statusBanner.innerHTML = message;
+    els.statusBanner.classList.add("visible");
+  }
+  function hideBanner() {
+    els.statusBanner.classList.remove("visible");
+  }
+
+  /* ============================= Sparkline (tile) ============================= */
+  function buildSparkline(values) {
+    const w = 100, h = 32, pad = 3;
+    const nums = values.map(Number).filter((v) => isFinite(v));
+    if (nums.length < 2) return `<svg viewBox="0 0 ${w} ${h}" class="spark"></svg>`;
+    const min = Math.min(...nums), max = Math.max(...nums);
+    const span = max - min || 1;
+    const stepX = (w - pad * 2) / (values.length - 1);
+    const pts = values.map((v, i) => {
+      const num = Number(v);
+      const y = isFinite(num) ? h - pad - ((num - min) / span) * (h - pad * 2) : h / 2;
+      return [pad + i * stepX, y];
+    });
+    const pathD = pts.map((p, i) => (i === 0 ? "M" : "L") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    const last = pts[pts.length - 1];
+    return `<svg viewBox="0 0 ${w} ${h}" class="spark" preserveAspectRatio="none">
+      <path d="${pathD}" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+      <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.5" fill="var(--series-1)" />
+    </svg>`;
+  }
+
+  /* ============================= Tile rendering ============================= */
+  function periodsFor(seriesId) {
+    if (!state.trending) return [];
+    return state.trending.series[seriesId] || [];
+  }
+
+  function metricSeriesValues(periods, metricId) {
+    return periods.map((p) => {
+      const raw = p.metrics ? p.metrics[metricId] : undefined;
+      const num = Number(raw);
+      return raw === undefined || raw === null || Number.isNaN(num) ? null : num;
+    });
+  }
+
+  function renderTiles() {
+    const byCategory = {};
+    state.metrics.forEach((m) => {
+      (byCategory[m.category] = byCategory[m.category] || []).push(m);
+    });
+
+    const periods = periodsFor("ALL_LINES");
+    const html = Object.entries(byCategory).map(([category, metricsInCat]) => {
+      const tiles = metricsInCat.map((m) => {
+        const values = metricSeriesValues(periods, m.id);
+        const cleanValues = values.filter((v) => v !== null);
+        if (!cleanValues.length) {
+          return `<button class="tile" data-metric="${m.id}">
+            <div class="label">${m.label}</div>
+            <div class="no-data">No data in this range</div>
+          </button>`;
+        }
+        const current = cleanValues[cleanValues.length - 1];
+        const previous = cleanValues.length > 1 ? cleanValues[cleanValues.length - 2] : null;
+        let deltaHtml = "";
+        if (previous !== null && previous !== 0) {
+          const delta = current - previous;
+          const pct = (delta / Math.abs(previous)) * 100;
+          // Only show a delta badge when the change is big enough to matter --
+          // a "→ 0.0%" badge on every unchanged tile is noise, not information.
+          if (Math.abs(pct) >= 0.1) {
+            const up = delta > 0;
+            const arrow = up ? "▲" : "▼";
+            const cls = m.higher_is_better === null ? "neutral" : (up === m.higher_is_better ? "good" : "bad");
+            deltaHtml = `<span class="delta ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}% <span class="visually-hidden">vs previous ${state.granularity}</span></span>`;
+          }
+        }
+        const spark = buildSparkline(values.map((v) => (v === null ? cleanValues[0] : v)).slice(-12));
+        return `<button class="tile" data-metric="${m.id}" aria-haspopup="dialog">
+          <div class="label">${m.label}</div>
+          <div class="value-row">
+            <span class="value">${formatValue(current, m)}</span>
+            ${deltaHtml}
+          </div>
+          ${spark}
+        </button>`;
+      }).join("");
+      return `<section class="category-block">
+        <h2 class="category-title">${category}</h2>
+        <div class="tile-grid">${tiles}</div>
+      </section>`;
+    }).join("");
+
+    els.tileContainer.innerHTML = html;
+    els.tileContainer.querySelectorAll(".tile[data-metric]").forEach((btn) => {
+      btn.addEventListener("click", () => openModal(btn.getAttribute("data-metric")));
+    });
+  }
+
+  function renderSkeleton() {
+    els.tileContainer.innerHTML = `<section class="category-block">
+      <div class="tile-grid">
+        ${Array.from({ length: 8 }).map(() => `<div class="tile skeleton">
+          <div class="label">Loading metric name</div>
+          <div class="value-row"><span class="value">0000</span></div>
+        </div>`).join("")}
+      </div>
+    </section>`;
+  }
+
+  /* ============================= Modal: chart + table ============================= */
+  function metricById(id) { return state.metrics.find((m) => m.id === id); }
+
+  function openModal(metricId) {
+    state.modal.open = true;
+    state.modal.metricId = metricId;
+    if (!state.modal.compareLines.length) state.modal.compareLines = ["ALL_LINES"];
+    els.modalBackdrop.classList.add("open");
+    renderModal();
+  }
+  function closeModal() {
+    state.modal.open = false;
+    els.modalBackdrop.classList.remove("open");
+  }
+
+  function toggleCompareLine(id) {
+    const cl = state.modal.compareLines;
+    if (id === "ALL_LINES") {
+      state.modal.compareLines = ["ALL_LINES"];
+    } else {
+      const idx = cl.indexOf(id);
+      let next = cl.filter((x) => x !== "ALL_LINES");
+      if (idx >= 0) next = next.filter((x) => x !== id);
+      else next = [...next, id];
+      state.modal.compareLines = next.length ? next : ["ALL_LINES"];
+    }
+    renderModal();
+  }
+
+  function renderModal() {
+    const metric = metricById(state.modal.metricId);
+    if (!metric) return;
+    els.modalTitle.textContent = metric.label;
+    els.modalCategory.textContent = `${metric.category} · ${state.granularity === "day" ? "Daily" : "Weekly"} trend`;
+
+    const chips = ["ALL_LINES", ...LINES].map((id) => {
+      const active = state.modal.compareLines.includes(id);
+      return `<button class="chip ${active ? "active" : ""}" data-line="${id}">
+        <span class="dot" style="background:${colorFor(id)}"></span>${SERIES_LABELS[id]}
+      </button>`;
+    }).join("");
+
+    els.compareRow.innerHTML = `${chips}
+      <div class="view-toggle segmented">
+        <button data-view="chart" class="${state.modal.viewMode === "chart" ? "active" : ""}">Chart</button>
+        <button data-view="table" class="${state.modal.viewMode === "table" ? "active" : ""}">Table</button>
+      </div>`;
+
+    els.compareRow.querySelectorAll("[data-line]").forEach((btn) => {
+      btn.addEventListener("click", () => toggleCompareLine(btn.getAttribute("data-line")));
+    });
+    els.compareRow.querySelectorAll("[data-view]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.modal.viewMode = btn.getAttribute("data-view");
+        renderModal();
+      });
+    });
+
+    const seriesData = state.modal.compareLines.map((id) => {
+      const periods = periodsFor(id);
+      return {
+        id,
+        label: SERIES_LABELS[id],
+        color: colorFor(id),
+        points: periods.map((p) => ({
+          x: p.period_start,
+          y: p.metrics ? p.metrics[metric.id] : undefined,
+        })),
+      };
+    });
+
+    if (state.modal.viewMode === "chart") {
+      els.modalContent.innerHTML = `<div class="chart-wrap" id="chartWrap"></div>`;
+      renderChart(document.getElementById("chartWrap"), seriesData, metric);
+    } else {
+      els.modalContent.innerHTML = renderTable(seriesData, metric);
+    }
+  }
+
+  function renderTable(seriesData, metric) {
+    if (!seriesData.length || !seriesData[0].points.length) {
+      return `<div class="empty-state">No data in this range.</div>`;
+    }
+    const rows = seriesData[0].points.map((_, i) => {
+      const period = seriesData[0].points[i].x;
+      const cells = seriesData.map((s) => {
+        const raw = s.points[i] ? s.points[i].y : undefined;
+        const num = Number(raw);
+        const val = raw === undefined || raw === null || Number.isNaN(num) ? "—" : formatValue(num, metric);
+        return `<td>${val}</td>`;
+      }).join("");
+      return `<tr><td>${fmtLong(fromISO(period))}</td>${cells}</tr>`;
+    }).join("");
+    const headers = seriesData.map((s) => `<th>${s.label}</th>`).join("");
+    return `<table class="data-table"><thead><tr><th>Period</th>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  /* ============================= Chart (hand-rolled SVG) ============================= */
+  function renderChart(container, seriesData, metric) {
+    const W = container.clientWidth || 900, H = 320;
+    const padL = 56, padR = 16, padT = 16, padB = 32;
+    const innerW = W - padL - padR, innerH = H - padT - padB;
+
+    const allPoints = seriesData.flatMap((s) => s.points);
+    const labels = seriesData[0] ? seriesData[0].points.map((p) => p.x) : [];
+    const nums = allPoints.map((p) => Number(p.y)).filter((v) => isFinite(v));
+
+    if (!labels.length || !nums.length) {
+      container.innerHTML = `<div class="empty-state">No data in this range.</div>`;
+      return;
+    }
+
+    let min = Math.min(0, ...nums), max = Math.max(...nums);
+    if (min === max) { max = min + 1; }
+    const niceMax = max + (max - min) * 0.1;
+
+    const xFor = (i) => padL + (labels.length > 1 ? (i / (labels.length - 1)) * innerW : innerW / 2);
+    const yFor = (v) => padT + innerH - ((v - min) / (niceMax - min)) * innerH;
+
+    const yTicks = 4;
+    // On a near-flat metric (e.g. a downtime field sitting at/near 0), the
+    // axis range can be tiny -- fall back to more decimal places so ticks
+    // don't all round to the same displayed number.
+    const axisDecimals = (niceMax - min) < 10 ? Math.max(metric.decimals, 1) : metric.decimals;
+    const gridLines = Array.from({ length: yTicks + 1 }, (_, i) => {
+      const v = min + ((niceMax - min) / yTicks) * i;
+      const y = yFor(v);
+      return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="var(--gridline)" stroke-width="1" />
+        <text x="${padL - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="var(--text-muted)">${compactNumber(v, axisDecimals)}</text>`;
+    }).join("");
+
+    const xLabelStep = Math.max(1, Math.ceil(labels.length / 8));
+    const xLabels = labels.map((lab, i) => {
+      if (i % xLabelStep !== 0 && i !== labels.length - 1) return "";
+      const d = fromISO(lab);
+      return `<text x="${xFor(i)}" y="${H - padB + 18}" text-anchor="middle" font-size="11" fill="var(--text-muted)">${fmtShort(d)}</text>`;
+    }).join("");
+
+    const seriesPaths = seriesData.map((s) => {
+      const pts = s.points.map((p, i) => {
+        const num = Number(p.y);
+        return isFinite(num) ? [xFor(i), yFor(num)] : null;
+      });
+      let d = "";
+      let started = false;
+      pts.forEach((pt) => {
+        if (!pt) { started = false; return; }
+        d += (started ? "L" : "M") + pt[0].toFixed(1) + " " + pt[1].toFixed(1) + " ";
+        started = true;
+      });
+      const markers = pts.map((pt) => pt
+        ? `<circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="4" fill="${s.color}" stroke="var(--surface-1)" stroke-width="2" />`
+        : "").join("");
+      return `<g data-series="${s.id}">
+        <path d="${d.trim()}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        ${markers}
+      </g>`;
+    }).join("");
+
+    const legend = seriesData.length > 1
+      ? `<div class="legend-row">${seriesData.map((s) => `<div class="legend-item"><span class="swatch" style="background:${s.color}"></span>${s.label}</div>`).join("")}</div>`
+      : "";
+
+    container.innerHTML = `${legend}
+      <svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" id="chartSvg" role="img" aria-label="${metric.label} trend chart">
+        ${gridLines}
+        <line x1="${padL}" y1="${padT + innerH}" x2="${W - padR}" y2="${padT + innerH}" stroke="var(--baseline)" stroke-width="1" />
+        ${seriesPaths}
+        ${xLabels}
+        <line id="crosshair" x1="0" y1="${padT}" x2="0" y2="${padT + innerH}" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="3,3" style="display:none" />
+        <rect id="hoverCatcher" x="${padL}" y="${padT}" width="${innerW}" height="${innerH}" fill="transparent" />
+      </svg>
+      <div class="chart-tooltip" id="chartTooltip"></div>`;
+
+    const svg = container.querySelector("#chartSvg");
+    const catcher = container.querySelector("#hoverCatcher");
+    const crosshair = container.querySelector("#crosshair");
+    const tooltip = container.querySelector("#chartTooltip");
+
+    function handleMove(evt) {
+      const rect = svg.getBoundingClientRect();
+      const scaleX = W / rect.width;
+      const mouseX = (evt.clientX - rect.left) * scaleX;
+      let idx = Math.round(((mouseX - padL) / innerW) * (labels.length - 1));
+      idx = Math.max(0, Math.min(labels.length - 1, idx));
+      const x = xFor(idx);
+
+      crosshair.setAttribute("x1", x);
+      crosshair.setAttribute("x2", x);
+      crosshair.style.display = "block";
+
+      const rows = seriesData.map((s) => {
+        const raw = s.points[idx] ? s.points[idx].y : undefined;
+        const num = Number(raw);
+        const val = raw === undefined || raw === null || Number.isNaN(num) ? "—" : formatValue(num, metric);
+        return `<div class="tt-row"><span class="tt-dot" style="background:${s.color}"></span>${s.label}<span class="tt-val">${val}</span></div>`;
+      }).join("");
+
+      tooltip.innerHTML = `<div class="tt-title">${fmtLong(fromISO(labels[idx]))}</div>${rows}`;
+      tooltip.style.display = "block";
+      const containerRect = container.getBoundingClientRect();
+      let left = (evt.clientX - containerRect.left) + 14;
+      if (left + 170 > containerRect.width) left = (evt.clientX - containerRect.left) - 184;
+      tooltip.style.left = left + "px";
+      tooltip.style.top = ((evt.clientY - containerRect.top) - 10) + "px";
+    }
+
+    catcher.addEventListener("mousemove", handleMove);
+    catcher.addEventListener("mouseleave", () => {
+      crosshair.style.display = "none";
+      tooltip.style.display = "none";
+    });
+  }
+
+  /* ============================= Load + refresh cycle ============================= */
+  function freshnessSuffix(full) {
+    if (!full || !full.generated_at) return "";
+    try {
+      const generated = new Date(full.generated_at);
+      const stamp = generated.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      return ` · data as of ${stamp}`;
+    } catch (e) { return ""; }
+  }
+
+  async function refresh() {
+    if (state.loading) return;
+    state.loading = true;
+    hideBanner();
+    els.rangeSubtitle.textContent = "Loading…";
+    renderSkeleton();
+    try {
+      let errCount = 0;
+      let freshness = "";
+      if (LIVE_MODE) {
+        await Promise.all([loadMetricsCatalogLive(), loadTrendingLive()]);
+        errCount = Object.values(state.trending.errors || {}).reduce((n, arr) => n + arr.length, 0);
+      } else {
+        const [metricsCatalog, full] = await Promise.all([
+          fetchStaticJSON(`data/metrics-${state.granularity}.json`),
+          loadFullTrendingStatic(state.granularity),
+        ]);
+        state.metrics = metricsCatalog;
+        clampDateRangeToAvailable(full);
+        state.trending = filterTrendingToRange(full, toISO(state.startDate), toISO(state.endDate));
+        errCount = Object.values(full.errors || {}).reduce((n, arr) => n + arr.length, 0);
+        freshness = freshnessSuffix(full);
+      }
+
+      state.apiReachable = true;
+      const modeLabel = LIVE_MODE ? " · live" : "";
+      els.rangeSubtitle.textContent = `${fmtLong(state.startDate)} — ${fmtLong(state.endDate)} · ${state.granularity === "day" ? "Daily" : "Weekly"} · All lines${modeLabel}${freshness}`;
+      if (errCount) {
+        showBanner(`L2L returned errors for ${errCount} period(s)/line(s) during the last refresh. Those points show as gaps rather than wrong numbers.`);
+      }
+      renderTiles();
+      if (state.modal.open) renderModal();
+    } catch (err) {
+      state.apiReachable = false;
+      els.rangeSubtitle.textContent = "Unable to load data";
+      if (LIVE_MODE) {
+        showBanner(`Can't reach the live API at <code>${LIVE_API_BASE}</code>. Make sure that backend is running and reachable.<br><span style="opacity:.7">${err.message}</span>`);
+      } else {
+        showBanner(`Can't load <code>data/${state.granularity === "day" ? "trending-day" : "trending-week"}.json</code>. If you opened this file directly (a <code>file://</code> URL) rather than through a web server, that's expected -- browsers block this kind of fetch from local files. Serve it over http(s) instead (this is exactly what GitHub Pages does once published), or run <code>python3 -m http.server</code> in this folder for local testing.<br><span style="opacity:.7">${err.message}</span>`);
+      }
+      els.tileContainer.innerHTML = "";
+    } finally {
+      state.loading = false;
+    }
+  }
+
+  /* ============================= Wiring ============================= */
+  function wireControls() {
+    els.granularityToggle.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const value = btn.getAttribute("data-value");
+        if (value === state.granularity) return;
+        state.granularity = value;
+        els.granularityToggle.querySelectorAll("button").forEach((b) => {
+          b.classList.toggle("active", b === btn);
+          b.setAttribute("aria-selected", b === btn ? "true" : "false");
+        });
+        populatePresets();
+        applyPreset(PRESETS[state.granularity][1].days);
+        refresh();
+      });
+    });
+
+    els.presetSelect.addEventListener("change", () => {
+      applyPreset(Number(els.presetSelect.value));
+      refresh();
+    });
+
+    els.startDate.addEventListener("change", () => {
+      state.startDate = fromISO(els.startDate.value);
+      refresh();
+    });
+    els.endDate.addEventListener("change", () => {
+      state.endDate = fromISO(els.endDate.value);
+      refresh();
+    });
+
+    els.refreshBtn.addEventListener("click", refresh);
+
+    els.themeBtn.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme");
+      const next = current === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      if (state.trending) { renderTiles(); if (state.modal.open) renderModal(); }
+    });
+
+    els.modalClose.addEventListener("click", closeModal);
+    els.modalBackdrop.addEventListener("click", (e) => { if (e.target === els.modalBackdrop) closeModal(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && state.modal.open) closeModal(); });
+  }
+
+  function populatePresets() {
+    els.presetSelect.innerHTML = PRESETS[state.granularity]
+      .map((p) => `<option value="${p.days}">${p.label}</option>`)
+      .join("");
+    els.presetSelect.value = PRESETS[state.granularity][1].days;
+  }
+
+  /* ============================= Init ============================= */
+  function init() {
+    cacheEls();
+    wireControls();
+    populatePresets();
+    applyPreset(PRESETS.day[1].days);
+    refresh();
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
+</script>
 </body>
 </html>
