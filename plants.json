@@ -14,8 +14,8 @@
       "name": "Novus Foods Plant 1710",
       "shortLabel": "Plant 1710",
       "location": "REPLACE_ME — city, state",
-      "dataUrl": "REPLACE_ME — Plant 1710's dashboard-data.json URL",
-      "l2lDataUrl": "REPLACE_ME — Plant 1710's l2l-data.json URL (omit this field entirely if 1710 doesn't use L2L)",
+      "dataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/1710/dashboard-data.json",
+      "l2lDataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/1710/l2l-data.json",
       "lines": []
     },
     {
@@ -23,8 +23,8 @@
       "name": "Novus Foods Plant 1720",
       "shortLabel": "Plant 1720",
       "location": "REPLACE_ME — city, state",
-      "dataUrl": "REPLACE_ME — Plant 1720's dashboard-data.json URL",
-      "l2lDataUrl": "REPLACE_ME — Plant 1720's l2l-data.json URL (omit this field entirely if 1720 doesn't use L2L)",
+      "dataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/1720/dashboard-data.json",
+      "l2lDataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/1720/l2l-data.json",
       "lines": []
     },
     {
@@ -32,8 +32,8 @@
       "name": "Novus Foods Plant 1740",
       "shortLabel": "Plant 1740",
       "location": "REPLACE_ME — city, state",
-      "dataUrl": "REPLACE_ME — Plant 1740's dashboard-data.json URL",
-      "l2lDataUrl": "REPLACE_ME — Plant 1740's l2l-data.json URL (omit this field entirely if 1740 doesn't use L2L)",
+      "dataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/1740/dashboard-data.json",
+      "l2lDataUrl": "https://albertstevenmendoza-byte.github.io/Novus-Foods-1730/1740/l2l-data.json",
       "lines": []
     }
   ]
