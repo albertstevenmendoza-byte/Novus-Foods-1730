@@ -261,6 +261,40 @@
     .cmd-more-wrap { isolation: isolate; }
     .more-dropdown  { z-index: 9999; }
 
+    /* ── Custom Widgets (admin-managed metric cards / charts) ── */
+    .custom-widget-zone { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+    .custom-widget { position:relative; background:var(--surface2); border:1px dashed var(--border2); border-radius:var(--radius-sm); padding:8px; }
+    .custom-widget-remove { position:absolute; top:4px; right:4px; width:18px; height:18px; border:none; border-radius:4px; background:rgba(220,38,38,.08); color:var(--red-l); cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .15s; }
+    .custom-widget:hover .custom-widget-remove { opacity:1; }
+    .custom-widget-remove:hover { background:rgba(220,38,38,.18); }
+    .custom-widget-label { font-size:.64rem; font-weight:700; color:var(--ink3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+    .custom-widget-value { font-family:var(--mono); font-size:1.3rem; font-weight:700; color:var(--green-d); }
+    .custom-widget-sub { font-size:.62rem; color:var(--ink4); margin-top:2px; }
+
+    #cw-overlay { position:fixed; inset:0; z-index:10000; display:none; align-items:center; justify-content:center; }
+    #cw-overlay.cw-visible { display:flex; }
+    .cw-backdrop { position:absolute; inset:0; background:rgba(15,23,42,.55); backdrop-filter:blur(2px); }
+    .cw-panel { position:relative; width:min(560px,92vw); max-height:86vh; overflow-y:auto; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 20px 60px rgba(15,23,42,.25); padding:18px 20px 20px; }
+    .cw-panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+    .cw-panel-title { font-size:1rem; font-weight:800; color:var(--ink); display:flex; align-items:center; gap:8px; }
+    .cw-close { width:26px; height:26px; border:none; border-radius:6px; background:var(--surface2); color:var(--ink3); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .cw-close:hover { background:var(--border); }
+    .cw-sub { font-size:.72rem; color:var(--ink4); margin-bottom:14px; }
+    .cw-field-row { display:flex; flex-direction:column; gap:3px; margin-bottom:10px; }
+    .cw-field-row label { font-size:.66rem; font-weight:700; color:var(--ink3); text-transform:uppercase; letter-spacing:.04em; }
+    .cw-field-row select, .cw-field-row input { font:inherit; font-size:.78rem; padding:6px 8px; border:1px solid var(--border); border-radius:var(--radius-xs); background:var(--surface2); color:var(--ink); }
+    .cw-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .cw-add-btn { width:100%; margin-top:4px; padding:9px; border:none; border-radius:var(--radius-sm); background:linear-gradient(135deg,var(--green-d),var(--green)); color:#fff; font-weight:700; font-size:.8rem; cursor:pointer; }
+    .cw-add-btn:hover { filter:brightness(1.05); }
+    .cw-divider { border-top:1px solid var(--border); margin:16px 0 12px; }
+    .cw-list-title { font-size:.72rem; font-weight:800; color:var(--ink3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+    .cw-list-item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--radius-xs); margin-bottom:6px; background:var(--surface2); }
+    .cw-list-item-label { font-size:.75rem; color:var(--ink); }
+    .cw-list-item-meta { font-size:.62rem; color:var(--ink4); }
+    .cw-list-remove { border:none; background:none; color:var(--red-l); cursor:pointer; font-size:.7rem; font-weight:700; padding:2px 6px; }
+    .cw-list-remove:hover { text-decoration:underline; }
+    .cw-empty { font-size:.72rem; color:var(--ink4); padding:6px 0; }
+
   </style>
 </head>
 <body>
@@ -334,6 +368,11 @@
         <button class="sd-item sd-item-danger" onclick="clearManuals();closeMore()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.65"/></svg>
           Clear Manual Overrides
+        </button>
+        <!-- Admin-only -- visibility toggled in applyRoleAccess() -->
+        <button class="sd-item" id="btn-manage-widgets" style="display:none;" onclick="openWidgetsModal();closeMore()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Manage Custom Widgets
         </button>
 
         <div class="sd-divider"></div>
@@ -435,7 +474,6 @@
           <div class="metric-box"><div class="metric-label">Holds / COA</div><div class="metric-value" id="holds-coa" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
           <div class="metric-box"><div class="metric-label">PEM %</div><div class="metric-value" id="pem" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
           <div class="metric-box"><div class="metric-label">Complaints</div><div class="metric-value" id="complaints" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
-          <div class="metric-box"><div class="metric-label">CPM</div><div class="metric-value" id="CPM" contendible="true" oninput="saveMAual(this.id)">-</div></div>
         </div>
       </div>
       <div class="resizer"></div>
@@ -498,7 +536,7 @@
     </div>
 
     <!-- COSTS -->
-    <div class="panel" style="grid-column:span 4;position:relative;">
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-costs">
       <div class="panel-header ph-costs"><span class="panel-title">💰 Costs</span></div>
       <div class="panel-date" id="date-costs">—</div>
       <div class="panel-body">
@@ -517,7 +555,7 @@
     </div>
 
     <!-- HR -->
-    <div class="panel" style="grid-column:span 4;position:relative;">
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-hr">
       <div class="panel-header ph-hr"><span class="panel-title">👥 HR | Training</span></div>
       <div class="panel-date" id="date-hr">—</div>
       <div class="panel-body">
@@ -533,7 +571,7 @@
     </div>
 
     <!-- SAP -->
-    <div class="panel" style="grid-column:span 4;position:relative;">
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-sap">
       <div class="panel-header ph-sap"><span class="panel-title">📊 SAP Metrics</span></div>
       <div class="panel-date" id="date-sap">—</div>
       <div class="panel-body">
@@ -549,7 +587,7 @@
     </div>
 
     <!-- WAREHOUSE -->
-    <div class="panel" style="grid-column:span 4;position:relative;">
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-warehouse">
       <div class="panel-header ph-warehouse"><span class="panel-title">🏭 Warehouse</span></div>
       <div class="panel-date" id="date-warehouse">—</div>
       <div class="panel-body">
@@ -573,7 +611,7 @@
     </div>
 
     <!-- INVENTORY -->
-    <div class="panel" style="grid-column:span 4;position:relative;">
+    <div class="panel" style="grid-column:span 4;position:relative;" id="panel-inventory">
       <div class="panel-header ph-inventory"><span class="panel-title">📦 Inventory Control</span></div>
       <div class="panel-date" id="date-inventory">—</div>
       <div class="panel-body">
@@ -737,7 +775,7 @@ function renderDashboard(){
   const trainVal=getVal(hr,'Trainings Complete',dHR)??0;set('trainings',pct(trainVal));
   const hcd=Number(getVal(hr,'Head Count - Direct',dHR)||0),hci=Number(getVal(hr,'Head Count - Indirect',dHR)||0);set('headcount',(hcd+hci)>0?hcd+hci:null);
   // Quality
-  set('holds',getVal(qa,'Holds',dQA));set('holds-coa',getVal(qa,'Holds/COA',dQA));set('pem',pct(getVal(qa,'PEM %',dQA),1));set('CPM',getVal(qa,'CPM',dQA));set('complaints',getVal(qa,'Number of Complaints',dQA));
+  set('holds',getVal(qa,'Holds',dQA));set('holds-coa',getVal(qa,'Holds/COA',dQA));set('pem',pct(getVal(qa,'PEM %',dQA),1));set('complaints',getVal(qa,'Number of Complaints',dQA));
   set('san-preop',pct(getVal(qa,'Pre-Op %',dQA)??getVal(qa,'Pre-Op',dQA),1));set('san-mss',pct(getVal(qa,'MSS Completion %',dQA)??getVal(qa,'MSS %',dQA)??getVal(qa,'MSS',dQA),1));
   const snEl=document.getElementById('san-notes');if(snEl)snEl.textContent=getVal(qa,'Sanitation Notes',dQA)||'No sanitation notes reported.';
   // Costs
@@ -784,6 +822,7 @@ function renderDashboard(){
   set('inv-ce-variants',  invCE ? valByKey(invCE,'Variants')          : null);
   const inEl=document.getElementById('inv-notes');if(inEl)inEl.textContent=(invBP?valByKey(invBP,'Notes'):null)||'No inventory notes for this date.';
   loadManuals();
+  renderCustomWidgets();
   setTimeout(()=>drawCharts(prod,fin,sap,bpWH,whBP,whCE,trainVal,wh,isCE,isBP),60);
 }
 
@@ -942,6 +981,11 @@ function applyRoleAccess(){
       el.classList.remove('admin-edit');
     }
   });
+  const btnW=document.getElementById('btn-manage-widgets');
+  if(btnW) btnW.style.display=isAdmin?'':'none';
+  // Re-render so admin-only "×" remove buttons on custom widgets appear/
+  // disappear immediately on a role change, without a full data refetch.
+  if(typeof renderCustomWidgets==='function') renderCustomWidgets();
 }
 
 function markManualOverrides(){
@@ -954,7 +998,7 @@ function markManualOverrides(){
 
 // ── Data chart helpers (update font references) ──
 const CD={font:{family:"Inter,system-ui,sans-serif",size:10},mono:{family:"'JetBrains Mono',monospace",size:10},grid:'rgba(0,0,0,.04)',tick:'#94a3b8'};
-function mkChart(id,type,labels,datasets,extra={}){const el=document.getElementById(id);if(!el)return;const ex=Chart.getChart(el);if(ex)ex.destroy();new Chart(el.getContext('2d'),{type,data:{labels,datasets:datasets.map(ds=>({tension:.35,pointRadius:0,borderWidth:2,...ds}))},options:{responsive:true,maintainAspectRatio:false,animation:{duration:300},plugins:{title:{display:!!extra.title,text:extra.title||'',font:{family:'Inter,system-ui,sans-serif',size:11,weight:'700'},color:CD.tick,padding:{bottom:6}},legend:{display:datasets.length>1,position:extra.legendPos||'bottom',labels:{font:CD.font,color:CD.tick,boxWidth:10,padding:8}},tooltip:{backgroundColor:'rgba(15,23,42,.92)',padding:10,cornerRadius:6,titleFont:{family:'Inter,system-ui,sans-serif',size:11,weight:'600'},bodyFont:{family:"'JetBrains Mono',monospace",size:11}}},scales:{x:{grid:{color:CD.grid},ticks:{font:CD.mono,color:CD.tick,maxTicksLimit:8,maxRotation:40}},y:{beginAtZero:true,grid:{color:CD.grid},ticks:{font:CD.mono,color:CD.tick}},...(extra.y1?{y1:{position:'right',grid:{drawOnChartArea:false}}}:{})}}});}
+function mkChart(id,type,labels,datasets,extra={}){const el=document.getElementById(id);if(!el)return;const ex=Chart.getChart(el);if(ex)ex.destroy();new Chart(el.getContext('2d'),{type,data:{labels,datasets:datasets.map(ds=>({tension:.35,pointRadius:0,borderWidth:2,...ds}))},options:{indexAxis:extra.indexAxis||'x',responsive:true,maintainAspectRatio:false,animation:{duration:300},plugins:{title:{display:!!extra.title,text:extra.title||'',font:{family:'Inter,system-ui,sans-serif',size:11,weight:'700'},color:CD.tick,padding:{bottom:6}},legend:{display:datasets.length>1,position:extra.legendPos||'bottom',labels:{font:CD.font,color:CD.tick,boxWidth:10,padding:8}},tooltip:{backgroundColor:'rgba(15,23,42,.92)',padding:10,cornerRadius:6,titleFont:{family:'Inter,system-ui,sans-serif',size:11,weight:'600'},bodyFont:{family:"'JetBrains Mono',monospace",size:11}}},scales:{x:{grid:{color:CD.grid},ticks:{font:CD.mono,color:CD.tick,maxTicksLimit:8,maxRotation:40}},y:{beginAtZero:true,grid:{color:CD.grid},ticks:{font:CD.mono,color:CD.tick}},...(extra.y1?{y1:{position:'right',grid:{drawOnChartArea:false}}}:{})}}});}
 function mkDoughnut(id,value,label){const el=document.getElementById(id);if(!el)return;let n=parseFloat(value)||0;if(n>0&&n<=2)n*=100;const color=n>=90?'#059669':n>=70?'#d97706':'#ef4444';const short=label.includes('Overall')?'Overall':label.includes('Walmart')?'Walmart':label;const ex=Chart.getChart(el);if(ex)ex.destroy();new Chart(el.getContext('2d'),{type:'doughnut',data:{datasets:[{data:[n,100-n],backgroundColor:[color,'#e2e8f0'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'76%',animation:{duration:300},plugins:{legend:{display:false}}},plugins:[{id:'center',beforeDraw:chart=>{const{width,height,ctx}=chart;ctx.restore();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`600 10px Inter,system-ui,sans-serif`;ctx.fillStyle=CD.tick;ctx.fillText(short,width/2,height/2-12);ctx.font=`bold 18px Inter,system-ui,sans-serif`;ctx.fillStyle=color;ctx.fillText(`${n.toFixed(1)}%`,width/2,height/2+8);ctx.save();}}]});}
 
 // ── Sheet accessor (XLSX workbook) ──
@@ -1076,6 +1120,11 @@ async function fetchFromSharePoint(){
     } catch (e) {
       console.warn('l2l-data.json not loaded (non-fatal):', e);
     }
+
+    // Admin-added custom metric cards / charts for this plant (see
+    // "Manage Custom Widgets" in the ··· menu). Loaded here so
+    // renderDashboard() below can draw them from fresh data right away.
+    await loadCustomWidgets();
 
     workbook = { _json: true };
     renderDashboard();
@@ -1263,7 +1312,433 @@ NovusDB.ddsHighlights.subscribe(payload => {
 });
 
 hlLoad();
+
+// ── Admin-managed Custom Widgets ──────────────────────────────────────────
+// Lets anyone with the admin role add a metric card or mini-chart, built
+// from any field already present in this plant's dashboard-data.json, to
+// any existing panel -- see "Manage Custom Widgets" in the ··· menu.
+// Stored in Supabase (table dashboard_custom_widgets, scoped by plant_id)
+// so the set is global: every viewer of a plant sees the same widgets,
+// same as announcements/rules/needs-action elsewhere in this app. Every
+// call below guards for window.NovusDB.customWidgets being absent, so
+// this feature degrades gracefully (list stays empty, add shows a plain
+// message) until supabase-config.js is updated with that table's wrapper.
+const CW_PANELS = [
+  {id:'panel-safety',    label:'🦺 Safety'},
+  {id:'panel-quality',   label:'✅ Quality'},
+  {id:'panel-production',label:'⚙️ Production Summary'},
+  {id:'panel-sanitation',label:'🧼 Sanitation'},
+  {id:'panel-costs',     label:'💰 Costs'},
+  {id:'panel-hr',        label:'👥 HR | Training'},
+  {id:'panel-sap',       label:'📊 SAP Metrics'},
+  {id:'panel-warehouse', label:'🏭 Warehouse'},
+  {id:'panel-inventory', label:'📦 Inventory Control'},
+  {id:'panel-highlights',label:'🏆 Level 1 DDS Highlights'},
+];
+const CW_SHEETS = ['HR | Training','QA','Production','Finance','SAP','Warehouse','Inventory Control','Maintenance'];
+const CW_META_FIELDS = new Set(['date','line','city']); // structural columns, not metrics -- left out of the field picker
+let CUSTOM_WIDGETS = [];
+
+function getAvailablePanels(){ return CW_PANELS; }
+
+function getAvailableFields(sheetName){
+  const rows = sheet(sheetName) || [];
+  const fields = new Set();
+  rows.forEach(row => Object.keys(row).forEach(k => {
+    if(!CW_META_FIELDS.has(k.trim().toLowerCase())) fields.add(k);
+  }));
+  return [...fields].sort((a,b)=>a.localeCompare(b));
+}
+
+async function loadCustomWidgets(){
+  CUSTOM_WIDGETS = [];
+  if(!window.NovusDB || !window.NovusDB.customWidgets || !window.ACTIVE_PLANT) return;
+  try{
+    const { data, error } = await NovusDB.customWidgets.getAll(window.ACTIVE_PLANT.id);
+    if(!error && data) CUSTOM_WIDGETS = data;
+  }catch(e){ console.warn('customWidgets load failed (non-fatal):', e); }
+}
+
+function ensureCustomZone(panelId){
+  const panel = document.getElementById(panelId);
+  if(!panel) return null;
+  let zone = panel.querySelector('.custom-widget-zone');
+  if(!zone){
+    zone = document.createElement('div');
+    zone.className = 'custom-widget-zone';
+    const body = panel.querySelector('.panel-body') || panel;
+    body.appendChild(zone);
+  }
+  return zone;
+}
+
+// Widget display types and their human labels, shown in the modal and in
+// the "Current Widgets" list.
+const CW_TYPE_LABELS = {
+  metric:   'Metric Card',
+  line:     'Line Chart',
+  area:     'Area Chart',
+  bar:      'Bar Chart',
+  hbar:     'Horizontal Bar',
+  doughnut: 'Doughnut / Gauge',
+};
+// Date-range choices offered in the modal, in days; 0 means "all available
+// data" (no cutoff).
+const CW_RANGE_LABELS = { 7:'7 Days', 14:'14 Days', 30:'30 Days', 60:'60 Days', 90:'90 Days', 180:'180 Days', 365:'365 Days', 0:'All Available Data' };
+
+// Rows for widget.sheet, narrowed to widget.range_days back from today
+// (0/undefined range_days means "all rows" -- returned unfiltered).
+function cwFilteredRows(widget){
+  const rows = sheet(widget.sheet) || [];
+  const days = widget.range_days;
+  if(!days) return rows;
+  // "Last N Days" is an N-day window that includes today, so the cutoff is
+  // N-1 days back (days=7 -> today + the 6 days before it = 7 days total).
+  const cutoff = new Date(); cutoff.setHours(0,0,0,0); cutoff.setDate(cutoff.getDate()-(days-1));
+  return rows.filter(r=>{ const d=parseDate(r.Date); return d && d>=cutoff; });
+}
+
+// Pulls every value for widget.sheet/widget.field using the same
+// valByKey/parseDate helpers the built-in panels use, so a custom metric
+// card reads data exactly the way the rest of the dashboard does. Sum/avg
+// respect the widget's date range; "Latest Date" deliberately does not --
+// gating "latest" on a narrow window is the exact bug pattern that once
+// froze "Yesterday's Performance" on a stale date (see getLatestDate's
+// comment above), so a metric card always shows the sheet's true latest
+// value regardless of the range picker.
+function cwCompute(widget){
+  if(widget.agg==='sum'||widget.agg==='avg'){
+    const rows = cwFilteredRows(widget);
+    const nums = rows.map(r=>Number(valByKey(r,widget.field))).filter(n=>!isNaN(n));
+    if(!nums.length) return null;
+    return widget.agg==='sum' ? nums.reduce((a,b)=>a+b,0) : +(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(2);
+  }
+  const rows = sheet(widget.sheet) || [];
+  const ds = getLatestDate(rows)?.str;
+  if(ds==null) return null;
+  const dayRows = rows.filter(r=>toDS(parseDate(r.Date))===ds);
+  return dayRows.length ? valByKey(dayRows[dayRows.length-1], widget.field) : null;
+}
+
+// The one "current" number a widget's target is judged against -- for a
+// metric card this is whatever it already displays (respecting its own
+// agg); for every chart/gauge type it's always the sheet's true latest
+// value, same as the doughnut widget's own reading above (never gated by
+// the range picker, for the same stale-date reason cwCompute explains).
+function cwCurrentValue(widget){
+  return widget.widget_type==='metric' ? cwCompute(widget) : cwCompute({...widget, agg:'latest'});
+}
+
+// Builds the small "Target: ≥95 ✓ On Target" pill shown under a widget
+// when it has a target set, reusing the same .status-pill/.pill-yes/
+// .pill-no classes the built-in Start Up/CIL cards already use elsewhere
+// on this dashboard, so a custom widget's target reads as part of the
+// same visual system instead of a bolted-on extra.
+function cwTargetPillHtml(widget){
+  if(widget.target==null || widget.target==='') return '';
+  const cur = cwCurrentValue(widget);
+  const curNum = Number(cur);
+  const dirLte = widget.target_dir==='lte';
+  const met = (cur!=null && !isNaN(curNum)) ? (dirLte ? curNum<=widget.target : curNum>=widget.target) : null;
+  const dirSym = dirLte ? '≤' : '≥';
+  const cls = met==null ? 'pill-no' : (met ? 'pill-yes' : 'pill-no');
+  const status = met==null ? 'No Data' : (met ? '✓ On Target' : '⚠ Off Target');
+  return `<div class="status-pill ${cls}"><span class="pill-label">TARGET ${dirSym}${widget.target}</span><span>${status}</span></div>`;
+}
+
+function renderCustomWidgets(){
+  // Clear every zone first so a re-render (role change, data refresh,
+  // realtime update) never duplicates a card, and so a widget removed
+  // elsewhere disappears immediately.
+  document.querySelectorAll('.custom-widget-zone').forEach(z=>z.innerHTML='');
+  const isAdmin = !!(window.NovusCore && NovusCore.isAdmin && NovusCore.isAdmin());
+  CUSTOM_WIDGETS.forEach(w=>{
+    const zone = ensureCustomZone(w.panel_id);
+    if(!zone) return;
+    const box = document.createElement('div');
+    box.className = 'custom-widget';
+    box.id = 'cw-' + w.id;
+    const removeBtn = isAdmin
+      ? `<button class="custom-widget-remove" title="Remove widget" onclick="cwRemoveWidget('${w.id}')">
+           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+         </button>` : '';
+    const pillHtml = cwTargetPillHtml(w);
+    if(w.widget_type==='metric'){
+      const val = cwCompute(w);
+      box.innerHTML = `${removeBtn}<div class="custom-widget-label">${w.label}</div><div class="custom-widget-value">${val==null?'—':val}</div><div class="custom-widget-sub">${w.sheet} · ${w.field}</div>${pillHtml}`;
+      zone.appendChild(box);
+    } else if(w.widget_type==='doughnut'){
+      const canvasId = 'cw-chart-' + w.id;
+      box.innerHTML = `${removeBtn}<div class="custom-widget-label">${w.label}</div><div class="chart-wrap" style="height:135px;"><canvas id="${canvasId}"></canvas></div>${pillHtml}`;
+      zone.appendChild(box);
+      const val = cwCompute({...w, agg:'latest'});
+      mkDoughnut(canvasId, val==null?0:val, w.label);
+    } else {
+      // line / area / bar / hbar -- all driven off the same date-ranged history
+      const canvasId = 'cw-chart-' + w.id;
+      box.innerHTML = `${removeBtn}<div class="custom-widget-label">${w.label}</div><div class="chart-wrap" style="height:135px;"><canvas id="${canvasId}"></canvas></div>${pillHtml}`;
+      zone.appendChild(box);
+      // Rows are already narrowed to the widget's range, so a high maxPts
+      // here just means "don't truncate the (already short) list further".
+      const hist = getHist(cwFilteredRows(w), w.field, 400);
+      if(hist.labels.length){
+        const chartType = (w.widget_type==='hbar') ? 'bar' : (w.widget_type==='area' ? 'line' : w.widget_type);
+        const datasets = [{label:w.field, data:hist.values, borderColor:'#059669', backgroundColor:'rgba(5,150,105,.08)', fill:w.widget_type==='area'}];
+        // A flat dashed reference line at the target value, drawn as a
+        // 'line' dataset overlaid on the chart (Chart.js supports a
+        // per-dataset type override, so this works even on top of a bar
+        // chart). Skipped for horizontal bar -- with indexAxis flipped a
+        // "line" dataset there plots along the wrong axis and comes out
+        // wrong, so hbar widgets show their target in the pill only.
+        if(w.target!=null && w.target!=='' && w.widget_type!=='hbar'){
+          datasets.push({label:'Target', data:hist.labels.map(()=>w.target), type:'line', borderColor:'#94a3b8', backgroundColor:'transparent', borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false});
+        }
+        mkChart(canvasId, chartType, hist.labels, datasets,
+          {title:w.label, indexAxis: w.widget_type==='hbar' ? 'y' : 'x'});
+      }
+    }
+  });
+}
+
+function openWidgetsModal(){
+  if(!document.getElementById('cw-overlay')) return;
+  cwPopulatePanelsAndFields();
+  cwToggleChartType();
+  cwRenderList();
+  document.getElementById('cw-overlay').classList.add('cw-visible');
+  document.body.style.overflow='hidden';
+}
+function closeWidgetsModal(){
+  const el=document.getElementById('cw-overlay');
+  if(!el) return;
+  el.classList.remove('cw-visible');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Escape') return;
+  const el=document.getElementById('cw-overlay');
+  if(el && el.classList.contains('cw-visible')) closeWidgetsModal();
+});
+
+function cwPopulatePanelsAndFields(){
+  const panelSel=document.getElementById('cw-panel');
+  const sheetSel=document.getElementById('cw-sheet');
+  if(panelSel && !panelSel.dataset.filled){
+    panelSel.innerHTML = CW_PANELS.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
+    panelSel.dataset.filled='1';
+  }
+  if(sheetSel && !sheetSel.dataset.filled){
+    sheetSel.innerHTML = CW_SHEETS.map(s=>`<option value="${s}">${s}</option>`).join('');
+    sheetSel.dataset.filled='1';
+  }
+  cwPopulateFields();
+}
+
+function cwPopulateFields(){
+  const sheetSel=document.getElementById('cw-sheet');
+  const fieldSel=document.getElementById('cw-field');
+  if(!sheetSel||!fieldSel) return;
+  const fields=getAvailableFields(sheetSel.value);
+  fieldSel.innerHTML = fields.length
+    ? fields.map(f=>`<option value="${f}">${f}</option>`).join('')
+    : '<option value="">No fields detected yet</option>';
+}
+
+function cwToggleChartType(){
+  const type=document.getElementById('cw-type').value;
+  const aggEl=document.getElementById('cw-agg');
+  const aggRow=document.getElementById('cw-agg-row');
+  const rangeRow=document.getElementById('cw-range-row');
+  if(aggRow) aggRow.style.display = type==='metric' ? '' : 'none';
+  // Date range applies to charts (line/area/bar/hbar) and to Sum/Average
+  // metric cards -- it's meaningless for a doughnut/gauge or a "Latest
+  // Date" metric card, both of which always show one current value.
+  const rangeApplies = type!=='doughnut' && !(type==='metric' && aggEl && aggEl.value==='latest');
+  if(rangeRow) rangeRow.style.display = rangeApplies ? '' : 'none';
+}
+
+function cwRenderList(){
+  const list=document.getElementById('cw-list');
+  if(!list) return;
+  if(!CUSTOM_WIDGETS.length){ list.innerHTML='<div class="cw-empty">No custom widgets yet for this plant.</div>'; return; }
+  list.innerHTML = CUSTOM_WIDGETS.map(w=>{
+    const panel = CW_PANELS.find(p=>p.id===w.panel_id);
+    const typeLabel = CW_TYPE_LABELS[w.widget_type] || w.widget_type;
+    const rangeLabel = (w.widget_type==='doughnut' || (w.widget_type==='metric' && w.agg==='latest'))
+      ? '' : ' · ' + (CW_RANGE_LABELS[w.range_days] || (w.range_days ? w.range_days+' Days' : 'All Available Data'));
+    const targetLabel = (w.target!=null && w.target!=='') ? ` · Target ${w.target_dir==='lte'?'≤':'≥'}${w.target}` : '';
+    return `<div class="cw-list-item">
+      <div>
+        <div class="cw-list-item-label">${w.label}</div>
+        <div class="cw-list-item-meta">${panel?panel.label:w.panel_id} · ${w.sheet} · ${w.field} · ${typeLabel}${rangeLabel}${targetLabel}</div>
+      </div>
+      <button class="cw-list-remove" onclick="cwRemoveWidget('${w.id}')">Remove</button>
+    </div>`;
+  }).join('');
+}
+
+async function cwAddWidget(){
+  const panel_id = document.getElementById('cw-panel').value;
+  const sheetName = document.getElementById('cw-sheet').value;
+  const field = document.getElementById('cw-field').value;
+  const widget_type = document.getElementById('cw-type').value;
+  const aggEl = document.getElementById('cw-agg');
+  const agg = widget_type==='metric' ? (aggEl ? aggEl.value : 'latest') : null;
+  const rangeEl = document.getElementById('cw-range');
+  const range_days = rangeEl ? parseInt(rangeEl.value, 10) || 0 : 30;
+  const targetEl = document.getElementById('cw-target');
+  const targetRaw = targetEl ? targetEl.value.trim() : '';
+  const target = targetRaw==='' ? null : Number(targetRaw);
+  const targetDirEl = document.getElementById('cw-target-dir');
+  const target_dir = targetDirEl ? targetDirEl.value : 'gte';
+  const labelInput = document.getElementById('cw-label');
+  const label = (labelInput.value || '').trim() || field;
+  if(!field){ alert('Pick a field first — no fields were detected on that sheet yet.'); return; }
+  if(targetRaw!=='' && isNaN(target)){ alert('Target must be a number.'); return; }
+  if(!window.NovusDB || !window.NovusDB.customWidgets){ alert('Custom widgets need the database connection, which is not set up yet.'); return; }
+  if(!window.ACTIVE_PLANT){ alert('No active plant resolved yet — reload and try again.'); return; }
+  const widget = {
+    id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('cw-' + Date.now() + '-' + Math.random().toString(36).slice(2)),
+    plant_id: window.ACTIVE_PLANT.id,
+    panel_id, sheet: sheetName, field, widget_type, agg, range_days, target, target_dir, label,
+    created_by: (NovusCore.getUser && NovusCore.getUser()?.username) || 'unknown',
+    created_at: new Date().toISOString(),
+  };
+  const btn=document.getElementById('cw-add-btn'); if(btn) btn.disabled=true;
+  try{
+    const { error } = await NovusDB.customWidgets.add(widget);
+    if(error) throw error;
+    CUSTOM_WIDGETS.push(widget);
+    cwRenderList();
+    renderCustomWidgets();
+    labelInput.value='';
+    if(targetEl) targetEl.value='';
+  }catch(e){
+    console.error('Failed to add custom widget:', e);
+    alert('Could not save that widget — check your connection and try again.');
+  }finally{
+    if(btn) btn.disabled=false;
+  }
+}
+
+async function cwRemoveWidget(id){
+  if(!confirm('Remove this widget for everyone viewing this plant?')) return;
+  if(window.NovusDB && window.NovusDB.customWidgets){
+    try{ await NovusDB.customWidgets.remove(id); }catch(e){ console.warn('customWidgets.remove failed:', e); }
+  }
+  CUSTOM_WIDGETS = CUSTOM_WIDGETS.filter(w=>w.id!==id);
+  cwRenderList();
+  renderCustomWidgets();
+}
+
+// Realtime: keep every open browser's widget set in sync as admins
+// add/remove widgets, filtered to the plant this browser is viewing.
+// Guarded the same way as everything else above -- a no-op until
+// supabase-config.js defines NovusDB.customWidgets.subscribe.
+if(window.NovusDB && NovusDB.customWidgets && NovusDB.customWidgets.subscribe){
+  NovusDB.customWidgets.subscribe(payload => {
+    if(!window.ACTIVE_PLANT) return;
+    if(payload.eventType === 'DELETE'){
+      const oldId = payload.old && payload.old.id;
+      if(oldId) CUSTOM_WIDGETS = CUSTOM_WIDGETS.filter(w=>w.id!==oldId);
+    } else {
+      const row = payload.new;
+      if(!row || row.plant_id !== window.ACTIVE_PLANT.id) return;
+      const idx = CUSTOM_WIDGETS.findIndex(w=>w.id===row.id);
+      if(idx>-1) CUSTOM_WIDGETS[idx]=row; else CUSTOM_WIDGETS.push(row);
+    }
+    renderCustomWidgets();
+    const overlay=document.getElementById('cw-overlay');
+    if(overlay && overlay.classList.contains('cw-visible')) cwRenderList();
+  });
+}
 </script>
+
+<!-- Manage Custom Widgets modal (admin-only; opened from ··· More menu) -->
+<div id="cw-overlay" aria-modal="true" role="dialog">
+  <div class="cw-backdrop" onclick="closeWidgetsModal()"></div>
+  <div class="cw-panel">
+    <div class="cw-panel-header">
+      <div class="cw-panel-title">🧩 Manage Custom Widgets</div>
+      <button class="cw-close" onclick="closeWidgetsModal()" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="cw-sub">Add a metric card or mini-chart to any panel, built from a field already present in this plant's data. Visible to everyone viewing this plant.</div>
+
+    <div class="cw-field-row">
+      <label for="cw-panel">Panel</label>
+      <select id="cw-panel"></select>
+    </div>
+    <div class="cw-row-2">
+      <div class="cw-field-row">
+        <label for="cw-sheet">Data Sheet</label>
+        <select id="cw-sheet" onchange="cwPopulateFields()"></select>
+      </div>
+      <div class="cw-field-row">
+        <label for="cw-field">Field</label>
+        <select id="cw-field"></select>
+      </div>
+    </div>
+    <div class="cw-row-2">
+      <div class="cw-field-row">
+        <label for="cw-type">Display As</label>
+        <select id="cw-type" onchange="cwToggleChartType()">
+          <option value="metric">Metric Card</option>
+          <option value="line">Line Chart</option>
+          <option value="area">Area Chart</option>
+          <option value="bar">Bar Chart</option>
+          <option value="hbar">Horizontal Bar</option>
+          <option value="doughnut">Doughnut / Gauge</option>
+        </select>
+      </div>
+      <div class="cw-field-row" id="cw-agg-row">
+        <label for="cw-agg">Metric Value</label>
+        <select id="cw-agg" onchange="cwToggleChartType()">
+          <option value="latest">Latest Date</option>
+          <option value="sum">Sum (in range)</option>
+          <option value="avg">Average (in range)</option>
+        </select>
+      </div>
+    </div>
+    <div class="cw-field-row" id="cw-range-row">
+      <label for="cw-range">Date Range</label>
+      <select id="cw-range">
+        <option value="7">Last 7 Days</option>
+        <option value="14">Last 14 Days</option>
+        <option value="30" selected>Last 30 Days</option>
+        <option value="60">Last 60 Days</option>
+        <option value="90">Last 90 Days</option>
+        <option value="180">Last 180 Days</option>
+        <option value="365">Last 365 Days</option>
+        <option value="0">All Available Data</option>
+      </select>
+    </div>
+    <div class="cw-row-2">
+      <div class="cw-field-row">
+        <label for="cw-target">Target (optional)</label>
+        <input type="number" step="any" id="cw-target" placeholder="e.g. 95">
+      </div>
+      <div class="cw-field-row">
+        <label for="cw-target-dir">On Target Means</label>
+        <select id="cw-target-dir">
+          <option value="gte">At or Above Target</option>
+          <option value="lte">At or Below Target</option>
+        </select>
+      </div>
+    </div>
+    <div class="cw-field-row">
+      <label for="cw-label">Label (optional)</label>
+      <input type="text" id="cw-label" placeholder="Defaults to the field name">
+    </div>
+    <button class="cw-add-btn" id="cw-add-btn" onclick="cwAddWidget()">+ Add Widget</button>
+
+    <div class="cw-divider"></div>
+    <div class="cw-list-title">Current Widgets — This Plant</div>
+    <div id="cw-list"></div>
+  </div>
+</div>
+
 <script src="novus-interactions.js" defer></script>
 </body>
 </html>
