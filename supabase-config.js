@@ -248,6 +248,7 @@ window.NovusDB = {
         range_days:  widget.range_days ?? 30,
         target:      (widget.target === undefined || widget.target === null || widget.target === '') ? null : widget.target,
         target_dir:  widget.target_dir || 'gte',
+        full_width:  !!widget.full_width,
         label:       widget.label,
         created_by:  widget.created_by || '',
         created_at:  widget.created_at || new Date().toISOString(),
