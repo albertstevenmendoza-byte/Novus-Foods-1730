@@ -262,8 +262,12 @@
     .more-dropdown  { z-index: 9999; }
 
     /* ── Custom Widgets (admin-managed metric cards / charts) ── */
-    .custom-widget-zone { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
-    .custom-widget { position:relative; background:var(--surface2); border:1px dashed var(--border2); border-radius:var(--radius-sm); padding:8px; }
+    /* Auto-fit grid: widgets narrower than ~190px sit side by side (as
+       many as fit the panel's width); a widget marked .cw-full-width
+       always spans the whole row regardless of how much room is left. */
+    .custom-widget-zone { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; margin-top:10px; align-items:start; }
+    .custom-widget { position:relative; background:var(--surface2); border:1px dashed var(--border2); border-radius:var(--radius-sm); padding:8px; min-width:0; }
+    .custom-widget.cw-full-width { grid-column:1 / -1; }
     .custom-widget-remove { position:absolute; top:4px; right:4px; width:18px; height:18px; border:none; border-radius:4px; background:rgba(220,38,38,.08); color:var(--red-l); cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .15s; }
     .custom-widget:hover .custom-widget-remove { opacity:1; }
     .custom-widget-remove:hover { background:rgba(220,38,38,.18); }
@@ -286,6 +290,8 @@
     .cw-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .cw-add-btn { width:100%; margin-top:4px; padding:9px; border:none; border-radius:var(--radius-sm); background:linear-gradient(135deg,var(--green-d),var(--green)); color:#fff; font-weight:700; font-size:.8rem; cursor:pointer; }
     .cw-add-btn:hover { filter:brightness(1.05); }
+    .cw-checkbox-row { display:flex; align-items:center; gap:7px; margin-bottom:12px; font-size:.72rem; color:var(--ink3); cursor:pointer; }
+    .cw-checkbox-row input { flex-shrink:0; }
     .cw-divider { border-top:1px solid var(--border); margin:16px 0 12px; }
     .cw-list-title { font-size:.72rem; font-weight:800; color:var(--ink3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
     .cw-list-item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 9px; border:1px solid var(--border); border-radius:var(--radius-xs); margin-bottom:6px; background:var(--surface2); }
@@ -1456,7 +1462,7 @@ function renderCustomWidgets(){
     const zone = ensureCustomZone(w.panel_id);
     if(!zone) return;
     const box = document.createElement('div');
-    box.className = 'custom-widget';
+    box.className = 'custom-widget' + (w.full_width ? ' cw-full-width' : '');
     box.id = 'cw-' + w.id;
     const removeBtn = isAdmin
       ? `<button class="custom-widget-remove" title="Remove widget" onclick="cwRemoveWidget('${w.id}')">
@@ -1567,10 +1573,11 @@ function cwRenderList(){
     const rangeLabel = (w.widget_type==='doughnut' || (w.widget_type==='metric' && w.agg==='latest'))
       ? '' : ' · ' + (CW_RANGE_LABELS[w.range_days] || (w.range_days ? w.range_days+' Days' : 'All Available Data'));
     const targetLabel = (w.target!=null && w.target!=='') ? ` · Target ${w.target_dir==='lte'?'≤':'≥'}${w.target}` : '';
+    const widthLabel = w.full_width ? ' · Full Width' : '';
     return `<div class="cw-list-item">
       <div>
         <div class="cw-list-item-label">${w.label}</div>
-        <div class="cw-list-item-meta">${panel?panel.label:w.panel_id} · ${w.sheet} · ${w.field} · ${typeLabel}${rangeLabel}${targetLabel}</div>
+        <div class="cw-list-item-meta">${panel?panel.label:w.panel_id} · ${w.sheet} · ${w.field} · ${typeLabel}${rangeLabel}${targetLabel}${widthLabel}</div>
       </div>
       <button class="cw-list-remove" onclick="cwRemoveWidget('${w.id}')">Remove</button>
     </div>`;
@@ -1591,6 +1598,8 @@ async function cwAddWidget(){
   const target = targetRaw==='' ? null : Number(targetRaw);
   const targetDirEl = document.getElementById('cw-target-dir');
   const target_dir = targetDirEl ? targetDirEl.value : 'gte';
+  const fullWidthEl = document.getElementById('cw-full-width');
+  const full_width = fullWidthEl ? !!fullWidthEl.checked : false;
   const labelInput = document.getElementById('cw-label');
   const label = (labelInput.value || '').trim() || field;
   if(!field){ alert('Pick a field first — no fields were detected on that sheet yet.'); return; }
@@ -1600,7 +1609,7 @@ async function cwAddWidget(){
   const widget = {
     id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('cw-' + Date.now() + '-' + Math.random().toString(36).slice(2)),
     plant_id: window.ACTIVE_PLANT.id,
-    panel_id, sheet: sheetName, field, widget_type, agg, range_days, target, target_dir, label,
+    panel_id, sheet: sheetName, field, widget_type, agg, range_days, target, target_dir, full_width, label,
     created_by: (NovusCore.getUser && NovusCore.getUser()?.username) || 'unknown',
     created_at: new Date().toISOString(),
   };
@@ -1613,6 +1622,7 @@ async function cwAddWidget(){
     renderCustomWidgets();
     labelInput.value='';
     if(targetEl) targetEl.value='';
+    if(fullWidthEl) fullWidthEl.checked=false;
   }catch(e){
     console.error('Failed to add custom widget:', e);
     alert('Could not save that widget — check your connection and try again.');
@@ -1731,6 +1741,10 @@ if(window.NovusDB && NovusDB.customWidgets && NovusDB.customWidgets.subscribe){
       <label for="cw-label">Label (optional)</label>
       <input type="text" id="cw-label" placeholder="Defaults to the field name">
     </div>
+    <label class="cw-checkbox-row">
+      <input type="checkbox" id="cw-full-width">
+      <span>Full width — otherwise widgets sit side by side, as many as fit the panel</span>
+    </label>
     <button class="cw-add-btn" id="cw-add-btn" onclick="cwAddWidget()">+ Add Widget</button>
 
     <div class="cw-divider"></div>
