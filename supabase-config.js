@@ -220,6 +220,48 @@ window.NovusDB = {
           .on('postgres_changes', { event: '*', schema: 'public', table: 'dds_highlights' }, callback)
           .subscribe(),
     },
+
+  // ── Custom Dashboard Widgets (admin-managed metric cards / charts) ──────
+  // Backs the "Manage Custom Widgets" feature in dds-dashboard.html: any
+  // admin can add a metric card or mini-chart, built from a field already
+  // present in a plant's dashboard-data.json, to any existing panel. Global
+  // per plant (scoped by plant_id) — every viewer of that plant sees the
+  // same widgets, same as announcements/rules elsewhere in this file. Run
+  // the migration in dashboard_custom_widgets.sql once before this is used.
+  customWidgets: {
+    /** All widgets for one plant */
+    getAll: (plantId) =>
+      _sb.from('dashboard_custom_widgets')
+        .select('*')
+        .eq('plant_id', plantId)
+        .order('created_at', { ascending: true }),
+
+    add: (widget) =>
+      _sb.from('dashboard_custom_widgets').insert({
+        id:          widget.id,
+        plant_id:    widget.plant_id,
+        panel_id:    widget.panel_id,
+        sheet:       widget.sheet,
+        field:       widget.field,
+        widget_type: widget.widget_type,
+        agg:         widget.agg || null,
+        range_days:  widget.range_days ?? 30,
+        target:      (widget.target === undefined || widget.target === null || widget.target === '') ? null : widget.target,
+        target_dir:  widget.target_dir || 'gte',
+        label:       widget.label,
+        created_by:  widget.created_by || '',
+        created_at:  widget.created_at || new Date().toISOString(),
+      }),
+
+    remove: (id) =>
+      _sb.from('dashboard_custom_widgets').delete().eq('id', id),
+
+    subscribe: (callback) =>
+      _sb
+        .channel('dashboard-custom-widgets-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_custom_widgets' }, callback)
+        .subscribe(),
+  },
 };
 
 // ── Play Call ──────────────────────────────────────────────────────────────
