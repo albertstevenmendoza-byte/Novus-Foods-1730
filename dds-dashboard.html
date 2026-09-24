@@ -435,6 +435,7 @@
           <div class="metric-box"><div class="metric-label">Holds / COA</div><div class="metric-value" id="holds-coa" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
           <div class="metric-box"><div class="metric-label">PEM %</div><div class="metric-value" id="pem" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
           <div class="metric-box"><div class="metric-label">Complaints</div><div class="metric-value" id="complaints" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
+          <div class="metric-box"><div class="metric-label">CPM</div><div class="metric-value" id="CPM" contendible="true" oninput="saveMAual(this.id)">-</div></div>
         </div>
       </div>
       <div class="resizer"></div>
@@ -736,7 +737,7 @@ function renderDashboard(){
   const trainVal=getVal(hr,'Trainings Complete',dHR)??0;set('trainings',pct(trainVal));
   const hcd=Number(getVal(hr,'Head Count - Direct',dHR)||0),hci=Number(getVal(hr,'Head Count - Indirect',dHR)||0);set('headcount',(hcd+hci)>0?hcd+hci:null);
   // Quality
-  set('holds',getVal(qa,'Holds',dQA));set('holds-coa',getVal(qa,'Holds/COA',dQA));set('pem',pct(getVal(qa,'PEM %',dQA),1));set('complaints',getVal(qa,'Number of Complaints',dQA));
+  set('holds',getVal(qa,'Holds',dQA));set('holds-coa',getVal(qa,'Holds/COA',dQA));set('pem',pct(getVal(qa,'PEM %',dQA),1));set('CPM',getVal(qa,'CPM',dQA));set('complaints',getVal(qa,'Number of Complaints',dQA));
   set('san-preop',pct(getVal(qa,'Pre-Op %',dQA)??getVal(qa,'Pre-Op',dQA),1));set('san-mss',pct(getVal(qa,'MSS Completion %',dQA)??getVal(qa,'MSS %',dQA)??getVal(qa,'MSS',dQA),1));
   const snEl=document.getElementById('san-notes');if(snEl)snEl.textContent=getVal(qa,'Sanitation Notes',dQA)||'No sanitation notes reported.';
   // Costs
