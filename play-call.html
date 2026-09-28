@@ -10,10 +10,44 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="novus-core.js"></script>
+  <script>
+    // ── Multi-plant config ──────────────────────────────────────────────
+    // Play Call is scoped per plant (see plant_scoped_boards.sql) -- this
+    // resolves which plant is active the same way dds-dashboard.html and
+    // hub.html do: URL ?plant=, then the last plant chosen in this
+    // browser, then plants.json's first entry. No "default plant" concept.
+    window.PLANTS_CONFIG_PROMISE = fetch('plants.json?v=' + Date.now(), { cache: 'no-cache' })
+      .then(r => r.json())
+      .catch(err => {
+        console.error('Could not load plants.json -- falling back to a single built-in plant:', err);
+        return { plants: [{ id: '1730', name: 'Novus Foods Plant 1730', shortLabel: 'Plant 1730' }] };
+      });
+
+    async function resolveActivePlant(){
+      const config = await window.PLANTS_CONFIG_PROMISE;
+      const plants = config.plants || [];
+      const urlId = new URLSearchParams(location.search).get('plant');
+      let storedId = null;
+      try { storedId = localStorage.getItem('novus_active_plant'); } catch(_) {}
+      const wantId = urlId || storedId;
+      const plant = plants.find(p => p.id === wantId) || plants[0];
+      window.PLANTS_CONFIG = config;
+      window.ACTIVE_PLANT = plant;
+      try { localStorage.setItem('novus_active_plant', plant.id); } catch(_) {}
+      return plant;
+    }
+
+    function applyPlantBranding(plant){
+      document.title = 'Play Call – ' + plant.name;
+      const tag = document.getElementById('plant-tag');
+      if(tag) tag.textContent = plant.shortLabel || plant.name;
+    }
+  </script>
   <style>
     .page { padding-top:24px; }
     .page-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; }
     .page-title { font-size:2rem; font-weight:800; color:var(--ink); letter-spacing:-.04em; }
+    .plant-tag  { font-size:.72rem; font-weight:700; color:var(--green-d); background:var(--green-xll); border:1px solid var(--green-ll); padding:3px 10px; border-radius:20px; margin-left:12px; vertical-align:middle; }
     .sync-meta  { font-size:.72rem; font-family:'DM Mono',monospace; color:var(--ink4); display:flex; align-items:center; gap:10px; }
 
     .playcall-grid { grid-column: 1 / -1; }
@@ -130,7 +164,7 @@
 
 <div class="page">
   <div class="page-top">
-    <h1 class="page-title">Daily Play Call</h1>
+    <h1 class="page-title">Daily Play Call<span class="plant-tag" id="plant-tag"></span></h1>
     <div class="sync-meta">
       <span id="sync-status">Connecting…</span>
       <button class="btn btn-ghost" style="font-size:.72rem;padding:5px 11px;" onclick="fetchData()">↺ Refresh</button>
@@ -175,23 +209,28 @@
     });
   }
 
+  // Namespaced per plant so switching plants never flashes another
+  // plant's cached plays before fetchData() below overwrites it.
+  function playCallCacheKey(){return 'novus_playcall_cache_'+((window.ACTIVE_PLANT&&window.ACTIVE_PLANT.id)||'default');}
+
   async function fetchData(){
     const status=document.getElementById('sync-status');status.textContent='Syncing…';
-    const{data,error}=await NovusDB.playCall.getAll();
+    const{data,error}=await NovusDB.playCall.getAll(window.ACTIVE_PLANT&&window.ACTIVE_PLANT.id);
     if(error){status.textContent='Error';console.error(error);return;}
     taskData=data||[];
-    try{localStorage.setItem('novus_playcall_cache',JSON.stringify(taskData));}catch(_){}
+    try{localStorage.setItem(playCallCacheKey(),JSON.stringify(taskData));}catch(_){}
     render();
     status.textContent=`Synced ${new Date().toLocaleTimeString()}`;
   }
 
   async function addTask(managerName,input){
     const text=input.value.trim();if(!text)return;
+    if(!window.ACTIVE_PLANT){alert('No active plant resolved yet — reload and try again.');return;}
     const mgr=MANAGERS.find(m=>m.name===managerName);
     const id=Date.now().toString();
     input.value='';
     taskData.push({id,owner:managerName,text});render();
-    const{error}=await NovusDB.playCall.add({id,owner:managerName,text,webhook:mgr?.webhook||'',date:new Date().toLocaleString()});
+    const{error}=await NovusDB.playCall.add({id,plant_id:window.ACTIVE_PLANT.id,owner:managerName,text,webhook:mgr?.webhook||'',date:new Date().toLocaleString()});
     if(error){console.error(error);taskData=taskData.filter(t=>t.id!==id);render();}
     else if(mgr?.webhook)fetch(mgr.webhook,{method:'POST',mode:'no-cors',body:JSON.stringify({task:text,owner:managerName})}).catch(()=>{});
   }
@@ -202,9 +241,11 @@
     await NovusDB.playCall.delete(id);
   }
 
-  window.onload=()=>{
+  window.onload=async()=>{
     NovusCore.requireAuth();initGrid();
-    try{const c=localStorage.getItem('novus_playcall_cache');if(c){taskData=JSON.parse(c);render();}}catch(_){}
+    const plant=await resolveActivePlant();
+    applyPlantBranding(plant);
+    try{const c=localStorage.getItem(playCallCacheKey());if(c){taskData=JSON.parse(c);render();}}catch(_){}
     fetchData();
     NovusDB.playCall.subscribe(()=>fetchData());
   };
