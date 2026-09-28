@@ -10,10 +10,44 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="novus-core.js"></script>
+  <script>
+    // ── Multi-plant config ──────────────────────────────────────────────
+    // Announcements are scoped per plant (see plant_scoped_boards.sql) --
+    // this resolves which plant is active the same way dds-dashboard.html
+    // and hub.html do: URL ?plant=, then the last plant chosen in this
+    // browser, then plants.json's first entry. No "default plant" concept.
+    window.PLANTS_CONFIG_PROMISE = fetch('plants.json?v=' + Date.now(), { cache: 'no-cache' })
+      .then(r => r.json())
+      .catch(err => {
+        console.error('Could not load plants.json -- falling back to a single built-in plant:', err);
+        return { plants: [{ id: '1730', name: 'Novus Foods Plant 1730', shortLabel: 'Plant 1730' }] };
+      });
+
+    async function resolveActivePlant(){
+      const config = await window.PLANTS_CONFIG_PROMISE;
+      const plants = config.plants || [];
+      const urlId = new URLSearchParams(location.search).get('plant');
+      let storedId = null;
+      try { storedId = localStorage.getItem('novus_active_plant'); } catch(_) {}
+      const wantId = urlId || storedId;
+      const plant = plants.find(p => p.id === wantId) || plants[0];
+      window.PLANTS_CONFIG = config;
+      window.ACTIVE_PLANT = plant;
+      try { localStorage.setItem('novus_active_plant', plant.id); } catch(_) {}
+      return plant;
+    }
+
+    function applyPlantBranding(plant){
+      document.title = 'DDS Announcements – ' + plant.name;
+      const tag = document.getElementById('plant-tag');
+      if(tag) tag.textContent = plant.shortLabel || plant.name;
+    }
+  </script>
   <style>
     .page { padding-top:28px; }
     .header-flex { display:flex; justify-content:space-between; align-items:center; margin-bottom:36px; }
     .page-title  { font-size:2rem; font-weight:800; color:var(--ink); letter-spacing:-.03em; }
+    .plant-tag   { font-size:.72rem; font-weight:700; color:var(--green-d); background:var(--green-xll); border:1px solid var(--green-ll); padding:3px 10px; border-radius:20px; margin-left:12px; }
     .sync-badge  { font-size:.7rem; font-weight:700; color:var(--green); background:var(--green-xll); padding:3px 12px; border-radius:20px; border:1px solid var(--green-ll); margin-left:12px; opacity:0; transition:.3s; }
     .sync-badge.on { opacity:1; }
 
@@ -136,6 +170,7 @@
   <div class="header-flex">
     <div style="display:flex;align-items:center;">
       <h2 class="page-title">DDS Announcements</h2>
+      <span class="plant-tag" id="plant-tag"></span>
       <span class="sync-badge" id="sync-badge">Syncing…</span>
     </div>
     <button class="btn btn-primary admin-only" onclick="addItem()">+ Post New Update</button>
@@ -181,7 +216,7 @@
   function parseStyle(s){const p=(s||'').split('|');return{bg:p[0]||'#ffffff',align:p[1]||'left',theme:p[2]||'light'};}
 
   async function loadData(){
-    const{data,error}=await NovusDB.announcements.getAll();
+    const{data,error}=await NovusDB.announcements.getAll(window.ACTIVE_PLANT&&window.ACTIVE_PLANT.id);
     if(error){console.error(error);return;}
     const container=document.getElementById('board');
     if(!data.length){container.innerHTML='<p style="color:var(--ink4);padding:20px;">No announcements yet.</p>';return;}
@@ -228,13 +263,15 @@
     await updateField(id,'color',newStr);
   }
   async function addItem(){
-    if(!isAdmin)return; showSync();
-    const newItem={id:Date.now().toString(),number:document.querySelectorAll('.pretty-card').length+1,text:'New update — click to edit this message…',date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),image:PROF_PRESETS[0],color:'#ffffff|left|light'};
+    if(!isAdmin)return;
+    if(!window.ACTIVE_PLANT){alert('No active plant resolved yet — reload and try again.');return;}
+    showSync();
+    const newItem={id:Date.now().toString(),plant_id:window.ACTIVE_PLANT.id,number:document.querySelectorAll('.pretty-card').length+1,text:'New update — click to edit this message…',date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),image:PROF_PRESETS[0],color:'#ffffff|left|light'};
     await NovusDB.announcements.add(newItem);
     hideSync();
   }
   async function deleteItem(id){
-    if(!confirm('Delete globally?'))return; showSync();
+    if(!confirm('Delete this announcement?'))return; showSync();
     await NovusDB.announcements.delete(id);
     hideSync();
   }
@@ -244,8 +281,10 @@
   async function selectPreset(url){document.getElementById(`img-${activeCardId}`).src=url;await updateField(activeCardId,'image',url);closeGallery();}
   function handleFileUpload(e){const file=e.target.files[0];const reader=new FileReader();reader.onload=async ev=>{document.getElementById(`img-${activeCardId}`).src=ev.target.result;await updateField(activeCardId,'image',ev.target.result);closeGallery();};reader.readAsDataURL(file);}
 
-  window.onload=()=>{
+  window.onload=async()=>{
     NovusCore.requireAuth();
+    const plant=await resolveActivePlant();
+    applyPlantBranding(plant);
     loadData();
     NovusDB.announcements.subscribe(()=>loadData());
   };
