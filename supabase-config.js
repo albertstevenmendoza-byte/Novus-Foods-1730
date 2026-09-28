@@ -39,13 +39,22 @@ const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 window.NovusDB = {
 
   // ── Announcements ───────────────────────────────────────────────────────
+  // Scoped per plant via plant_id (see plant_scoped_boards.sql). getAll
+  // still works with no plantId -- returns every plant's announcements --
+  // as a safety net for any old cached page that hasn't picked up the
+  // plant-aware version yet; every page this app ships now always passes
+  // its resolved ACTIVE_PLANT.id.
   announcements: {
-    getAll: () =>
-      _sb.from('announcements').select('*').order('created_at', { ascending: false }),
+    getAll: (plantId) => {
+      let q = _sb.from('announcements').select('*').order('created_at', { ascending: false });
+      if (plantId) q = q.eq('plant_id', plantId);
+      return q;
+    },
 
     add: (item) =>
       _sb.from('announcements').insert({
         id:        item.id,
+        plant_id:  item.plant_id,
         number:    item.number,
         text:      item.text,
         date:      item.date,
@@ -267,17 +276,24 @@ window.NovusDB = {
 
 // ── Play Call ──────────────────────────────────────────────────────────────
 // NOTE: was missing — this fixes play-call.html
+// Scoped per plant via plant_id (see plant_scoped_boards.sql), same pattern
+// as announcements above -- getAll(plantId) with no plantId returns every
+// plant's plays, kept only as a safety net for a stale cached page.
 window.NovusDB.playCall = {
-  getAll: () =>
-    _sb.from('play_call').select('*').order('created_at', { ascending: true }),
+  getAll: (plantId) => {
+    let q = _sb.from('play_call').select('*').order('created_at', { ascending: true });
+    if (plantId) q = q.eq('plant_id', plantId);
+    return q;
+  },
 
   add: (item) =>
     _sb.from('play_call').insert({
-      id:      item.id,
-      owner:   item.owner,
-      text:    item.text,
-      webhook: item.webhook || '',
-      date:    item.date    || '',
+      id:       item.id,
+      plant_id: item.plant_id,
+      owner:    item.owner,
+      text:     item.text,
+      webhook:  item.webhook || '',
+      date:     item.date    || '',
     }),
 
   delete: (id) =>
