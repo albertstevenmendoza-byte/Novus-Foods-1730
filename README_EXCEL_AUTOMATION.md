@@ -12,6 +12,12 @@ directly. That removes the Power Query refresh step, which is the part that cann
 
 Run `weekly_kpi_data.sql` first (see README_AUTOMATION.md).
 
+## Checked against your real tracker
+I ran the exported "Wkly Data" sheet (rows 1 to 121 of your CSV) through the same conversion the page uses. Result: the same
+61 KPIs and 39 weeks as weekly_KPIs.xlsx, latest week 2026-10-03, no Check notes, and 24 extra data points for 10/3 (the six
+line volumes and the Cost per Lb rows), because the tracker is newer than your workbook copy. The columns far to the right
+(the 2024 block, the #DIV/0! and 0 columns) have no week date in row 3 and are ignored, exactly as your Power Query did.
+
 ## What the page does with the tracker cells (same as your Power Query)
 Skip the first 2 rows; row 3 is the header (the week dates); skip 1 more row; columns A/B/C are Department/KPI/Target;
 fill Department down; drop rows with no KPI; turn the week columns into one row per KPI per week; keep real dates and
@@ -38,12 +44,14 @@ changes the tracker's layout (rows above the header, columns A to C), this is th
 
          {
            "plant_id": "1730",
-           "latest_week": "@{outputs('Run_script')?['body']?['result']?['latest_week']}",
+           "latest_week": "@{json(outputs('Run_script')?['body']?['result'])?['latest_week']}",
            "source": "SFRESH OGSM 2026 Tracker (Power Automate)",
            "updated_at": "@{utcNow()}",
            "data": @{outputs('Run_script')?['body']?['result']}
          }
 
+     The script returns its result as one text string of JSON (Office Scripts only allows simple return types), so the
+     `data` line drops that text in as-is and `json(...)` is used only to pull out `latest_week`.
      If the flow errors on the body, open the Run script step in a test run and copy the exact path it shows for the result.
 4. **Test > Manually.** Supabase > Table Editor > weekly_kpi_data should show the row. Open Weekly KPIs; the source line
    reads "Supabase · updated ...".

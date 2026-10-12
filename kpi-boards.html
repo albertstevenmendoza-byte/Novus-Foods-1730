@@ -569,7 +569,13 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
   function cs(v) { return v == null ? '' : String(v).trim(); }
   function toNum(v) {
     if (typeof v === 'number') return isFinite(v) ? v : null;
-    if (typeof v === 'string' && v.trim() !== '') { var n = Number(v.replace(/,/g, '')); return isFinite(n) ? n : null; }
+    if (typeof v === 'string' && v.trim() !== '') {
+      // text that looks like a number, e.g. " 1,019,981 ", "$0.199", "35%", "(54,504)". Errors such as #DIV/0! and a lone "-" are not numbers.
+      var t = v.trim(), neg = /^\(.*\)$/.test(t); if (neg) t = t.slice(1, -1);
+      var pct = /%$/.test(t); t = t.replace(/[$,%\s]/g, '');
+      if (!/^-?(\d+\.?\d*|\.\d+)$/.test(t)) return null;
+      var n = Number(t) / (pct ? 100 : 1); return isFinite(n) ? (neg ? -n : n) : null;
+    }
     return null;
   }
   function toISO(v) {
@@ -1704,7 +1710,7 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     loadPrefs();
     if (window.innerWidth < 900) S.libOpen = false;
     bind();
-    window.__kpi = { state: S, fromWorkbook: buildFromWorkbook, loadSheetJS: loadSheetJS };
+    window.__kpi = { state: S, fromWorkbook: buildFromWorkbook, loadSheetJS: loadSheetJS, wideToRows: wideToRows, toNum: toNum };
     var embedded;
     try { embedded = JSON.parse($('#kpi-data').textContent); } catch (e) { embedded = null; }
     if (S.plant !== '1730') embedded = null;   // the built-in snapshot is Plant 1730 only
