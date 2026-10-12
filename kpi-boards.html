@@ -1821,11 +1821,23 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
         var row = res && res.data;
         if (row && row.data) {
           var doc = row.data;
-          if (doc.raw && doc.raw.Wkly_Data && !doc.raw.Weekly_Data) doc.raw.Weekly_Data = wideToRows(doc.raw.Wkly_Data);
+          // tolerate JSON that was stored as text, or wrapped in a "result"/"data" key by the flow
+          for (var hop = 0; hop < 3; hop++) {
+            if (typeof doc === 'string') { try { doc = JSON.parse(doc); } catch (e) { break; } }
+            else if (doc && !doc.meta && !doc.raw && doc.result != null) doc = doc.result;
+            else if (doc && !doc.meta && !doc.raw && doc.data != null && typeof doc.data === 'object') doc = doc.data;
+            else break;
+          }
+          if (!doc || typeof doc !== 'object' || (!doc.meta && !doc.raw)) {
+            note('Supabase', 'row found for Plant ' + S.plant + ' but its data column is not in a known shape (' + (doc && typeof doc === 'object' ? 'keys: ' + Object.keys(doc).slice(0, 6).join(', ') : typeof doc) + '). Check the flow body: data must be the script result.', 'off');
+            return false;
+          }
+          if (doc.raw && doc.raw.Wkly_Data && !doc.raw.Weekly_Data) { doc.raw.Weekly_Data = wideToRows(doc.raw.Wkly_Data); if (!doc.raw.Weekly_Data.length) { note('Supabase', 'row found, but no weekly values could be read from the Wkly Data sheet (check that the header row has week-ending dates)', 'off'); return false; } }
           if (doc.raw && doc.raw.Weekly_Data) {   // raw sheet rows from the Excel Office Script: build here, same logic as Load data
             try { doc = buildFromWorkbook({ SheetNames: Object.keys(doc.raw), __rows: doc.raw, __notes: doc.raw.notes }, 'Excel (Supabase)'); }
             catch (e) { banner('Could not read the data in Supabase: ' + e.message); note('Supabase', 'row found but could not be read: ' + e.message, 'off'); return false; }
           }
+          if (doc.raw && !doc.meta) { note('Supabase', 'row found, but its raw data has no Wkly_Data or Weekly_Data sheet (found: ' + Object.keys(doc.raw).slice(0, 6).join(', ') + '). Check the sheet name in the Office Script.', 'off'); return false; }
           adopt(doc, 'Supabase · updated ' + new Date(row.updated_at).toLocaleString()); return true;
         }
         note('Supabase', res && res.error ? 'query failed: ' + (res.error.message || res.error) : 'connected, but no row for Plant ' + S.plant + ' yet', res && res.error ? 'off' : 'stale');
