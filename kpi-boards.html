@@ -588,7 +588,7 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     if (m) return { op: m[1], value: parseFloat(m[2]) / (m[3] ? 100 : 1), raw: s };
     var n = Number(s); return isFinite(n) ? { op: null, value: n, raw: s } : null;
   }
-  function sheetRows(wb, name) { return wb.Sheets[name] ? XLSX.utils.sheet_to_json(wb.Sheets[name], { raw: true, defval: null }) : null; }
+  function sheetRows(wb, name) { if (wb.__rows) return wb.__rows[name] || null; return wb.Sheets[name] ? XLSX.utils.sheet_to_json(wb.Sheets[name], { raw: true, defval: null }) : null; }
 
   function buildFromWorkbook(wb, fileName) {
     var raw = sheetRows(wb, 'Weekly_Data');
@@ -599,8 +599,9 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     });
     var mapRows = sheetRows(wb, 'KPI_Map'), staticNotes = [];
     if (mapRows) {
-      var nsheet = wb.Sheets['Notes'];
-      if (nsheet) XLSX.utils.sheet_to_json(nsheet, { header: 1, raw: true, defval: null }).slice(1).forEach(function (r) { if (cs(r[0])) staticNotes.push(cs(r[0])); });
+      var nsheet = wb.Sheets && wb.Sheets['Notes'];
+      if (wb.__rows) staticNotes = (wb.__notes || []).map(cs).filter(Boolean);
+      else if (nsheet) XLSX.utils.sheet_to_json(nsheet, { header: 1, raw: true, defval: null }).slice(1).forEach(function (r) { if (cs(r[0])) staticNotes.push(cs(r[0])); });
     } else {
       var emb = JSON.parse($('#kpi-map').textContent); mapRows = emb.rows; staticNotes = emb.notes || [];
     }
@@ -1481,6 +1482,24 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     }
   }
 
+  /* The OGSM tracker's "Wkly Data" sheet is wide (one column per week). This repeats the Power Query steps in
+     weekly_KPIs.xlsx: skip 2 rows, headers on the 3rd, skip 1 more, A/B/C = Department/KPI/Target, fill Department
+     down, drop blank KPIs, unpivot the week columns, keep only real dates and numbers. */
+  function wideToRows(vals) {
+    var hdr = vals[2] || [], out = [], dept = '', weeks = [], c;
+    for (c = 3; c < hdr.length; c++) weeks[c] = toISO(hdr[c]);
+    for (var r = 4; r < vals.length; r++) {
+      var row = vals[r]; if (!row) continue;
+      if (cs(row[0])) dept = cs(row[0]);
+      var kpi = cs(row[1]); if (!kpi) continue;
+      for (c = 3; c < hdr.length; c++) {
+        var v = row[c]; if (!weeks[c] || v === '' || v == null) continue;
+        out.push({ Department: dept, KPI: kpi, Target: row[2] === '' ? null : row[2], 'Week Ending': weeks[c], Value: v });
+      }
+    }
+    return out;
+  }
+
   function bind() {
     document.addEventListener('click', function (e) {
       var tgt = e.target;
@@ -1723,7 +1742,15 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     function fromDb(db) {
       return Promise.resolve(db.kpiData.get(S.plant)).then(function (res) {
         var row = res && res.data;
-        if (row && row.data) { adopt(row.data, 'Supabase · updated ' + new Date(row.updated_at).toLocaleString()); return true; }
+        if (row && row.data) {
+          var doc = row.data;
+          if (doc.raw && doc.raw.Wkly_Data && !doc.raw.Weekly_Data) doc.raw.Weekly_Data = wideToRows(doc.raw.Wkly_Data);
+          if (doc.raw && doc.raw.Weekly_Data) {   // raw sheet rows from the Excel Office Script: build here, same logic as Load data
+            try { doc = buildFromWorkbook({ SheetNames: Object.keys(doc.raw), __rows: doc.raw, __notes: doc.raw.notes }, 'Excel (Supabase)'); }
+            catch (e) { banner('Could not read the data in Supabase: ' + e.message); return false; }
+          }
+          adopt(doc, 'Supabase · updated ' + new Date(row.updated_at).toLocaleString()); return true;
+        }
         return false;
       }).catch(function () { return false; });
     }
