@@ -1704,18 +1704,36 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     }
     applyTheme();
     if (!hasChart()) banner('Charts could not load (no internet access to the chart library). Numbers and tables still work.');
-    // On a web server, a kpi-data.json next to the site wins when it is newer than what is loaded.
-    if (/^https?:$/.test(location.protocol) && window.fetch) {
+    // Newest source wins: Supabase (via the DDS page), then a kpi-data.json on the site.
+    function adopt(j, label) {
+      if (!j || !j.meta || !j.meta.latestWeek) return false;
+      var cur = loaded ? S.meta : null;
+      var newer = !cur || j.meta.latestWeek > cur.latestWeek ||
+        (j.meta.latestWeek === cur.latestWeek && (/built-in/.test(S.source) || (j.meta.generated || '') > (cur.generated || '')));
+      if (!newer) return false;
+      try { useData(j, label); loaded = true; banner(''); return true; } catch (e) { return false; }
+    }
+    function dbOf() { try { var d = window.parent !== window && window.parent.NovusDB; return d && d.kpiData ? d : null; } catch (e) { return null; } }
+    function fromFile() {
+      if (!(/^https?:$/.test(location.protocol) && window.fetch)) return Promise.resolve();
       var url = (S.plant === '1730' ? '' : S.plant + '/') + 'kpi-data.json';
-      fetch(url + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : Promise.reject(); })
-        .then(function (j) {
-          if (!j || !j.meta) return;
-          if (!loaded || (S.meta && S.meta.latestWeek && j.meta.latestWeek > S.meta.latestWeek)) { useData(j, url + ' (live file)'); loaded = true; banner(''); }
-        })
-        .catch(function () {
-          if (!loaded) banner('No weekly KPI data for Plant ' + S.plant + ' yet. Use Load data to open weekly_KPIs.xlsx, or add ' + url + ' to the site.');
-        });
-    } else if (!loaded) banner('No data loaded. Use Load data to open weekly_KPIs.xlsx or kpi-data.json.');
+      return fetch(url + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+        .then(function (j) { adopt(j, url + ' (live file)'); }).catch(function () {});
+    }
+    function fromDb(db) {
+      return Promise.resolve(db.kpiData.get(S.plant)).then(function (res) {
+        var row = res && res.data;
+        if (row && row.data) { adopt(row.data, 'Supabase · updated ' + new Date(row.updated_at).toLocaleString()); return true; }
+        return false;
+      }).catch(function () { return false; });
+    }
+    var db = dbOf();
+    (db ? fromDb(db) : Promise.resolve(false)).then(function () { return fromFile(); }).then(function () {
+      if (!loaded) banner('No weekly KPI data for Plant ' + S.plant + ' yet. Use Load data to open weekly_KPIs.xlsx, or upload it to Supabase (see kpi-tools).');
+    });
+    if (db && db.kpiData.subscribe) {
+      try { db.kpiData.subscribe(S.plant, function () { fromDb(db).then(function () { toast('Weekly KPI data updated'); }); }); } catch (e) {}
+    }
   }
   function boot() {
     if (hasChart()) return start();
