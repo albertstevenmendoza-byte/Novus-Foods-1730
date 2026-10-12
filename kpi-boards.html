@@ -307,6 +307,27 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
 /* Embedded inside the DDS: the page header already carries the brand */
 .shell.embed .brand { display: none; }
 .shell.embed .row1 { justify-content: flex-end; }
+
+.srcwrap { position: relative; }
+.srcchip { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; max-width: 100%; }
+.srcchip:hover { background: var(--bg); }
+.srcchip .dot.pulse { animation: srcpulse 1.4s ease-out 2; }
+@keyframes srcpulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 55%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+.srcpop { width: min(380px, calc(100vw - 32px)); right: 0; left: auto; padding: 14px; }
+.srcpop h3 { margin: 0 0 4px; font-size: 14px; }
+.srcpop .srcmeta { margin: 0 0 10px; font-size: 12.5px; color: var(--ink-2, var(--muted, inherit)); line-height: 1.45; }
+.srcpop ol { margin: 0 0 10px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
+.srcpop li { display: grid; grid-template-columns: 10px 1fr; gap: 8px; align-items: start; line-height: 1.4; }
+.srcpop li .dot { margin-top: 4px; }
+.srcpop .srcbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+.shell.present .srcchip { background: transparent; }
+@media (max-width: 640px) { .srcchip { height: 30px; font-size: 12px; } }
+.tile.kind-wins { border-top-color: var(--good); background: color-mix(in srgb, var(--good) 6%, var(--surface)); }
+.tile.kind-wins .t-title { color: var(--good); }
+.tile.kind-opps { border-top-color: var(--warn); background: color-mix(in srgb, var(--warn) 6%, var(--surface)); }
+.tile.kind-opps .t-title { color: var(--warn); }
+.tile.kind-actions { border-top-color: var(--ink); background: var(--surface); }
+.tile.kind-actions .t-title { color: var(--ink); }
 </style>
 
 <div class="shell" id="shell">
@@ -317,6 +338,10 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
         <div><div class="eyebrow">Plant 1730</div><h1>KPI Boards</h1></div>
       </div>
       <div class="tools">
+        <div class="srcwrap">
+          <button class="srcchip" id="srcChip" type="button" aria-expanded="false" aria-controls="srcPop" title="Where this data is coming from"><span class="dot" id="srcDot"></span><span id="srcText">Data source</span></button>
+          <div class="pop srcpop" id="srcPop" hidden role="dialog" aria-label="Data source"></div>
+        </div>
         <button class="btn" id="btnLib" type="button">Metrics</button>
         <label class="field tool-edit"><span>Week ending</span><select id="selWeek" aria-label="Week ending"></select></label>
         <div class="seg" id="segSpan" role="group" aria-label="Weeks shown">
@@ -430,8 +455,10 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
         { type: 'metric', m: ['qa-perfect-order'], w: 's', h: 3, view: 'number' },
         { type: 'metric', m: ['cost-delivery-pounds'], w: 'l', h: 4, view: 'line' },
         { type: 'breakdown', m: ['cost-delivery-pounds'], w: 'l', h: 4, view: 'latest' },
-        { type: 'compare', m: ['qa-yield', 'qa-perfect-order', 'qa-fill-rate'], w: 'xl', h: 4, view: 'raw' },
-        { type: 'note', m: [], w: 'm', h: 4, title: 'Talking points & actions', text: '' } ] },
+        { type: 'compare', m: ['qa-yield', 'qa-perfect-order', 'qa-fill-rate'], w: 'f', h: 4, view: 'raw' },
+        { type: 'note', kind: 'wins', m: [], w: 'm', h: 4, title: 'Wins', text: '' },
+        { type: 'note', kind: 'opps', m: [], w: 'm', h: 4, title: 'Opportunities', text: '' },
+        { type: 'note', kind: 'actions', m: [], w: 'm', h: 4, title: 'Actions & owners', text: '' } ] },
       { name: 'Safety & Quality', tiles: [
         { type: 'metric', m: ['safety-dart-rate'], w: 's', h: 3, view: 'number' },
         { type: 'metric', m: ['safety-near-miss-submission'], w: 's', h: 3, view: 'number' },
@@ -845,12 +872,17 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     if (type === 'breakdown') return { w: 'l', h: 4 };
     return { w: 'l', h: 4 };
   }
+  var NOTE_KINDS = {
+    wins: { title: 'Wins', hint: 'What went well this week, and who deserves a shout-out…' },
+    opps: { title: 'Opportunities', hint: 'Gaps, bottlenecks and ideas worth chasing next…' },
+    actions: { title: 'Actions & owners', hint: 'Action, owner, due date…' }
+  };
   function mkTile(o) {
     var d = tileDefaults(o.type, o.view);
     return {
       id: uid(), type: o.type, m: (o.m || []).slice(), w: o.w || d.w, h: o.h || d.h,
       view: o.view || (o.type === 'metric' ? 'number' : o.type === 'compare' ? 'index' : o.type === 'breakdown' ? 'latest' : ''),
-      title: o.title || '', text: o.text || '', ma: !!o.ma, bview: o.bview || 'chart'
+      title: o.title || '', kind: NOTE_KINDS[o.kind] ? o.kind : '', text: o.text || '', ma: !!o.ma, bview: o.bview || 'chart'
     };
   }
   function okTile(t) { return t.type === 'note' || t.m.every(function (id) { return S.byId[id]; }); }
@@ -989,7 +1021,7 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     if (!ro) tools += '<button type="button" class="tbtn" data-act="tmenu" title="More" aria-label="Tile options">' + ICON.more + '</button>';
     var cs = SIZES[t.w] || 4, rs = t.h || 4;
     var chartish = (t.type === 'metric' && t.view !== 'number') || t.type === 'compare' || t.type === 'breakdown';
-    return '<article class="tile tt-' + t.type + (chartish ? ' is-chart' : '') + tileStatus(t) + '" data-tid="' + t.id + '"' + (t.type === 'metric' && k ? ' data-mid="' + esc(k.id) + '"' : '') +
+    return '<article class="tile tt-' + t.type + (t.kind ? ' kind-' + t.kind : '') + (chartish ? ' is-chart' : '') + tileStatus(t) + '" data-tid="' + t.id + '"' + (t.type === 'metric' && k ? ' data-mid="' + esc(k.id) + '"' : '') +
       ' style="--cs:' + cs + ';--rs:' + rs + ';--mh:' + Math.max(170, rs * 70) + 'px">' +
       '<header class="t-head">' + (ro ? '' : '<span class="grip" title="Drag to move" aria-hidden="true">⠿</span>') +
       '<div class="t-titles"><div class="t-title">' + esc(tileTitle(t)) + '</div><div class="t-sub">' + esc(tileSub(t)) + '</div></div>' +
@@ -1017,7 +1049,7 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
   function stat(l, v) { return '<div class="stat"><dt>' + esc(l) + '</dt><dd>' + esc(v) + '</dd></div>'; }
   function noteBody(t, ro) {
     if (ro || S.present) return '<div class="note-read">' + (t.text ? esc(t.text) : '<span class="hint">No notes yet.</span>') + '</div>';
-    return '<textarea class="note" data-tid="' + t.id + '" placeholder="Wins, bottlenecks, actions and owners…" aria-label="Notes">' + esc(t.text) + '</textarea>';
+    return '<textarea class="note" data-tid="' + t.id + '" placeholder="' + esc((NOTE_KINDS[t.kind] || {}).hint || 'Talking points, wins, opportunities, actions and owners…') + '" aria-label="' + esc(t.title || 'Notes') + '">' + esc(t.text) + '</textarea>';
   }
   function legendHtml(t, ks, removable) {
     return '<div class="legend">' + ks.map(function (k, i) {
@@ -1152,6 +1184,7 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     $$('#segSpan button').forEach(function (b) { var n = +b.dataset.n; b.setAttribute('aria-pressed', n === S.span); });
     $$('#segTheme button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.v === S.theme); });
     $('#dataSrc').textContent = S.source;
+    renderSrc();
     $('#library').classList.toggle('closed', !S.libOpen);
     $('#btnLib').setAttribute('aria-pressed', S.libOpen);
   }
@@ -1301,7 +1334,7 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     HEIGHTS.forEach(function (h) { items.push({ label: h[1], check: t.h === h[0], run: function () { t.h = h[0]; commit(); } }); });
     items.push({ sep: 1 }, { label: 'Rename', run: function () { startRename(tid); } },
       { label: 'Move earlier', run: function () { moveBy(t, b, -1); } }, { label: 'Move later', run: function () { moveBy(t, b, 1); } },
-      { label: 'Duplicate', run: function () { var c = mkTile(t); c.title = t.title; c.text = t.text; addTileAt(b, c, b.tiles.indexOf(t) + 1); commit(); } });
+      { label: 'Duplicate', run: function () { var c = mkTile(t); c.title = t.title; c.kind = t.kind; c.text = t.text; addTileAt(b, c, b.tiles.indexOf(t) + 1); commit(); } });
     if (S.boards.length > 1) { items.push({ h: 'Move to board' }); items = items.concat(S.boards.filter(function (x) { return x.id !== b.id; }).map(function (x) { return { label: x.name, run: function () { moveTileTo(tid, x.id); } }; })); }
     items.push({ sep: 1 }, { label: 'Remove from board', danger: true, run: function () { removeTile(tid); } });
     return items;
@@ -1313,14 +1346,17 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     var b = activeBoard();
     return [{ title: b.name },
       { label: 'Rename board', run: function () { S.editing = b.id; renderTabs(); } },
-      { label: 'Duplicate board', run: function () { var nb = newBoard(b.name + ' copy', b.tiles.map(function (t) { var c = mkTile(t); c.title = t.title; c.text = t.text; return c; })); commit(); } },
+      { label: 'Duplicate board', run: function () { var nb = newBoard(b.name + ' copy', b.tiles.map(function (t) { var c = mkTile(t); c.title = t.title; c.kind = t.kind; c.text = t.text; return c; })); commit(); } },
       { label: 'Copy board data for Excel', run: function () { copyBoardData(b); } },
       { label: 'Present this board', run: function () { setPresent(true); } },
       { sep: 1 }, { label: 'Delete board…', danger: true, disabled: S.boards.length < 2, run: function () { confirmDialog('Delete "' + b.name + '"?', 'Its ' + b.tiles.length + ' tiles will be removed. This cannot be undone.', 'Delete board', function () { var i = S.boards.indexOf(b); S.boards.splice(i, 1); S.active = S.boards[Math.max(0, i - 1)].id; commit(); }); } }];
   }
   function addMenu() {
     var b = activeBoard();
-    return [{ h: 'Add to this board' }, { label: 'Notes (talking points)', run: function () { addTileAt(b, mkTile({ type: 'note', title: 'Talking points' })); commit(); } },
+    return [{ h: 'Add to this board' }, { label: 'Wins', run: function () { addTileAt(b, mkTile({ type: 'note', kind: 'wins', title: 'Wins', w: 'm' })); commit(); } },
+      { label: 'Opportunities', run: function () { addTileAt(b, mkTile({ type: 'note', kind: 'opps', title: 'Opportunities', w: 'm' })); commit(); } },
+      { label: 'Actions & owners', run: function () { addTileAt(b, mkTile({ type: 'note', kind: 'actions', title: 'Actions & owners', w: 'm' })); commit(); } },
+      { label: 'Notes (talking points)', run: function () { addTileAt(b, mkTile({ type: 'note', title: 'Talking points' })); commit(); } },
       { label: 'Metric from library…', run: function () { S.libOpen = true; renderTop(); $('#q').focus(); } },
       { label: 'Comparison of selected metrics', disabled: selIds().length < 2, run: function () { newCompare(b.id, selIds()); } }];
   }
@@ -1356,6 +1392,40 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     drawAll($('#fgrid'), tiles);
   }
   var tTimer;
+  /* ---------- data source indicator ---------- */
+  var trail = [], srcFresh = false;
+  function note(step, msg, state) { trail.push({ step: step, msg: msg, state: state || 'off' }); if (!$('#srcPop').hidden) renderSrcPop(); }
+  function srcKind() {
+    var s = S.source || '';
+    if (/^Supabase/.test(s)) return 'supabase';
+    if (/live file/.test(s)) return 'file';
+    if (/built-in/.test(s)) return 'builtin';
+    if (/saved in this browser/.test(s)) return 'browser';
+    return s ? 'upload' : 'none';
+  }
+  var SRC_NAME = { supabase: 'Live from Supabase', file: 'Site file (kpi-data.json)', builtin: 'Built-in snapshot', browser: 'Saved in this browser', upload: 'File you loaded', none: 'No data' };
+  function renderSrc() {
+    var k = srcKind(), dot = $('#srcDot');
+    dot.className = 'dot ' + (k === 'supabase' ? 'on' : k === 'none' ? 'off' : 'stale') + (srcFresh ? ' pulse' : '');
+    $('#srcText').textContent = SRC_NAME[k] + (S.meta && S.meta.latestWeek && k !== 'none' ? ' · wk ' + S.meta.latestWeek : '');
+    srcFresh = false;
+  }
+  function renderSrcPop() {
+    var k = srcKind(), h = '<h3>' + esc(SRC_NAME[k]) + '</h3><p class="srcmeta">' + esc(S.source || 'Nothing loaded yet') +
+      (S.meta && S.meta.latestWeek ? '<br>Latest week in this data: ' + esc(S.meta.latestWeek) : '') +
+      (S.meta && S.meta.generated ? '<br>Generated: ' + esc(S.meta.generated) : '') + '</p>';
+    if (trail.length) {
+      h += '<ol>' + trail.map(function (t) { return '<li><span class="dot ' + t.state + '"></span><span><b>' + esc(t.step) + ':</b> ' + esc(t.msg) + '</span></li>'; }).join('') + '</ol>';
+    }
+    h += '<div class="srcbtns"><button class="btn" id="srcRefresh" type="button">Check again</button></div>';
+    $('#srcPop').innerHTML = h;
+    var r = $('#srcRefresh'); if (r) r.addEventListener('click', function () { if (window.__kpiRefresh) window.__kpiRefresh(); });
+  }
+  function announceSource(prev) {
+    srcFresh = true; renderSrc();
+    var k = srcKind();
+    toast(SRC_NAME[k] + (S.meta && S.meta.latestWeek ? ' · latest week ' + S.meta.latestWeek : ''));
+  }
   function toast(msg) { var t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(tTimer); tTimer = setTimeout(function () { t.hidden = true; }, 3200); }
   function banner(msg) { var b = $('#banner'); b.textContent = msg || ''; b.hidden = !msg; }
   function copyText(text, okMsg) {
@@ -1420,7 +1490,7 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
   function cleanBoards(arr) {
     if (!Array.isArray(arr)) return [];
     return arr.filter(function (b) { return b && typeof b.name === 'string' && Array.isArray(b.tiles); }).map(function (b) {
-      return { id: uid(), name: String(b.name).slice(0, 60), tiles: b.tiles.filter(function (t) { return t && ['metric', 'compare', 'breakdown', 'note'].indexOf(t.type) > -1; }).map(function (t) { var c = mkTile({ type: t.type, m: Array.isArray(t.m) ? t.m.map(String) : [], w: SIZES[t.w] ? t.w : null, h: t.h >= 2 && t.h <= 8 ? +t.h : null, view: t.view, title: t.title ? String(t.title).slice(0, 80) : '', text: t.text ? String(t.text).slice(0, 4000) : '', ma: t.ma, bview: t.bview }); return c; }) };
+      return { id: uid(), name: String(b.name).slice(0, 60), tiles: b.tiles.filter(function (t) { return t && ['metric', 'compare', 'breakdown', 'note'].indexOf(t.type) > -1; }).map(function (t) { var c = mkTile({ type: t.type, m: Array.isArray(t.m) ? t.m.map(String) : [], w: SIZES[t.w] ? t.w : null, h: t.h >= 2 && t.h <= 8 ? +t.h : null, view: t.view, title: t.title ? String(t.title).slice(0, 80) : '', kind: t.kind, text: t.text ? String(t.text).slice(0, 4000) : '', ma: t.ma, bview: t.bview }); return c; }) };
     });
   }
   function loadPrefs() {
@@ -1603,7 +1673,7 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     $('#swatches').addEventListener('click', function (e) { var b = e.target.closest('.sw[data-l]'); if (!b) return; S.accent = b.dataset.l === CONFIG.SWATCHES[0].l ? null : { l: b.dataset.l, d: b.dataset.d }; applyTheme(); savePrefs(); renderBoard(); });
     $('#accPick').addEventListener('input', function (e) { var c = e.target.value; S.accent = { l: c, d: lighten(c, 0.35) }; applyTheme(); savePrefs(); renderBoard(); });
     $('#btnExport').addEventListener('click', function () {
-      var out = S.boards.map(function (b) { return { name: b.name, tiles: b.tiles.map(function (t) { return { type: t.type, m: t.m, w: t.w, h: t.h, view: t.view, title: t.title, text: t.text, ma: t.ma, bview: t.bview }; }) }; });
+      var out = S.boards.map(function (b) { return { name: b.name, tiles: b.tiles.map(function (t) { return { type: t.type, m: t.m, w: t.w, h: t.h, view: t.view, title: t.title, kind: t.kind, text: t.text, ma: t.ma, bview: t.bview }; }) }; });
       copyText(JSON.stringify(out), 'Copied ' + out.length + ' boards. Paste them into Settings > Paste boards on any copy of this page.');
     });
     $('#btnImport').addEventListener('click', function () {
@@ -1731,19 +1801,20 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
     if (!hasChart()) banner('Charts could not load (no internet access to the chart library). Numbers and tables still work.');
     // Newest source wins: Supabase (via the DDS page), then a kpi-data.json on the site.
     function adopt(j, label) {
-      if (!j || !j.meta || !j.meta.latestWeek) return false;
+      var step = /^Supabase/.test(label) ? 'Supabase' : 'Site file';
+      if (!j || !j.meta || !j.meta.latestWeek) { note(step, 'data was empty or unreadable', 'off'); return false; }
       var cur = loaded ? S.meta : null;
       var newer = !cur || j.meta.latestWeek > cur.latestWeek ||
         (j.meta.latestWeek === cur.latestWeek && (/built-in/.test(S.source) || (j.meta.generated || '') > (cur.generated || '')));
-      if (!newer) return false;
-      try { useData(j, label); loaded = true; banner(''); return true; } catch (e) { return false; }
+      if (!newer) { note(step, 'found week ' + j.meta.latestWeek + ', not newer than what is already showing (' + (cur ? cur.latestWeek : '-') + '), skipped', 'stale'); return false; }
+      try { useData(j, label); loaded = true; banner(''); note(step, 'week ' + j.meta.latestWeek + ' loaded and in use', 'on'); announceSource(); return true; } catch (e) { note(step, 'could not use it: ' + e.message, 'off'); return false; }
     }
     function dbOf() { try { var d = window.parent !== window && window.parent.NovusDB; return d && d.kpiData ? d : null; } catch (e) { return null; } }
     function fromFile() {
-      if (!(/^https?:$/.test(location.protocol) && window.fetch)) return Promise.resolve();
+      if (!(/^https?:$/.test(location.protocol) && window.fetch)) { note('Site file', 'skipped (page opened as a local file)', 'stale'); return Promise.resolve(); }
       var url = (S.plant === '1730' ? '' : S.plant + '/') + 'kpi-data.json';
       return fetch(url + '?v=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : Promise.reject(); })
-        .then(function (j) { adopt(j, url + ' (live file)'); }).catch(function () {});
+        .then(function (j) { adopt(j, url + ' (live file)'); }).catch(function () { note('Site file', url + ' not found or unreadable', 'stale'); });
     }
     function fromDb(db) {
       return Promise.resolve(db.kpiData.get(S.plant)).then(function (res) {
@@ -1753,15 +1824,30 @@ input[type="color"] { width: 32px; height: 28px; padding: 0; border: 1px solid v
           if (doc.raw && doc.raw.Wkly_Data && !doc.raw.Weekly_Data) doc.raw.Weekly_Data = wideToRows(doc.raw.Wkly_Data);
           if (doc.raw && doc.raw.Weekly_Data) {   // raw sheet rows from the Excel Office Script: build here, same logic as Load data
             try { doc = buildFromWorkbook({ SheetNames: Object.keys(doc.raw), __rows: doc.raw, __notes: doc.raw.notes }, 'Excel (Supabase)'); }
-            catch (e) { banner('Could not read the data in Supabase: ' + e.message); return false; }
+            catch (e) { banner('Could not read the data in Supabase: ' + e.message); note('Supabase', 'row found but could not be read: ' + e.message, 'off'); return false; }
           }
           adopt(doc, 'Supabase · updated ' + new Date(row.updated_at).toLocaleString()); return true;
         }
+        note('Supabase', res && res.error ? 'query failed: ' + (res.error.message || res.error) : 'connected, but no row for Plant ' + S.plant + ' yet', res && res.error ? 'off' : 'stale');
         return false;
-      }).catch(function () { return false; });
+      }).catch(function (e) { note('Supabase', 'request failed: ' + (e && e.message || e), 'off'); return false; });
     }
     var db = dbOf();
-    (db ? fromDb(db) : Promise.resolve(false)).then(function () { return fromFile(); }).then(function () {
+    function runLoad() {
+      trail.length = 0;
+      if (!db) note('Supabase', window.parent !== window ? 'not reachable from the DDS page (NovusDB.kpiData missing - redeploy supabase-config.js)' : 'not used (this page is open on its own, outside the DDS)', 'stale');
+      return (db ? fromDb(db) : Promise.resolve(false)).then(function () { return fromFile(); }).then(function () {
+        if (loaded && !trail.some(function (t) { return t.state === 'on'; })) note('Result', 'keeping ' + (SRC_NAME[srcKind()] || 'current data'), 'stale');
+        if (!$('#srcPop').hidden) renderSrcPop();
+        renderSrc();
+      });
+    }
+    window.__kpiRefresh = function () { runLoad().then(function () { if (!trail.some(function (t) { return t.state === 'on'; })) toast('Checked: ' + SRC_NAME[srcKind()] + ' is still the newest'); }); };
+    $('#srcChip').addEventListener('click', function (e) {
+      e.stopPropagation(); var p = $('#srcPop'); p.hidden = !p.hidden; $('#srcChip').setAttribute('aria-expanded', !p.hidden); if (!p.hidden) renderSrcPop();
+    });
+    document.addEventListener('click', function (e) { var p = $('#srcPop'); if (!p.hidden && !p.contains(e.target)) { p.hidden = true; $('#srcChip').setAttribute('aria-expanded', 'false'); } });
+    runLoad().then(function () {
       if (!loaded) banner('No weekly KPI data for Plant ' + S.plant + ' yet. Use Load data to open weekly_KPIs.xlsx, or upload it to Supabase (see kpi-tools).');
     });
     if (db && db.kpiData.subscribe) {
