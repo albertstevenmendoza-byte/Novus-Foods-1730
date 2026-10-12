@@ -417,3 +417,21 @@ window.NovusDB.dashboardData = {
     return data?.synced_at || null;
   },
 };
+
+// ── Weekly KPIs ─────────────────────────────────────────────────────────
+// Written by kpi-tools/upload_kpi_to_supabase.py with the service key (RLS is
+// read-only for the anon key). One row per plant; `data` is the whole
+// kpi-data.json document. Table: kpi-tools/weekly_kpi_data.sql.
+window.NovusDB.kpiData = {
+  get: (plantId) =>
+    _sb.from('weekly_kpi_data')
+      .select('data, latest_week, updated_at, source')
+      .eq('plant_id', plantId)
+      .maybeSingle(),
+
+  subscribe: (plantId, callback) =>
+    _sb
+      .channel('weekly-kpi-' + plantId)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_kpi_data', filter: 'plant_id=eq.' + plantId }, callback)
+      .subscribe(),
+};
