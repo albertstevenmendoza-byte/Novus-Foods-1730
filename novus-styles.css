@@ -1462,10 +1462,8 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
 .nm-table th { font-size:.6rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-4); font-weight:700; text-align:right; padding:2px 0 4px; }
 .nm-table th:first-child, .nm-table td:first-child { text-align:left; }
 .nm-table td { text-align:right; padding:4px 0; border-top:1px solid var(--border); color:var(--text-2); font-variant-numeric:tabular-nums; }
-.nm-table th:nth-child(2), .nm-table td:nth-child(2) { width:64px; }
-.nm-table th:nth-child(3), .nm-table td:nth-child(3) { width:84px; }
+.nm-table th:nth-child(2), .nm-table td:nth-child(2), .nm-table th:nth-child(3), .nm-table td:nth-child(3) { width:64px; }
 .nm-na { color:var(--text-4); }
 .nm-hot { color:#c2410c; }
-.nm-sub td { font-style:italic; color:var(--text-3); }
 .nm-total td { font-weight:700; color:var(--text-1); border-top:2px solid var(--border); }
 .nm-empty { text-align:center !important; color:var(--text-4); }
