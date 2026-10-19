@@ -1467,3 +1467,4 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
 .nm-hot { color:#c2410c; }
 .nm-total td { font-weight:700; color:var(--text-1); border-top:2px solid var(--border); }
 .nm-empty { text-align:center !important; color:var(--text-4); }
+.nm-range { text-transform:none; letter-spacing:0; font-weight:500; margin-left:6px; color:var(--text-4); }
