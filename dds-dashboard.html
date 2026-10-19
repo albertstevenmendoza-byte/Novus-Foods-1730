@@ -800,7 +800,11 @@ function renderNearMissBreakdown(depts){
   const cell=(t,hot)=>t==null?'<span class="nm-na">—</span>':'<span title="'+asOf(t.ds)+'">'+(hot&&t.n>0?'<b class="nm-hot">'+t.n+'</b>':t.n)+'</span>';
   let sumO=0,sumC=0,anyO=false,anyC=false,html='';
   depts.forEach(([name,rows])=>{
-    const o=latest(rows,NM_FIELDS.open),c=latest(rows,NM_FIELDS.closed);
+    // A department may combine several sheets (Office = Finance + HR | Training):
+    // take each sheet's own latest value, then add them together.
+    const srcs=Array.isArray(rows[0])?rows:[rows];
+    const merge=names=>{let n=0,ds=null;srcs.forEach(r=>{const t=latest(r,names);if(t){n+=t.n;if(ds===null||t.ds>ds)ds=t.ds;}});return ds===null?null:{n,ds};};
+    const o=merge(NM_FIELDS.open),c=merge(NM_FIELDS.closed);
     if(o){sumO+=o.n;anyO=true;}if(c){sumC+=c.n;anyC=true;}
     html+='<tr><td>'+name+'</td><td>'+cell(o,true)+'</td><td>'+cell(c,false)+'</td></tr>';
   });
@@ -846,7 +850,7 @@ function renderDashboard(){
   [['date-safety',dHR],['date-quality',dQA],['date-costs',dFin],['date-hr',dHR],['date-sap',dSAP],['date-warehouse',dWH],['date-inventory',dInv]].forEach(([id,d])=>checkStale(id,d));
 
   // Safety/HR
-  renderNearMissBreakdown([['Production',prod],['QA',qa],['Maintenance',maint],['Warehouse',bpWH],['Inventory Control',inv],['SAP',sap],['Finance',fin],['HR | Training',hr]]);
+  renderNearMissBreakdown([['Production',prod],['QA',qa],['Maintenance',maint],['Warehouse',bpWH],['Inventory Control',inv],['SAP',sap],['Office',[fin,hr]]]);
   set('days-incident',getVal(hr,'Days Without Incident',dHR));set('near-misses',getVal(hr,'Near Miss Reports',dHR));set('safety-audits',getVal(hr,'Safety Audits',dHR));set('meal-penalties',getVal(hr,'Number of Meal Penalties',dHR));
   const trainVal=getVal(hr,'Trainings Complete',dHR)??0;set('trainings',pct(trainVal));
   const hcd=Number(getVal(hr,'Head Count - Direct',dHR)||0),hci=Number(getVal(hr,'Head Count - Indirect',dHR)||0);set('headcount',(hcd+hci)>0?hcd+hci:null);
