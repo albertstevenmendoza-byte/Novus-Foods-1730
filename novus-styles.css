@@ -1454,3 +1454,18 @@ input::placeholder, textarea::placeholder { color: var(--text-4); }
   .plant-status-bar { padding: 0 16px; }
   .psb-right { display: none; }
 }
+
+/* ── Safety: near misses by department ── */
+.nm-breakdown { border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); padding:10px 12px; }
+.nm-title { font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--text-4); margin-bottom:6px; }
+.nm-table { width:100%; border-collapse:collapse; font-size:.78rem; }
+.nm-table th { font-size:.6rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-4); font-weight:700; text-align:right; padding:2px 0 4px; }
+.nm-table th:first-child, .nm-table td:first-child { text-align:left; }
+.nm-table td { text-align:right; padding:4px 0; border-top:1px solid var(--border); color:var(--text-2); font-variant-numeric:tabular-nums; }
+.nm-table th:nth-child(2), .nm-table td:nth-child(2) { width:64px; }
+.nm-table th:nth-child(3), .nm-table td:nth-child(3) { width:84px; }
+.nm-na { color:var(--text-4); }
+.nm-hot { color:#c2410c; }
+.nm-sub td { font-style:italic; color:var(--text-3); }
+.nm-total td { font-weight:700; color:var(--text-1); border-top:2px solid var(--border); }
+.nm-empty { text-align:center !important; color:var(--text-4); }
