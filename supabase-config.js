@@ -435,3 +435,39 @@ window.NovusDB.kpiData = {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_kpi_data', filter: 'plant_id=eq.' + plantId }, callback)
       .subscribe(),
 };
+
+// ── Startup Actions ─────────────────────────────────────────────────────
+// Action items tied to a line's STARTUP status on dds-dashboard.html.
+// Scoped per plant. Run startup_actions.sql once before this is used.
+window.NovusDB.startupActions = {
+  getAll: (plantId) =>
+    _sb.from('startup_actions')
+      .select('*')
+      .eq('plant_id', plantId)
+      .order('created_at', { ascending: true }),
+
+  add: (item) =>
+    _sb.from('startup_actions').insert({
+      id:         item.id,
+      plant_id:   item.plant_id,
+      line:       item.line,
+      text:       item.text,
+      owner:      item.owner || '',
+      created_by: item.created_by || '',
+    }),
+
+  setDone: (id, done, user) =>
+    _sb.from('startup_actions').update({
+      completed_at: done ? new Date().toISOString() : null,
+      completed_by: done ? (user || '') : '',
+    }).eq('id', id),
+
+  remove: (id) =>
+    _sb.from('startup_actions').delete().eq('id', id),
+
+  subscribe: (callback) =>
+    _sb
+      .channel('startup-actions-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'startup_actions' }, callback)
+      .subscribe(),
+};
