@@ -493,7 +493,7 @@
           <div class="metric-box"><div class="metric-label">Safety Audits</div><div class="metric-value" id="safety-audits" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
         </div>
         <div class="nm-breakdown" id="nm-breakdown">
-          <div class="nm-title">Near Misses by Department</div>
+          <div class="nm-title">Near Misses by Department <span class="nm-range" id="nm-range"></span></div>
           <table class="nm-table">
             <thead><tr><th>Department</th><th>Open</th><th>Closed</th></tr></thead>
             <tbody id="nm-tbody"><tr><td colspan="3" class="nm-empty">—</td></tr></tbody>
@@ -772,43 +772,46 @@ function regression(y){const n=y.length;if(n<2)return y;let sx=0,sy=0,sxy=0,sx2=
 
 // [migrated above]
 
-// Near misses by department for the Safety panel: how many are Open and how
-// many are Closed. Each department adds two columns to its own sheet --
-// "Near Miss Open" and "Near Miss Closed" -- holding the current count.
-// These are status counts, so the LATEST row that has a value is used (not a
-// fixed date); if one date has several rows (e.g. Production lines) they are
-// summed. A blank column shows "—" (not reported), never 0. Hover a number
-// to see the date it was reported.
+// Near misses by department for the Safety panel: how many were Opened and
+// how many Closed in the LAST 30 DAYS (today and the 29 days before it --
+// "today" is the browser's real date, so the window moves on its own).
+// Each department adds two columns to its own sheet, "Near Miss Open" and
+// "Near Miss Closed", with that day's count; every row inside the window is
+// added up (so several rows on one date, e.g. Production lines, also add).
+// A column with nothing entered in the window shows "—" (not reported),
+// never 0. A department may combine sheets (Office = Finance + HR | Training).
 const NM_FIELDS={
   open:  ['Near Miss Open','Near Misses Open','Open Near Misses','Open Near Miss'],
   closed:['Near Miss Closed','Near Misses Closed','Closed Near Misses','Closed Near Miss']
 };
+const NM_WINDOW_DAYS=30;
 function renderNearMissBreakdown(depts){
   const tb=document.getElementById('nm-tbody');if(!tb)return;
-  const limit=new Date();limit.setDate(limit.getDate()+1);const limitDS=toDS(new Date(Date.UTC(limit.getFullYear(),limit.getMonth(),limit.getDate())));
-  const latest=(rows,names)=>{
-    let best=null,sum=0;
+  const t=new Date();
+  const endDS=`${t.getFullYear()}-${p2(t.getMonth()+1)}-${p2(t.getDate())}`;
+  const st=new Date(t.getFullYear(),t.getMonth(),t.getDate()-(NM_WINDOW_DAYS-1));
+  const startDS=`${st.getFullYear()}-${p2(st.getMonth()+1)}-${p2(st.getDate())}`;
+  const fmtD=ds=>new Date(ds+'T00:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
+  const rangeTxt=fmtD(startDS)+' – '+fmtD(endDS);
+  const winSum=(rows,names)=>{
+    let n=0,found=false;
     rows.forEach(r=>{
-      const ds=toDS(parseDate(r.Date));if(!ds||ds>limitDS)return;
-      let n=null;for(const f of names){const v=valByKey(r,f);if(v!=null&&v!==''&&!isNaN(Number(v))){n=Number(v);break;}}
-      if(n==null)return;
-      if(best===null||ds>best){best=ds;sum=n;}else if(ds===best){sum+=n;}
+      const ds=toDS(parseDate(r.Date));if(!ds||ds<startDS||ds>endDS)return;
+      for(const f of names){const v=valByKey(r,f);if(v!=null&&v!==''&&!isNaN(Number(v))){n+=Number(v);found=true;break;}}
     });
-    return best===null?null:{n:sum,ds:best};
+    return found?n:null;
   };
-  const asOf=ds=>{const d=new Date(ds+'T00:00:00Z');return 'As of '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});};
-  const cell=(t,hot)=>t==null?'<span class="nm-na">—</span>':'<span title="'+asOf(t.ds)+'">'+(hot&&t.n>0?'<b class="nm-hot">'+t.n+'</b>':t.n)+'</span>';
+  const merge=(srcs,names)=>{let n=0,found=false;srcs.forEach(r=>{const v=winSum(r,names);if(v!=null){n+=v;found=true;}});return found?n:null;};
+  const cell=(v,hot)=>v==null?'<span class="nm-na">—</span>':(hot&&v>0?'<b class="nm-hot">'+v+'</b>':String(v));
+  const ttl=document.getElementById('nm-range');if(ttl)ttl.textContent='Last 30 days · '+rangeTxt;
   let sumO=0,sumC=0,anyO=false,anyC=false,html='';
   depts.forEach(([name,rows])=>{
-    // A department may combine several sheets (Office = Finance + HR | Training):
-    // take each sheet's own latest value, then add them together.
     const srcs=Array.isArray(rows[0])?rows:[rows];
-    const merge=names=>{let n=0,ds=null;srcs.forEach(r=>{const t=latest(r,names);if(t){n+=t.n;if(ds===null||t.ds>ds)ds=t.ds;}});return ds===null?null:{n,ds};};
-    const o=merge(NM_FIELDS.open),c=merge(NM_FIELDS.closed);
-    if(o){sumO+=o.n;anyO=true;}if(c){sumC+=c.n;anyC=true;}
+    const o=merge(srcs,NM_FIELDS.open),c=merge(srcs,NM_FIELDS.closed);
+    if(o!=null){sumO+=o;anyO=true;}if(c!=null){sumC+=c;anyC=true;}
     html+='<tr><td>'+name+'</td><td>'+cell(o,true)+'</td><td>'+cell(c,false)+'</td></tr>';
   });
-  html+='<tr class="nm-total"><td>Total</td><td>'+(anyO?(sumO>0?'<b class="nm-hot">'+sumO+'</b>':'0'):'<span class="nm-na">—</span>')+'</td><td>'+(anyC?sumC:'<span class="nm-na">—</span>')+'</td></tr>';
+  html+='<tr class="nm-total"><td>Total</td><td>'+cell(anyO?sumO:null,true)+'</td><td>'+cell(anyC?sumC:null,false)+'</td></tr>';
   tb.innerHTML=html;
 }
 
