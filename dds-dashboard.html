@@ -467,6 +467,13 @@
           <div class="metric-box"><div class="metric-label">Near Misses</div><div class="metric-value" id="near-misses" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
           <div class="metric-box"><div class="metric-label">Safety Audits</div><div class="metric-value" id="safety-audits" contenteditable="true" oninput="saveManual(this.id)">—</div></div>
         </div>
+        <div class="nm-breakdown" id="nm-breakdown">
+          <div class="nm-title">Near Misses by Department</div>
+          <table class="nm-table">
+            <thead><tr><th>Department</th><th id="nm-th-day">Day</th><th>Last 30 days</th></tr></thead>
+            <tbody id="nm-tbody"><tr><td colspan="3" class="nm-empty">—</td></tr></tbody>
+          </table>
+        </div>
       </div>
       <div class="resizer"></div>
     </div>
@@ -740,6 +747,41 @@ function regression(y){const n=y.length;if(n<2)return y;let sx=0,sy=0,sxy=0,sx2=
 
 // [migrated above]
 
+// Near misses by department for the Safety panel. Each department's sheet
+// has its own "Near Miss" column; HR's "Near Miss Reports" is the site-wide
+// headline count. A blank column is shown as "—" (not reported), never 0,
+// so a department that isn't entering data isn't mistaken for a clean one.
+// "Day" = the Safety panel's date (dHR); "Last 30 days" = that date and the
+// 29 days before it. Multiple rows on one date (e.g. Production lines) are summed.
+function renderNearMissBreakdown(anchor,hr,depts){
+  const tb=document.getElementById('nm-tbody');if(!tb)return;
+  if(!anchor){tb.innerHTML='<tr><td colspan="3" class="nm-empty">No data</td></tr>';return;}
+  const a=new Date(anchor+'T00:00:00Z');a.setUTCDate(a.getUTCDate()-29);const start=toDS(a);
+  const th=document.getElementById('nm-th-day');
+  if(th){const d=new Date(anchor+'T00:00:00Z');th.textContent=d.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});}
+  const tally=(rows,field)=>{
+    let day=0,dayN=0,win=0,winN=0;
+    rows.forEach(r=>{
+      const ds=toDS(parseDate(r.Date));if(!ds||ds>anchor||ds<start)return;
+      const v=valByKey(r,field);if(v==null||v==='')return;
+      const n=Number(v);if(isNaN(n))return;
+      win+=n;winN++;if(ds===anchor){day+=n;dayN++;}
+    });
+    return{day:dayN?day:null,win:winN?win:null};
+  };
+  const cell=v=>v==null?'<span class="nm-na">—</span>':(v>0?'<b class="nm-hot">'+v+'</b>':'0');
+  let sumDay=0,sumWin=0,html='';
+  depts.forEach(([name,rows])=>{
+    const t=tally(rows,'Near Miss');sumDay+=t.day||0;sumWin+=t.win||0;
+    html+='<tr><td>'+name+'</td><td>'+cell(t.day)+'</td><td>'+cell(t.win)+'</td></tr>';
+  });
+  const tot=tally(hr,'Near Miss Reports');
+  const un=(a,b)=>a==null?null:Math.max(0,a-b);
+  html+='<tr class="nm-sub"><td>Not assigned to a department</td><td>'+cell(un(tot.day,sumDay))+'</td><td>'+cell(un(tot.win,sumWin))+'</td></tr>';
+  html+='<tr class="nm-total"><td>Total reported (HR)</td><td>'+cell(tot.day)+'</td><td>'+cell(tot.win)+'</td></tr>';
+  tb.innerHTML=html;
+}
+
 function renderDashboard(){
   if(!workbook)return;
   GLOBAL_MAX_DATE=null;
@@ -778,6 +820,7 @@ function renderDashboard(){
   [['date-safety',dHR],['date-quality',dQA],['date-costs',dFin],['date-hr',dHR],['date-sap',dSAP],['date-warehouse',dWH],['date-inventory',dInv]].forEach(([id,d])=>checkStale(id,d));
 
   // Safety/HR
+  renderNearMissBreakdown(dHR,hr,[['Production',prod],['QA',qa],['Maintenance',maint],['Warehouse',bpWH],['Inventory Control',inv],['SAP',sap],['Finance',fin]]);
   set('days-incident',getVal(hr,'Days Without Incident',dHR));set('near-misses',getVal(hr,'Near Miss Reports',dHR));set('safety-audits',getVal(hr,'Safety Audits',dHR));set('meal-penalties',getVal(hr,'Number of Meal Penalties',dHR));
   const trainVal=getVal(hr,'Trainings Complete',dHR)??0;set('trainings',pct(trainVal));
   const hcd=Number(getVal(hr,'Head Count - Direct',dHR)||0),hci=Number(getVal(hr,'Head Count - Indirect',dHR)||0);set('headcount',(hcd+hci)>0?hcd+hci:null);
